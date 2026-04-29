@@ -561,14 +561,20 @@
   "habitDetail": {
     "ifYouKeep": "If you keep this up…",
     "atStake": "What's at stake if you stop",
-    "showAtStake": "Show what's at stake",
-    "showProjection": "Back to projection",
+    "showLoss": "Show me the loss",
+    "showGain": "Show me the gain",
+    "reversalLabel": "How to reverse it, starting today",
     "hadithLabel": "From the tradition",
     "currentStreak": "Current streak",
     "noStreakYet": "Start today.",
     "deleteHabit": "Delete habit",
     "criticalToggle": "Critical habit",
-    "criticalHint": "Missing this triggers your punishment."
+    "criticalHint": "Missing this triggers your punishment.",
+    "muted": {
+      "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
+      "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
+      "lowMood": "Paused after a low check-in. Come back when you're steadier."
+    }
   },
   "narratives": {
     "generic": {
@@ -579,13 +585,17 @@
       "yearlyNoUnit": "Doing this every day adds up to {days} successful days a year.",
       "decadeNoUnit": "{decade} successful days across a decade.",
       "lostYearNoUnit": "Skip it and you lose {days} successful days a year.",
-      "lostDecadeNoUnit": "A decade off and you forfeit {decade} successful days."
+      "lostDecadeNoUnit": "A decade off and you forfeit {decade} successful days.",
+      "r1": "Start with the smallest possible version of this habit today — even one rep counts.",
+      "r2": "The body and brain rebuild fast once you give them the right inputs again."
     },
     "reading": {
       "p1": "{pages} pages a year — about {books} books.",
       "p2": "Across a decade, {decadeBooks} books. A small library.",
-      "c1": "Skip a year and that's {books} books unread.",
-      "c2": "A decade off and {decadeBooks} books are gone forever.",
+      "c1": "Skip a year and that's {books} books — and the upgraded thinking inside them — that you never get.",
+      "c2": "A decade of not reading compounds into the same person you are now, only older. Your kids see that, too.",
+      "r1": "Start with one page tonight before bed — that's it. Tomorrow, two.",
+      "r2": "Keep a book in every room you sit in. Boredom becomes the trigger.",
       "hadithText": "Read! In the name of your Lord who created.",
       "hadithSource": "Surah Al-'Alaq 96:1"
     },
@@ -593,8 +603,10 @@
       "p1": "{yearly} saved this year.",
       "p2": "About {tenYear} after 10 years at {rate}% return.",
       "p3": "About {thirtyYear} after 30 years — small money becomes big money.",
-      "c1": "Skip a year and {yearly} stays out of your future.",
-      "c2": "A decade off and {tenYear} of compounding is lost.",
+      "c1": "Skip a year and the gap to retirement widens. Money you didn't save is interest that's working against you instead of for you.",
+      "c2": "A decade off compound growth is roughly the difference between owning your home outright and renting forever.",
+      "r1": "Automate it. Move {yearly} a year out of your account before you can spend it — pay yourself first.",
+      "r2": "Cancel one subscription tonight. Funnel that exact amount into savings.",
       "hadithText": "And whoever fears Allah, He will make for him a way out, and provide for him from where he does not expect.",
       "hadithSource": "Surah At-Talaq 65:2-3"
     },
@@ -602,8 +614,10 @@
       "p1": "{hours} hours of movement a year.",
       "p2": "About {km} km on foot — like walking London to Paris {trips, plural, =1 {once} other {# times}}.",
       "p3": "Across a decade, {decadeHours} hours of strength built.",
-      "c1": "Skip a year and that's {hours} hours your body never recovers.",
-      "c2": "A decade off — your future self pays the bill.",
+      "c1": "Sedentary years compound into the metabolic risk profile that fills cardiology wards — diabetes, heart disease, the back pain that never quite goes away.",
+      "c2": "Muscle and aerobic capacity you don't build in your 30s are very hard to recover in your 60s.",
+      "r1": "Walk 10 minutes today. That's the dose. Tomorrow, the same.",
+      "r2": "Tie movement to something you already do — push-ups before every shower, calf raises while the kettle boils.",
       "hadithText": "The strong believer is more beloved to Allah than the weak believer, while there is good in both.",
       "hadithSource": "Sahih Muslim 2664"
     },
@@ -611,50 +625,72 @@
       "p1": "{pages} pages a year.",
       "p2": "You complete the Quran every {monthsPerKhatm} months — {khatmsPerYear, plural, =1 {one khatm} other {# khatmas}} a year.",
       "p3": "Across a decade, {decadeKhatms} khatmas of revelation.",
-      "c1": "Skip a year — {pages} pages of the Quran unread.",
-      "c2": "A decade off — {decadeKhatms} khatmas you'll never make up.",
+      "c1": "A year of not opening the Mushaf is a year your heart drifts further from the Speech of Allah — quietly, almost imperceptibly.",
+      "c2": "A decade away is a different relationship with the book entirely. The door doesn't close, but the ease of return fades.",
+      "r1": "One page after Fajr. That's the whole strategy.",
+      "r2": "Place the Mushaf on top of your prayer mat tonight. Let it greet you in the morning.",
       "hadithText": "The best of you are those who learn the Quran and teach it.",
       "hadithSource": "Sahih al-Bukhari 5027"
     },
     "screenTime": {
       "p1": "Stay at {limit} hours a day. Cut one hour and reclaim {daysReclaimed} days a year.",
       "p2": "Across a decade, {decadeDaysReclaimed} days back in your life.",
-      "c1": "Slip back to old habits — {daysReclaimed} days a year scrolled into nothing.",
-      "c2": "A decade off — {decadeDaysReclaimed} days you can never get back.",
+      "c1": "Late-night scrolling shifts melatonin, fragments REM, and bleeds into next morning's focus and patience with the people you love.",
+      "c2": "A decade of comparison feeds — every meal somebody else's, every body somebody else's — and the mind starts believing your life is the small one.",
+      "r1": "Charge the phone outside the bedroom tonight. Buy a cheap alarm clock if you need one.",
+      "r2": "Greyscale the screen, delete the worst app off the home row. Make the slot machine boring.",
       "hadithText": "From the goodness of a man's Islam is leaving what does not concern him.",
       "hadithSource": "Sunan al-Tirmidhi 2317"
     },
     "tahajjud": {
       "p1": "{nights} nights of closeness with Allah this year.",
       "p2": "{decadeNights} nights of tahajjud across a decade.",
-      "c1": "Skip and {nights} nights of unique nearness pass without you.",
-      "c2": "A decade off — irreplaceable.",
+      "c1": "Each missed night is a private door of mercy that opened — and closed — without you walking through.",
+      "c2": "Years of sleeping through the last third of the night quietly remove a kind of intimacy that no daytime worship replaces.",
+      "r1": "Go to bed earlier tonight. Set the alarm for one rakat — that's enough to begin.",
+      "r2": "If you wake for water or the bathroom, pray two rakats before lying back down.",
       "hadithText": "Our Lord descends to the lowest heaven in the last third of the night and says: Who is calling Me, that I may answer him? Who is asking Me, that I may give him?",
       "hadithSource": "Sahih al-Bukhari 1145"
     },
     "sadaqah": {
       "p1": "{count} acts of charity this year.",
       "p2": "{decadeCount} acts across a decade — sadaqah jariyah that keeps giving.",
-      "c1": "Skip a year — {count} doors of barakah you didn't open.",
-      "c2": "A decade off — {decadeCount} acts of mercy that never happened.",
+      "c1": "Tightness with money compounds into tightness in the chest. The Sunnah on sadaqah is also a Sunnah on the heart.",
+      "c2": "Years of holding back when there's room to give — small barakah, small horizon.",
+      "r1": "Round up your next purchase. Donate the difference, however small.",
+      "r2": "Set a recurring monthly amount, even if it's tiny. Make giving the default.",
       "hadithText": "Charity does not decrease wealth.",
       "hadithSource": "Sahih Muslim 2588"
     },
     "learning": {
       "p1": "{hours} hours of learning a year.",
       "p2": "About {decadeHours} hours over a decade — enough to master a new field.",
-      "c1": "Skip a year — {hours} hours of self that never gets built.",
-      "c2": "A decade off — a different person you'll never meet.",
+      "c1": "A year without learning is a year of repeating yesterday. The market shifts; you stay where you are.",
+      "c2": "A decade of stagnation is the version of you that gets passed over for the version that kept showing up.",
+      "r1": "Pick one topic that scares you. Spend 15 minutes on it tonight.",
+      "r2": "Teach what you learn — a friend, a sibling, a journal entry. Teaching is how it sticks.",
       "hadithText": "Whoever travels a path in search of knowledge, Allah makes easy for him a path to Paradise.",
       "hadithSource": "Sahih Muslim 2699"
     },
     "gheebat": {
       "p1": "Hold the tongue. {days} days of clean speech this year.",
       "p2": "Across a decade, that's {decadeDays} days you protected others' honour.",
-      "c1": "Slip back — every word eats good deeds you worked hard for.",
-      "c2": "A decade of careless speech is a decade of lost reward.",
+      "c1": "Backbiting is a leak in the same bucket your prayers and fasts are filling. The harder you work, the more painful the leak.",
+      "c2": "A decade of careless speech changes how people relax around you — and how you feel walking into a room.",
+      "r1": "When the urge rises, redirect: say something true and good about the person instead.",
+      "r2": "If you've already wronged someone with words, ask Allah's forgiveness — and where possible, theirs.",
       "hadithText": "Do you know what backbiting is? It is mentioning your brother in a manner he dislikes.",
       "hadithSource": "Sahih Muslim 2589"
+    },
+    "callFamily": {
+      "p1": "{calls} times a year you reach out — a thread that holds.",
+      "p2": "{decadeCalls} reaching-outs across a decade. People feel them.",
+      "c1": "Parents over 60 have a finite number of weekends left — visits and calls become the most precious currency you have.",
+      "c2": "Children grow up in one direction. The version of them you missed talking to today doesn't return.",
+      "r1": "Call a parent or sibling now. Even if it's awkward. Especially if it's awkward.",
+      "r2": "Schedule a recurring time — Friday after Asr, Sunday morning. Make it a fixed feature, not a feeling.",
+      "hadithText": "Whoever believes in Allah and the Last Day, let him be generous to his guest. Whoever believes in Allah and the Last Day, let him uphold the ties of kinship.",
+      "hadithSource": "Sahih al-Bukhari 6138"
     }
   },
   "futureSelf": {

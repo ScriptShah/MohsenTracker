@@ -11,6 +11,7 @@ import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
+import { shouldMuteConsequences } from '@/lib/sensitivity';
 import type { ConsequenceSensitivity } from '@/domain/types';
 
 function sliceForSensitivity(
@@ -45,10 +46,13 @@ function HabitDetail() {
   const sensitivity = useAppStore(
     (s) => s.profile?.consequenceSensitivity ?? 'honest',
   );
+  const resets = useAppStore((s) => s.resets);
+  const muteVerdict = useMemo(() => shouldMuteConsequences(resets), [resets]);
+  const stakesAvailable = sensitivity !== 'off' && !muteVerdict.muted;
 
   const fmt = useNumberFormatter();
   const [showStakesRaw, setShowStakes] = useState(false);
-  const showStakes = showStakesRaw && sensitivity !== 'off';
+  const showStakes = showStakesRaw && stakesAvailable;
 
   const narrative = useMemo(() => {
     if (!habit) return null;
@@ -126,15 +130,43 @@ function HabitDetail() {
               </li>
             ))}
           </ul>
-          {sensitivity !== 'off' && (
+
+          {/* Spec §21.10: every consequence pairs with a reversal so the user
+              never lands on despair. */}
+          {showStakes && narrative.reversalLines.length > 0 && (
+            <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-leaf-700">
+                {t('habitDetail.reversalLabel')}
+              </p>
+              <ul className="mt-1 space-y-1.5 text-sm text-ink-800">
+                {narrative.reversalLines.map((line, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span
+                      aria-hidden
+                      className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-leaf-500"
+                    />
+                    <span className="leading-relaxed">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {muteVerdict.muted && sensitivity !== 'off' && (
+            <p className="rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-xs text-sand-700">
+              {t(`habitDetail.muted.${muteVerdict.reason}` as any)}
+            </p>
+          )}
+
+          {stakesAvailable && (
             <button
               type="button"
               onClick={() => setShowStakes((s) => !s)}
               className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
             >
               {showStakes
-                ? t('habitDetail.showProjection')
-                : t('habitDetail.showAtStake')}
+                ? t('habitDetail.showGain')
+                : t('habitDetail.showLoss')}
             </button>
           )}
         </Card>

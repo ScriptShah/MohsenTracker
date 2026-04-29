@@ -8,6 +8,12 @@ export interface Hadith {
 export interface Narrative {
   projectionLines: string[];
   consequenceLines: string[];
+  /**
+   * Hopeful counterweights paired with the consequence lines.
+   * Spec §21.10: never end on despair. Every "if you keep going down this
+   * path" is paired with "but here's how to start reversing it today."
+   */
+  reversalLines: string[];
   hadith?: Hadith;
 }
 
@@ -58,6 +64,10 @@ const builders: Record<string, Builder> = {
         t('narratives.reading.c1', { books: fmt(books) }),
         t('narratives.reading.c2', { decadeBooks: fmt(decadeBooks) }),
       ],
+      reversalLines: [
+        t('narratives.reading.r1'),
+        t('narratives.reading.r2'),
+      ],
       hadith: hadithFromKey(t, 'reading'),
     };
   },
@@ -80,6 +90,10 @@ const builders: Record<string, Builder> = {
         t('narratives.saving.c1', { yearly: fmt(Math.round(yearly)) }),
         t('narratives.saving.c2', { tenYear: fmt(Math.round(tenYear)) }),
       ],
+      reversalLines: [
+        t('narratives.saving.r1'),
+        t('narratives.saving.r2'),
+      ],
       hadith: hadithFromKey(t, 'saving'),
     };
   },
@@ -98,6 +112,10 @@ const builders: Record<string, Builder> = {
       consequenceLines: [
         t('narratives.exercise.c1', { hours: fmt(hoursYearly) }),
         t('narratives.exercise.c2'),
+      ],
+      reversalLines: [
+        t('narratives.exercise.r1'),
+        t('narratives.exercise.r2'),
       ],
       hadith: hadithFromKey(t, 'exercise'),
     };
@@ -123,6 +141,10 @@ const builders: Record<string, Builder> = {
         t('narratives.quranPages.c1', { pages: fmt(pagesYearly) }),
         t('narratives.quranPages.c2', { decadeKhatms: fmt(decadeKhatms) }),
       ],
+      reversalLines: [
+        t('narratives.quranPages.r1'),
+        t('narratives.quranPages.r2'),
+      ],
       hadith: hadithFromKey(t, 'quranPages'),
     };
   },
@@ -147,6 +169,10 @@ const builders: Record<string, Builder> = {
           decadeDaysReclaimed: fmt(decadeDaysReclaimed),
         }),
       ],
+      reversalLines: [
+        t('narratives.screenTime.r1'),
+        t('narratives.screenTime.r2'),
+      ],
       hadith: hadithFromKey(t, 'screenTime'),
     };
   },
@@ -162,6 +188,10 @@ const builders: Record<string, Builder> = {
         t('narratives.tahajjud.c1', { nights: fmt(nights) }),
         t('narratives.tahajjud.c2'),
       ],
+      reversalLines: [
+        t('narratives.tahajjud.r1'),
+        t('narratives.tahajjud.r2'),
+      ],
       hadith: hadithFromKey(t, 'tahajjud'),
     };
   },
@@ -176,6 +206,10 @@ const builders: Record<string, Builder> = {
       consequenceLines: [
         t('narratives.sadaqah.c1', { count: fmt(count) }),
         t('narratives.sadaqah.c2', { decadeCount: fmt(count * 10) }),
+      ],
+      reversalLines: [
+        t('narratives.sadaqah.r1'),
+        t('narratives.sadaqah.r2'),
       ],
       hadith: hadithFromKey(t, 'sadaqah'),
     };
@@ -193,6 +227,10 @@ const builders: Record<string, Builder> = {
         t('narratives.learning.c1', { hours: fmt(hoursYearly) }),
         t('narratives.learning.c2'),
       ],
+      reversalLines: [
+        t('narratives.learning.r1'),
+        t('narratives.learning.r2'),
+      ],
       hadith: hadithFromKey(t, 'learning'),
     };
   },
@@ -205,13 +243,42 @@ const builders: Record<string, Builder> = {
         t('narratives.gheebat.p2', { decadeDays: fmt(days * 10) }),
       ],
       consequenceLines: [t('narratives.gheebat.c1'), t('narratives.gheebat.c2')],
+      reversalLines: [
+        t('narratives.gheebat.r1'),
+        t('narratives.gheebat.r2'),
+      ],
       hadith: hadithFromKey(t, 'gheebat'),
+    };
+  },
+
+  callFamily: ({ habit, t, fmt }) => {
+    const callsPerYear = habit.frequency === 'weekly' ? 52 : 365;
+    return {
+      projectionLines: [
+        t('narratives.callFamily.p1', { calls: fmt(callsPerYear) }),
+        t('narratives.callFamily.p2', {
+          decadeCalls: fmt(callsPerYear * 10),
+        }),
+      ],
+      consequenceLines: [
+        t('narratives.callFamily.c1'),
+        t('narratives.callFamily.c2'),
+      ],
+      reversalLines: [
+        t('narratives.callFamily.r1'),
+        t('narratives.callFamily.r2'),
+      ],
+      hadith: hadithFromKey(t, 'callFamily'),
     };
   },
 };
 
 function genericNarrative({ habit, t, fmt }: Ctx): Narrative {
   const occ = occurrencesPerYear(habit);
+  const reversalLines = [
+    t('narratives.generic.r1'),
+    t('narratives.generic.r2'),
+  ];
   if (habit.type === 'good' && habit.target !== undefined && habit.unit) {
     const yearly = habit.target * occ;
     const decade = yearly * 10;
@@ -228,6 +295,7 @@ function genericNarrative({ habit, t, fmt }: Ctx): Narrative {
         t('narratives.generic.lostYear', { value: fmt(yearly), unit: habit.unit }),
         t('narratives.generic.lostDecade', { decade: fmt(decade), unit: habit.unit }),
       ],
+      reversalLines,
     };
   }
   return {
@@ -239,6 +307,7 @@ function genericNarrative({ habit, t, fmt }: Ctx): Narrative {
       t('narratives.generic.lostYearNoUnit', { days: fmt(occ) }),
       t('narratives.generic.lostDecadeNoUnit', { decade: fmt(occ * 10) }),
     ],
+    reversalLines,
   };
 }
 
