@@ -1,0 +1,85 @@
+'use client';
+
+import clsx from 'clsx';
+import { useTranslations } from 'next-intl';
+import type { Habit } from '@/domain/types';
+import { useAppStore } from '@/lib/store';
+import { todayKey } from '@/lib/dates';
+import { isLogSuccessful } from '@/lib/streaks';
+
+export function HabitChecklist({ habits }: { habits: Habit[] }) {
+  const t = useTranslations();
+  const today = todayKey();
+  const logs = useAppStore((s) => s.logs[today] ?? {});
+  const streaks = useAppStore((s) => s.streaks);
+  const toggleHabit = useAppStore((s) => s.toggleHabit);
+
+  if (habits.length === 0) {
+    return <p className="text-ink-500">{t('home.noHabits')}</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {habits.map((habit) => {
+        const log = logs[habit.id];
+        const done = isLogSuccessful(habit, log);
+        const streak = streaks[habit.id]?.current ?? 0;
+        return (
+          <li key={habit.id}>
+            <button
+              type="button"
+              onClick={() => toggleHabit(habit.id)}
+              className={clsx(
+                'tap-44 flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-start transition',
+                done
+                  ? 'border-leaf-500 bg-leaf-50'
+                  : 'border-ink-200 bg-white hover:border-ink-300',
+              )}
+              aria-pressed={done}
+            >
+              <Checkmark active={done} />
+              <span className="flex-1">
+                <span className={clsx('block font-medium', done && 'text-leaf-800')}>
+                  {habit.name}
+                </span>
+                {habit.unit && habit.target !== undefined && (
+                  <span className="block text-xs text-ink-500">
+                    <span className="numeral">{habit.target}</span> {habit.unit}
+                  </span>
+                )}
+                {habit.type === 'bad' && habit.unit && habit.limit !== undefined && (
+                  <span className="block text-xs text-ink-500">
+                    ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                  </span>
+                )}
+              </span>
+              {streak > 0 && (
+                <span className="rounded-full bg-sand-100 px-2 py-1 text-xs text-sand-600">
+                  🔥 <span className="numeral">{streak}</span>
+                </span>
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function Checkmark({ active }: { active: boolean }) {
+  return (
+    <span
+      className={clsx(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
+        active ? 'border-leaf-600 bg-leaf-600 text-white animate-pop' : 'border-ink-300 bg-white',
+      )}
+      aria-hidden
+    >
+      {active && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+          <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </span>
+  );
+}

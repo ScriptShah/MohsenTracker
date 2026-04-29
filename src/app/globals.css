@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-persian: 'Vazirmatn', 'Tahoma', system-ui, sans-serif;
+  --line-height: 1.55;
+}
+
+[lang='fa'] {
+  --line-height: 1.75;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900;
+  font-family: var(--font-sans);
+  line-height: var(--line-height);
+}
+
+[lang='fa'] body {
+  font-family: var(--font-persian);
+}
+
+/* Numbers stay LTR even inside RTL UI (spec §13). */
+.numeral {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+
+/* Tap target for habit checkboxes — minimum 44px per mobile guidelines. */
+.tap-44 {
+  min-height: 44px;
+  min-width: 44px;
+}

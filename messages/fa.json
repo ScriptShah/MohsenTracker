@@ -1,0 +1,128 @@
+{
+  "app": {
+    "name": "محسن‌ترکر",
+    "tagline": "نسخهٔ بعدی خودت شو. عادت‌ها را بساز. آینده را ببین."
+  },
+  "nav": {
+    "home": "خانه",
+    "categories": "دسته‌ها",
+    "progress": "پیشرفت",
+    "futureSelf": "خودِ آینده",
+    "profile": "پروفایل"
+  },
+  "common": {
+    "save": "ذخیره",
+    "cancel": "لغو",
+    "next": "بعدی",
+    "back": "بازگشت",
+    "skip": "رد کردن",
+    "done": "انجام شد",
+    "delete": "حذف",
+    "add": "افزودن",
+    "edit": "ویرایش",
+    "today": "امروز",
+    "yes": "بله",
+    "no": "خیر",
+    "language": "زبان"
+  },
+  "onboarding": {
+    "step": "مرحلهٔ {n} از {total}",
+    "welcomeTitle": "به محسن‌ترکر خوش آمدی",
+    "welcomeBody": "اعمال کوچکِ روزانه تو را به آن کسی تبدیل می‌کنند که می‌خواهی بشوی. بیا اول طراحی کنیم چه‌کسی می‌خواهی بشوی، بعد عادت‌هایی را بسازیم که تو را به آن‌جا می‌رسانند.",
+    "begin": "شروع",
+    "languageTitle": "زبانت را انتخاب کن",
+    "languageBody": "هر وقت بخواهی می‌توانی در تنظیمات تغییرش بدهی.",
+    "profileTitle": "تو را چه صدا کنیم؟",
+    "namePlaceholder": "اسمت",
+    "visionTitle": "نسخهٔ بعدی تو کیست؟",
+    "visionBody": "در یکی دو جمله توصیف کن می‌خواهی چه‌کسی بشوی. این را روی داشبورد می‌گذاریم تا یادت بماند چرا شروع کردی.",
+    "visionPlaceholder": "من کسی هستم که نمازم را به وقت می‌خوانم، هر روز می‌خوانم، و با خانواده‌ام مهربان رفتار می‌کنم…",
+    "categoriesTitle": "انتخاب کن چه‌چیزهایی را پی‌گیری می‌کنی",
+    "categoriesBody": "با آن‌چه احساس می‌کنی درست است شروع کن. بعداً می‌توانی تغییرش بدهی.",
+    "finish": "پایان راه‌اندازی"
+  },
+  "home": {
+    "greetingMorning": "صبح به‌خیر، {name}",
+    "greetingDay": "سلام، {name}",
+    "greetingEvening": "عصر به‌خیر، {name}",
+    "todaysHabits": "عادت‌های امروز",
+    "completed": "{done} از {total} انجام شد",
+    "noHabits": "هنوز عادتی اضافه نکرده‌ای.",
+    "addHabit": "افزودن عادت",
+    "futureSelfReminder": "تو در حال تبدیل شدن به این هستی",
+    "compoundOfDay": "اثر مرکّب",
+    "startStreak": "امروز زنجیره‌ات را شروع کن.",
+    "streakDays": "زنجیرهٔ {days} روزه",
+    "streakDaysOne": "زنجیرهٔ ۱ روزه"
+  },
+  "categories": {
+    "title": "دسته‌ها",
+    "addHabit": "افزودن عادت",
+    "habitsCount": "{n} عادت",
+    "habitsCountOne": "۱ عادت",
+    "noHabitsInCategory": "هنوز عادتی این‌جا نیست.",
+    "names": {
+      "islamic": "اعمال اسلامی",
+      "health": "سلامتی",
+      "finance": "مالی",
+      "career": "کار و بهره‌وری",
+      "growth": "رشد فردی",
+      "relationships": "روابط"
+    }
+  },
+  "habit": {
+    "newTitle": "عادت جدید",
+    "name": "نام عادت",
+    "namePlaceholder": "خواندن ۱۰ صفحه",
+    "category": "دسته",
+    "type": "نوع",
+    "typeGood": "خوب (بساز)",
+    "typeBad": "بد (جای‌گزین کن)",
+    "measurement": "اندازه‌گیری",
+    "unit": "واحد",
+    "unitPlaceholder": "صفحه، دقیقه، لیوان…",
+    "target": "هدف روزانه",
+    "limit": "حدّ روزانه",
+    "replacement": "عادت جای‌گزین",
+    "replacementHint": "به‌جای آن چه عادت خوبی انجام می‌دهی؟",
+    "replacementPlaceholder": "خواندن به‌جای اسکرول کردن",
+    "create": "ساخت عادت"
+  },
+  "progress": {
+    "title": "پیشرفت",
+    "yearHeatmap": "امسال",
+    "streaks": "زنجیره‌های فعلی",
+    "noStreaks": "امروز یک عادت را انجام بده تا زنجیره شروع شود.",
+    "less": "کم‌تر",
+    "more": "بیش‌تر"
+  },
+  "compound": {
+    "yearly": "{value} در سال",
+    "decade": "{value} در یک دهه",
+    "lifetime": "{value} در یک عمر"
+  },
+  "presets": {
+    "fajr": "نماز فجر به‌وقت",
+    "fivePrayers": "پنج نماز روزانه به‌وقت",
+    "quranPages": "خواندن قرآن (صفحه)",
+    "morningAdhkar": "اذکار صبح",
+    "eveningAdhkar": "اذکار شام",
+    "tahajjud": "تهجد (نماز شب)",
+    "sleep": "خواب ۷ تا ۹ ساعت",
+    "water": "نوشیدن آب (لیوان)",
+    "exercise": "ورزش (دقیقه)",
+    "steps": "پیاده‌روی (قدم)",
+    "saving": "پس‌انداز (مقدار)",
+    "sadaqah": "صدقهٔ روزانه",
+    "noImpulseBuy": "بدون خرید لحظه‌ای",
+    "deepWork": "کار عمیق (دقیقه)",
+    "noSocialBeforeWork": "بدون شبکه‌های اجتماعی قبل از کار",
+    "reading": "خواندن کتاب (صفحه)",
+    "learning": "یادگیری چیز نو (دقیقه)",
+    "callFamily": "تماس با خانواده",
+    "phoneFreeMeals": "وعده‌های غذای بدون گوشی",
+    "screenTime": "زمان نمایشگر (ساعت)",
+    "junkFood": "غذای ناسالم (وعده)",
+    "gheebat": "موارد غیبت"
+  }
+}

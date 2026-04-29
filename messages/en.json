@@ -1,0 +1,128 @@
+{
+  "app": {
+    "name": "MohsenTracker",
+    "tagline": "Become your next version. Build the habits. See the future."
+  },
+  "nav": {
+    "home": "Home",
+    "categories": "Categories",
+    "progress": "Progress",
+    "futureSelf": "Future Self",
+    "profile": "Profile"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Done",
+    "delete": "Delete",
+    "add": "Add",
+    "edit": "Edit",
+    "today": "Today",
+    "yes": "Yes",
+    "no": "No",
+    "language": "Language"
+  },
+  "onboarding": {
+    "step": "Step {n} of {total}",
+    "welcomeTitle": "Welcome to MohsenTracker",
+    "welcomeBody": "Tiny daily actions compound into the person you become. Let's design who you're becoming, then build the habits that get you there.",
+    "begin": "Begin",
+    "languageTitle": "Choose your language",
+    "languageBody": "You can change this anytime in settings.",
+    "profileTitle": "What should we call you?",
+    "namePlaceholder": "Your name",
+    "visionTitle": "Who is your next version?",
+    "visionBody": "Describe the person you want to become in one or two sentences. We'll show this on your dashboard so you remember why you started.",
+    "visionPlaceholder": "I am a person who prays on time, reads daily, and treats my family with kindness…",
+    "categoriesTitle": "Pick what you'll track",
+    "categoriesBody": "Start with what feels right. You can change this later.",
+    "finish": "Finish setup"
+  },
+  "home": {
+    "greetingMorning": "Good morning, {name}",
+    "greetingDay": "Hello, {name}",
+    "greetingEvening": "Good evening, {name}",
+    "todaysHabits": "Today's habits",
+    "completed": "{done} of {total} done",
+    "noHabits": "You haven't added any habits yet.",
+    "addHabit": "Add a habit",
+    "futureSelfReminder": "You're becoming",
+    "compoundOfDay": "Compound effect",
+    "startStreak": "Start your streak today.",
+    "streakDays": "{days} day streak",
+    "streakDaysOne": "1 day streak"
+  },
+  "categories": {
+    "title": "Categories",
+    "addHabit": "Add habit",
+    "habitsCount": "{n} habits",
+    "habitsCountOne": "1 habit",
+    "noHabitsInCategory": "No habits here yet.",
+    "names": {
+      "islamic": "Islamic Practices",
+      "health": "Health",
+      "finance": "Finance",
+      "career": "Career & Productivity",
+      "growth": "Personal Growth",
+      "relationships": "Relationships"
+    }
+  },
+  "habit": {
+    "newTitle": "New habit",
+    "name": "Habit name",
+    "namePlaceholder": "Read 10 pages",
+    "category": "Category",
+    "type": "Type",
+    "typeGood": "Good (build it)",
+    "typeBad": "Bad (replace it)",
+    "measurement": "Measurement",
+    "unit": "Unit",
+    "unitPlaceholder": "pages, minutes, glasses…",
+    "target": "Daily target",
+    "limit": "Daily limit",
+    "replacement": "Replacement habit",
+    "replacementHint": "What good habit will you do instead?",
+    "replacementPlaceholder": "Read instead of scrolling",
+    "create": "Create habit"
+  },
+  "progress": {
+    "title": "Progress",
+    "yearHeatmap": "This year",
+    "streaks": "Current streaks",
+    "noStreaks": "Complete a habit today to start a streak.",
+    "less": "Less",
+    "more": "More"
+  },
+  "compound": {
+    "yearly": "{value} per year",
+    "decade": "{value} in a decade",
+    "lifetime": "{value} in a lifetime"
+  },
+  "presets": {
+    "fajr": "Pray Fajr on time",
+    "fivePrayers": "Five daily prayers in their time",
+    "quranPages": "Read Quran (pages)",
+    "morningAdhkar": "Morning adhkar",
+    "eveningAdhkar": "Evening adhkar",
+    "tahajjud": "Tahajjud (night prayer)",
+    "sleep": "Sleep 7–9 hours",
+    "water": "Drink water (glasses)",
+    "exercise": "Exercise (minutes)",
+    "steps": "Walk (steps)",
+    "saving": "Save (amount)",
+    "sadaqah": "Daily sadaqah",
+    "noImpulseBuy": "No impulse purchases",
+    "deepWork": "Deep work (minutes)",
+    "noSocialBeforeWork": "No social media before work",
+    "reading": "Read a book (pages)",
+    "learning": "Learn something new (minutes)",
+    "callFamily": "Call family",
+    "phoneFreeMeals": "Phone-free meals",
+    "screenTime": "Screen time (hours)",
+    "junkFood": "Junk food (servings)",
+    "gheebat": "Backbiting incidents"
+  }
+}

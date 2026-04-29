@@ -1,0 +1,19 @@
+{
+  "name": "MohsenTracker",
+  "short_name": "MohsenTracker",
+  "description": "Become your next version. Build the habits. See the future.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
