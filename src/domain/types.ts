@@ -131,6 +131,44 @@ export interface PendingReward {
   claimedAt?: string;
 }
 
+/* ── Book Tracker (spec §20) ──────────────────────────────────────────── */
+
+export type BookFormat = 'physical' | 'ebook' | 'audiobook';
+
+export type BookCategoryKey =
+  | 'islamic'
+  | 'selfImprovement'
+  | 'fiction'
+  | 'biography'
+  | 'business'
+  | 'science'
+  | 'history'
+  | 'other';
+
+export type BookStatus = 'reading' | 'completed' | 'archived';
+
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  totalPages: number;
+  category: BookCategoryKey;
+  format: BookFormat;
+  whyReading?: string;
+  targetCompletionDate?: string;
+  /** Resized JPEG data URL (~240px wide). Optional. */
+  coverImage?: string;
+  status: BookStatus;
+  startedAt: string;
+  completedAt?: string;
+  rating?: 1 | 2 | 3 | 4 | 5;
+  review?: string;
+  favouriteQuote?: string;
+  /** pagesByDate[YYYY-MM-DD] = pages read that day. */
+  pagesByDate: Record<string, number>;
+  createdAt: string;
+}
+
 export interface ActivePunishment {
   id: string;
   habitId: string;

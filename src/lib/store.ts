@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   ActivePunishment,
+  Book,
   Category,
   CategoryKey,
   DailySummary,
@@ -43,6 +44,9 @@ interface AppState {
   /** Last YYYY-MM-DD that we walked the log history queueing punishments. */
   lastReconciledDate?: string;
 
+  /* Book Tracker (spec §20) */
+  books: Book[];
+
   /* mutations */
   initFromOnboarding: (args: {
     profile: Profile;
@@ -66,6 +70,16 @@ interface AppState {
   claimReward: (id: string) => void;
   resolvePunishment: (id: string) => void;
   reconcilePunishments: () => void;
+
+  /* Book Tracker */
+  addBook: (input: Omit<Book, 'id' | 'status' | 'startedAt' | 'pagesByDate' | 'createdAt'>) => Book;
+  updateBook: (id: string, patch: Partial<Book>) => void;
+  logBookPages: (id: string, pages: number, date?: string) => void;
+  completeBook: (
+    id: string,
+    fields: { rating?: 1 | 2 | 3 | 4 | 5; review?: string; favouriteQuote?: string },
+  ) => void;
+  deleteBook: (id: string) => void;
 
   reset: () => void;
 }
@@ -129,6 +143,7 @@ export const useAppStore = create<AppState>()(
       punishments: [],
       pendingRewards: [],
       activePunishments: [],
+      books: [],
 
       initFromOnboarding: ({
         profile,
@@ -154,6 +169,7 @@ export const useAppStore = create<AppState>()(
           pendingRewards: [],
           activePunishments: [],
           lastReconciledDate: undefined,
+          books: [],
         });
       },
 
@@ -414,6 +430,63 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
+      addBook: (input) => {
+        const id = newId('book');
+        const book: Book = {
+          ...input,
+          id,
+          status: 'reading',
+          startedAt: new Date().toISOString(),
+          pagesByDate: {},
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ books: [book, ...s.books] }));
+        return book;
+      },
+
+      updateBook: (id, patch) =>
+        set((s) => ({
+          books: s.books.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+        })),
+
+      logBookPages: (id, pages, date) => {
+        const day = date ?? todayKey();
+        const sanitized = Math.max(0, Math.floor(pages));
+        set((s) => ({
+          books: s.books.map((b) => {
+            if (b.id !== id) return b;
+            const next = { ...b.pagesByDate, [day]: sanitized };
+            const total = Object.values(next).reduce((a, n) => a + n, 0);
+            // If they cross totalPages with a log, leave them as 'reading' —
+            // the user explicitly clicks Mark as Complete to enter the
+            // rating/review flow. We just don't go higher than totalPages
+            // when computing progress percent (the helper clamps).
+            return { ...b, pagesByDate: next };
+          }),
+        }));
+        // Suppress unused.
+        void sanitized;
+      },
+
+      completeBook: (id, fields) =>
+        set((s) => ({
+          books: s.books.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  status: 'completed' as const,
+                  completedAt: new Date().toISOString(),
+                  rating: fields.rating ?? b.rating,
+                  review: fields.review ?? b.review,
+                  favouriteQuote: fields.favouriteQuote ?? b.favouriteQuote,
+                }
+              : b,
+          ),
+        })),
+
+      deleteBook: (id) =>
+        set((s) => ({ books: s.books.filter((b) => b.id !== id) })),
+
       reset: () =>
         set({
           profile: null,
@@ -427,18 +500,20 @@ export const useAppStore = create<AppState>()(
           pendingRewards: [],
           activePunishments: [],
           lastReconciledDate: undefined,
+          books: [],
         }),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 4,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
         persisted.punishments = persisted.punishments ?? [];
         persisted.pendingRewards = persisted.pendingRewards ?? [];
         persisted.activePunishments = persisted.activePunishments ?? [];
+        persisted.books = persisted.books ?? [];
         if (persisted.profile) {
           persisted.profile.theme = persisted.profile.theme ?? 'auto';
           persisted.profile.ramadanAutoMode =

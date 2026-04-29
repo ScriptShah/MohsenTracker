@@ -46,6 +46,26 @@ function CategoryDetail() {
         <h1 className="text-xl font-semibold">{category.name}</h1>
       </div>
 
+      {category.key === 'growth' && (
+        <Link href="/books" className="block">
+          <Card className="flex items-center gap-3 border-leaf-200 bg-leaf-50 transition hover:border-leaf-400">
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-leaf-600 text-white"
+              aria-hidden
+            >
+              📚
+            </span>
+            <div className="flex-1">
+              <div className="font-medium">{t('books.feature.categoryCardTitle')}</div>
+              <div className="text-xs text-ink-600">
+                {t('books.feature.categoryCardBody')}
+              </div>
+            </div>
+            <ChevronEnd className="h-4 w-4 text-leaf-700" />
+          </Card>
+        </Link>
+      )}
+
       {habits.length === 0 ? (
         <p className="text-ink-500">{t('categories.noHabitsInCategory')}</p>
       ) : (

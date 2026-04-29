@@ -8,11 +8,13 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { HabitChecklist } from '@/components/HabitChecklist';
 import { CompletionRing } from '@/components/CompletionRing';
+import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
 import { dailyQuoteIndex } from '@/lib/futureSelf';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
+import { pagesRead, progressPercent } from '@/lib/books';
 
 export default function HomePage() {
   return (
@@ -31,6 +33,11 @@ function Home() {
   const summary = useAppStore((s) => s.summaries[today]);
   const rewardsCount = useAppStore((s) => s.rewards.length);
   const punishmentsCount = useAppStore((s) => s.punishments.length);
+  const currentBook = useAppStore((s) =>
+    s.books
+      .filter((b) => b.status === 'reading')
+      .sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0],
+  );
   const fmt = useNumberFormatter();
 
   useEffect(() => {
@@ -98,6 +105,35 @@ function Home() {
             <p className="inline-flex items-center gap-1 pt-2 text-sm font-medium text-leaf-700">
               {t('rewards.homeBannerCta')} <ChevronEnd className="h-4 w-4" />
             </p>
+          </Card>
+        </Link>
+      )}
+
+      {currentBook && (
+        <Link href={`/books/${currentBook.id}`} className="block">
+          <Card className="flex items-center gap-3 transition hover:border-ink-300">
+            <BookCover book={currentBook} size="sm" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-xs uppercase tracking-wide text-leaf-700">
+                {t('books.feature.homeReadingTitle')}
+              </p>
+              <p className="line-clamp-1 font-medium">{currentBook.title}</p>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+                <div
+                  className="h-full bg-leaf-500 transition-all"
+                  style={{
+                    width: `${Math.round(progressPercent(currentBook) * 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="numeral text-[11px] text-ink-500">
+                {t('books.progressShort', {
+                  read: fmt(pagesRead(currentBook)),
+                  total: fmt(currentBook.totalPages),
+                })}
+              </p>
+            </div>
+            <ChevronEnd className="h-4 w-4 text-ink-300" />
           </Card>
         </Link>
       )}
