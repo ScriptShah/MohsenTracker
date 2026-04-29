@@ -30,6 +30,7 @@ function HabitDetail() {
     habit ? s.categories.find((c) => c.id === habit.categoryId) : undefined,
   );
   const deleteHabit = useAppStore((s) => s.deleteHabit);
+  const setHabitCritical = useAppStore((s) => s.setHabitCritical);
 
   const fmt = useNumberFormatter();
   const [showStakes, setShowStakes] = useState(false);
@@ -122,6 +123,31 @@ function HabitDetail() {
           <p className="pt-2 text-xs text-ink-500">— {narrative.hadith.source}</p>
         </Card>
       )}
+
+      <Card className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="text-sm font-medium text-ink-800">
+            {t('habitDetail.criticalToggle')}
+          </div>
+          <p className="text-xs text-ink-500">{t('habitDetail.criticalHint')}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={!!habit.isCritical}
+          onClick={() => setHabitCritical(habit.id, !habit.isCritical)}
+          className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+            habit.isCritical ? 'bg-red-500' : 'bg-ink-200'
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+              habit.isCritical ? 'start-[22px]' : 'start-0.5'
+            }`}
+            aria-hidden
+          />
+        </button>
+      </Card>
 
       <div className="pt-2">
         <Button

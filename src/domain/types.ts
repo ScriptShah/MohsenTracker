@@ -31,6 +31,8 @@ export interface Habit {
   limit?: number;
   frequency: Frequency;
   replacementHabitId?: string;
+  /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
+  isCritical?: boolean;
   createdAt: string;
 }
 
@@ -71,3 +73,48 @@ export interface Profile {
 }
 
 export type DateKey = string;
+
+/* ── Rewards & Punishments (spec §5.4 / §5.5) ────────────────────────── */
+
+export type RewardTier = 'small' | 'medium' | 'big' | 'major';
+
+/** What triggers a reward to be queued. */
+export type RewardOrigin = 'dailyComplete' | 'streak7' | 'streak30' | 'streak100';
+
+export interface RewardOption {
+  id: string;
+  /** User-typed label. Preset entries store the translation key in presetKey. */
+  label: string;
+  presetKey?: string;
+  tier: RewardTier;
+  createdAt: string;
+}
+
+export interface PunishmentOption {
+  id: string;
+  label: string;
+  presetKey?: string;
+  createdAt: string;
+}
+
+export interface PendingReward {
+  id: string;
+  origin: RewardOrigin;
+  tier: RewardTier;
+  /** Streak rewards reference the habit; daily-complete rewards leave this empty. */
+  habitId?: string;
+  rewardOptionId?: string;
+  earnedAt: string;
+  /** Set when the user marks it as enjoyed/redeemed. */
+  claimedAt?: string;
+}
+
+export interface ActivePunishment {
+  id: string;
+  habitId: string;
+  /** The day the critical habit was missed. */
+  date: string;
+  /** User-assigned punishment option, or undefined → fall back to default charity. */
+  punishmentOptionId?: string;
+  doneAt?: string;
+}

@@ -1,11 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAppStore } from '@/lib/store';
 
 /**
  * Render children only after client-side hydration. Avoids reading from
  * persisted-state stores during SSR/SSG, which would either flash the wrong
  * UI or crash the prerender if the persist middleware isn't initialized yet.
+ *
+ * Also runs the daily punishment reconciliation pass once per session — the
+ * action itself is gated on lastReconciledDate, so calling it from many
+ * mounted screens is cheap.
  */
 export function ClientGate({
   children,
@@ -15,10 +20,12 @@ export function ClientGate({
   fallback?: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const reconcilePunishments = useAppStore((s) => s.reconcilePunishments);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    reconcilePunishments();
+  }, [reconcilePunishments]);
 
   if (!mounted) return <>{fallback ?? <div className="h-32 animate-pulse rounded-2xl bg-ink-100" />}</>;
   return <>{children}</>;

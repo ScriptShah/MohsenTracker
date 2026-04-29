@@ -28,6 +28,8 @@ function Home() {
   const habits = useAppStore((s) => s.habits);
   const today = todayKey();
   const summary = useAppStore((s) => s.summaries[today]);
+  const rewardsCount = useAppStore((s) => s.rewards.length);
+  const punishmentsCount = useAppStore((s) => s.punishments.length);
   const fmt = useNumberFormatter();
 
   useEffect(() => {
@@ -78,6 +80,22 @@ function Home() {
             <p className="pt-1 leading-relaxed text-ink-800">{rotating.line}</p>
             <p className="pt-2 text-xs text-ink-500">
               {rotating.habit.name} ›
+            </p>
+          </Card>
+        </Link>
+      )}
+
+      {rewardsCount === 0 && punishmentsCount === 0 && (
+        <Link href="/rewards" className="block">
+          <Card className="border-sand-200 bg-sand-50">
+            <p className="text-xs uppercase tracking-wide text-sand-600">
+              {t('rewards.homeBannerTitle')}
+            </p>
+            <p className="pt-1 text-sm leading-relaxed text-ink-700">
+              {t('rewards.homeBannerBody')}
+            </p>
+            <p className="pt-2 text-sm font-medium text-leaf-700">
+              {t('rewards.homeBannerCta')} ›
             </p>
           </Card>
         </Link>
