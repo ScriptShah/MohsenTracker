@@ -9,6 +9,9 @@ import { HabitChecklist } from '@/components/HabitChecklist';
 import { CompletionRing } from '@/components/CompletionRing';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
+import { dailyQuoteIndex } from '@/lib/futureSelf';
+import { getNarrative } from '@/lib/projections';
+import { useNumberFormatter } from '@/lib/format';
 
 export default function HomePage() {
   return (
@@ -25,6 +28,7 @@ function Home() {
   const habits = useAppStore((s) => s.habits);
   const today = todayKey();
   const summary = useAppStore((s) => s.summaries[today]);
+  const fmt = useNumberFormatter();
 
   useEffect(() => {
     if (!profile?.onboardingComplete) router.replace('/onboarding');
@@ -37,9 +41,18 @@ function Home() {
     return 'home.greetingEvening';
   }, []);
 
+  const dailyHabits = useMemo(() => habits.filter((h) => h.frequency === 'daily'), [habits]);
+
+  const rotating = useMemo(() => {
+    if (dailyHabits.length === 0) return null;
+    const habit = dailyHabits[dailyQuoteIndex(dailyHabits.length)];
+    const narrative = getNarrative({ habit, t: (k, v) => t(k as any, v), fmt });
+    const line = narrative.projectionLines[0];
+    return { habit, line };
+  }, [dailyHabits, t, fmt]);
+
   if (!profile) return null;
 
-  const dailyHabits = habits.filter((h) => h.frequency === 'daily');
   const total = dailyHabits.length;
   const done = summary?.completedCount ?? 0;
   const rate = total === 0 ? 0 : done / total;
@@ -56,9 +69,23 @@ function Home() {
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
 
+      {rotating && (
+        <Link href={`/habits/${rotating.habit.id}`} className="block">
+          <Card className="border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
+            <p className="text-xs uppercase tracking-wide text-leaf-700">
+              {t('home.compoundOfDay')}
+            </p>
+            <p className="pt-1 leading-relaxed text-ink-800">{rotating.line}</p>
+            <p className="pt-2 text-xs text-ink-500">
+              {rotating.habit.name} ›
+            </p>
+          </Card>
+        </Link>
+      )}
+
       {profile.futureSelfVision && (
-        <Card className="bg-gradient-to-br from-leaf-50 to-white">
-          <p className="text-xs uppercase tracking-wide text-leaf-700">
+        <Card className="bg-gradient-to-br from-sand-50 to-white">
+          <p className="text-xs uppercase tracking-wide text-sand-600">
             {t('home.futureSelfReminder')}
           </p>
           <p className="pt-1 text-sm leading-relaxed text-ink-700">{profile.futureSelfVision}</p>

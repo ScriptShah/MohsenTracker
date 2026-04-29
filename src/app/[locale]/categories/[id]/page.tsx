@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { projectCompound } from '@/lib/compound';
@@ -22,7 +21,6 @@ function CategoryDetail() {
   const { id } = useParams<{ id: string }>();
   const category = useAppStore((s) => s.categories.find((c) => c.id === id));
   const habits = useAppStore((s) => s.habits.filter((h) => h.categoryId === id));
-  const deleteHabit = useAppStore((s) => s.deleteHabit);
 
   if (!category) {
     return (
@@ -55,45 +53,43 @@ function CategoryDetail() {
             const proj = projectCompound(h);
             return (
               <li key={h.id}>
-                <Card className="flex items-start gap-3">
-                  <span
-                    className={`mt-1 inline-block h-2 w-2 rounded-full ${
-                      h.type === 'good' ? 'bg-leaf-500' : 'bg-red-500'
-                    }`}
-                    aria-hidden
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{h.name}</div>
-                    {h.unit && (
-                      <div className="text-xs text-ink-500">
-                        {h.type === 'good' && h.target !== undefined && (
-                          <>
-                            <span className="numeral">{h.target}</span> {h.unit}
-                          </>
-                        )}
-                        {h.type === 'bad' && h.limit !== undefined && (
-                          <>
-                            ≤ <span className="numeral">{h.limit}</span> {h.unit}
-                          </>
-                        )}
-                      </div>
-                    )}
-                    {h.type === 'good' && h.unit && proj.yearly > 0 && (
-                      <div className="mt-1 text-xs text-leaf-700">
-                        {t('compound.yearly', {
-                          value: `${Math.round(proj.yearly).toLocaleString()} ${h.unit}`,
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => deleteHabit(h.id)}
-                    aria-label={t('common.delete')}
-                  >
-                    ×
-                  </Button>
-                </Card>
+                <Link href={`/habits/${h.id}`} className="block">
+                  <Card className="flex items-start gap-3 transition hover:border-ink-300">
+                    <span
+                      className={`mt-1 inline-block h-2 w-2 rounded-full ${
+                        h.type === 'good' ? 'bg-leaf-500' : 'bg-red-500'
+                      }`}
+                      aria-hidden
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{h.name}</div>
+                      {h.unit && (
+                        <div className="text-xs text-ink-500">
+                          {h.type === 'good' && h.target !== undefined && (
+                            <>
+                              <span className="numeral">{h.target}</span> {h.unit}
+                            </>
+                          )}
+                          {h.type === 'bad' && h.limit !== undefined && (
+                            <>
+                              ≤ <span className="numeral">{h.limit}</span> {h.unit}
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {h.type === 'good' && h.unit && proj.yearly > 0 && (
+                        <div className="mt-1 text-xs text-leaf-700">
+                          {t('compound.yearly', {
+                            value: `${Math.round(proj.yearly).toLocaleString()} ${h.unit}`,
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-ink-300" aria-hidden>
+                      ›
+                    </span>
+                  </Card>
+                </Link>
               </li>
             );
           })}

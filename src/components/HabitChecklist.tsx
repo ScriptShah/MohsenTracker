@@ -2,6 +2,7 @@
 
 import clsx from 'clsx';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import type { Habit } from '@/domain/types';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
@@ -26,18 +27,32 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
         const streak = streaks[habit.id]?.current ?? 0;
         return (
           <li key={habit.id}>
-            <button
-              type="button"
-              onClick={() => toggleHabit(habit.id)}
+            <Link
+              href={`/habits/${habit.id}`}
               className={clsx(
                 'tap-44 flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-start transition',
                 done
                   ? 'border-leaf-500 bg-leaf-50'
                   : 'border-ink-200 bg-white hover:border-ink-300',
               )}
-              aria-pressed={done}
             >
-              <Checkmark active={done} />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleHabit(habit.id);
+                }}
+                aria-pressed={done}
+                aria-label={
+                  done
+                    ? `${habit.name} — ${t('common.done')}`
+                    : `${habit.name} — ${t('common.add')}`
+                }
+                className="tap-44 -m-2 flex items-center justify-center p-2"
+              >
+                <Checkmark active={done} />
+              </button>
               <span className="flex-1">
                 <span className={clsx('block font-medium', done && 'text-leaf-800')}>
                   {habit.name}
@@ -58,7 +73,10 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                   🔥 <span className="numeral">{streak}</span>
                 </span>
               )}
-            </button>
+              <span className="text-ink-300" aria-hidden>
+                ›
+              </span>
+            </Link>
           </li>
         );
       })}

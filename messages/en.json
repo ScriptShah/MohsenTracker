@@ -108,6 +108,103 @@
     "decade": "{value} in a decade",
     "lifetime": "{value} in a lifetime"
   },
+  "habitDetail": {
+    "ifYouKeep": "If you keep this up…",
+    "atStake": "What's at stake if you stop",
+    "showAtStake": "Show what's at stake",
+    "showProjection": "Back to projection",
+    "hadithLabel": "From the tradition",
+    "currentStreak": "Current streak",
+    "noStreakYet": "Start today.",
+    "deleteHabit": "Delete habit"
+  },
+  "narratives": {
+    "generic": {
+      "yearly": "Over a year, that's {value} {unit}.",
+      "decade": "Over a decade, that's {value} {unit} — {decade} total.",
+      "lostYear": "Skip it and you forfeit {value} {unit} every year.",
+      "lostDecade": "A decade off and {decade} {unit} are gone.",
+      "yearlyNoUnit": "Doing this every day adds up to {days} successful days a year.",
+      "decadeNoUnit": "{decade} successful days across a decade.",
+      "lostYearNoUnit": "Skip it and you lose {days} successful days a year.",
+      "lostDecadeNoUnit": "A decade off and you forfeit {decade} successful days."
+    },
+    "reading": {
+      "p1": "{pages} pages a year — about {books} books.",
+      "p2": "Across a decade, {decadeBooks} books. A small library.",
+      "c1": "Skip a year and that's {books} books unread.",
+      "c2": "A decade off and {decadeBooks} books are gone forever.",
+      "hadithText": "Read! In the name of your Lord who created.",
+      "hadithSource": "Surah Al-'Alaq 96:1"
+    },
+    "saving": {
+      "p1": "{yearly} saved this year.",
+      "p2": "About {tenYear} after 10 years at {rate}% return.",
+      "p3": "About {thirtyYear} after 30 years — small money becomes big money.",
+      "c1": "Skip a year and {yearly} stays out of your future.",
+      "c2": "A decade off and {tenYear} of compounding is lost.",
+      "hadithText": "And whoever fears Allah, He will make for him a way out, and provide for him from where he does not expect.",
+      "hadithSource": "Surah At-Talaq 65:2-3"
+    },
+    "exercise": {
+      "p1": "{hours} hours of movement a year.",
+      "p2": "About {km} km on foot — like walking London to Paris {trips, plural, =1 {once} other {# times}}.",
+      "p3": "Across a decade, {decadeHours} hours of strength built.",
+      "c1": "Skip a year and that's {hours} hours your body never recovers.",
+      "c2": "A decade off — your future self pays the bill.",
+      "hadithText": "The strong believer is more beloved to Allah than the weak believer, while there is good in both.",
+      "hadithSource": "Sahih Muslim 2664"
+    },
+    "quranPages": {
+      "p1": "{pages} pages a year.",
+      "p2": "You complete the Quran every {monthsPerKhatm} months — {khatmsPerYear, plural, =1 {one khatm} other {# khatmas}} a year.",
+      "p3": "Across a decade, {decadeKhatms} khatmas of revelation.",
+      "c1": "Skip a year — {pages} pages of the Quran unread.",
+      "c2": "A decade off — {decadeKhatms} khatmas you'll never make up.",
+      "hadithText": "The best of you are those who learn the Quran and teach it.",
+      "hadithSource": "Sahih al-Bukhari 5027"
+    },
+    "screenTime": {
+      "p1": "Stay at {limit} hours a day. Cut one hour and reclaim {daysReclaimed} days a year.",
+      "p2": "Across a decade, {decadeDaysReclaimed} days back in your life.",
+      "c1": "Slip back to old habits — {daysReclaimed} days a year scrolled into nothing.",
+      "c2": "A decade off — {decadeDaysReclaimed} days you can never get back.",
+      "hadithText": "From the goodness of a man's Islam is leaving what does not concern him.",
+      "hadithSource": "Sunan al-Tirmidhi 2317"
+    },
+    "tahajjud": {
+      "p1": "{nights} nights of closeness with Allah this year.",
+      "p2": "{decadeNights} nights of tahajjud across a decade.",
+      "c1": "Skip and {nights} nights of unique nearness pass without you.",
+      "c2": "A decade off — irreplaceable.",
+      "hadithText": "Our Lord descends to the lowest heaven in the last third of the night and says: Who is calling Me, that I may answer him? Who is asking Me, that I may give him?",
+      "hadithSource": "Sahih al-Bukhari 1145"
+    },
+    "sadaqah": {
+      "p1": "{count} acts of charity this year.",
+      "p2": "{decadeCount} acts across a decade — sadaqah jariyah that keeps giving.",
+      "c1": "Skip a year — {count} doors of barakah you didn't open.",
+      "c2": "A decade off — {decadeCount} acts of mercy that never happened.",
+      "hadithText": "Charity does not decrease wealth.",
+      "hadithSource": "Sahih Muslim 2588"
+    },
+    "learning": {
+      "p1": "{hours} hours of learning a year.",
+      "p2": "About {decadeHours} hours over a decade — enough to master a new field.",
+      "c1": "Skip a year — {hours} hours of self that never gets built.",
+      "c2": "A decade off — a different person you'll never meet.",
+      "hadithText": "Whoever travels a path in search of knowledge, Allah makes easy for him a path to Paradise.",
+      "hadithSource": "Sahih Muslim 2699"
+    },
+    "gheebat": {
+      "p1": "Hold the tongue. {days} days of clean speech this year.",
+      "p2": "Across a decade, that's {decadeDays} days you protected others' honour.",
+      "c1": "Slip back — every word eats good deeds you worked hard for.",
+      "c2": "A decade of careless speech is a decade of lost reward.",
+      "hadithText": "Do you know what backbiting is? It is mentioning your brother in a manner he dislikes.",
+      "hadithSource": "Sahih Muslim 2589"
+    }
+  },
   "futureSelf": {
     "daysIn": "Day {n} of your transformation",
     "thirtyDayTitle": "Last 30 days",
