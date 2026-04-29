@@ -7,6 +7,7 @@ import type { Habit } from '@/domain/types';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
 import { isLogSuccessful } from '@/lib/streaks';
+import { ChevronEnd } from './Chevron';
 
 export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const t = useTranslations();
@@ -73,9 +74,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                   🔥 <span className="numeral">{streak}</span>
                 </span>
               )}
-              <span className="text-ink-300" aria-hidden>
-                ›
-              </span>
+              <ChevronEnd className="h-4 w-4 text-ink-300" />
             </Link>
           </li>
         );

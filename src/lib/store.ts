@@ -432,13 +432,27 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
         persisted.punishments = persisted.punishments ?? [];
         persisted.pendingRewards = persisted.pendingRewards ?? [];
         persisted.activePunishments = persisted.activePunishments ?? [];
+        if (persisted.profile) {
+          persisted.profile.theme = persisted.profile.theme ?? 'auto';
+          persisted.profile.ramadanAutoMode =
+            persisted.profile.ramadanAutoMode ?? true;
+          persisted.profile.prayerMethod = persisted.profile.prayerMethod ?? 'mwl';
+          persisted.profile.calendar = persisted.profile.calendar ?? 'gregorian';
+          persisted.profile.consequenceSensitivity =
+            persisted.profile.consequenceSensitivity ?? 'honest';
+          persisted.profile.notifications = persisted.profile.notifications ?? {
+            enabled: false,
+            dailyTime: '09:00',
+            perHabit: {},
+          };
+        }
         return persisted;
       },
     },

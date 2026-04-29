@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 
@@ -44,9 +45,7 @@ function Categories() {
                         : t('categories.habitsCount', { n: count })}
                     </span>
                   </span>
-                  <span className="text-ink-400" aria-hidden>
-                    ›
-                  </span>
+                  <ChevronEnd className="h-4 w-4 text-ink-400" />
                 </Card>
               </Link>
             </li>

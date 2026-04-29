@@ -37,6 +37,12 @@ export default function OnboardingPage() {
       whyItMatters: why.trim() || undefined,
       language: locale,
       numeralSystem: locale === 'fa' ? 'persian' : 'western',
+      theme: 'auto',
+      ramadanAutoMode: true,
+      prayerMethod: locale === 'fa' ? 'tehran' : 'mwl',
+      calendar: locale === 'fa' ? 'jalali' : 'gregorian',
+      consequenceSensitivity: 'honest',
+      notifications: { enabled: false, dailyTime: '09:00', perHabit: {} },
       onboardingComplete: true,
       createdAt: new Date().toISOString(),
     };

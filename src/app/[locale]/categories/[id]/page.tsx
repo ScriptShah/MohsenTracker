@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { projectCompound } from '@/lib/compound';
@@ -85,9 +86,7 @@ function CategoryDetail() {
                         </div>
                       )}
                     </div>
-                    <span className="text-ink-300" aria-hidden>
-                      ›
-                    </span>
+                    <ChevronEnd className="h-4 w-4 text-ink-300" />
                   </Card>
                 </Link>
               </li>

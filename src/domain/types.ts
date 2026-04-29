@@ -59,6 +59,19 @@ export interface Streak {
   lastCompleted?: string;
 }
 
+export type ThemeMode = 'auto' | 'light';
+export type CalendarPreference = 'gregorian' | 'jalali' | 'hijri';
+export type PrayerCalcMethod = 'mwl' | 'isna' | 'tehran' | 'umm-al-qura';
+export type ConsequenceSensitivity = 'off' | 'mild' | 'honest' | 'full';
+
+export interface NotificationPreferences {
+  enabled: boolean;
+  /** Daily reminder time HH:mm (24h). */
+  dailyTime: string;
+  /** Per-habit toggles; absent key means "follow the global default". */
+  perHabit: Record<string, boolean>;
+}
+
 export interface Profile {
   name: string;
   /** Optional; Future Self screen prompts to fill it if missing. */
@@ -68,6 +81,15 @@ export interface Profile {
   whyItMatters?: string;
   language: 'en' | 'fa';
   numeralSystem: 'western' | 'persian';
+  /** General theme preference. 'auto' allows Ramadan mode to take over (spec §6.1). */
+  theme: ThemeMode;
+  ramadanAutoMode: boolean;
+  /** Free-text city or one of the curated dropdown values. */
+  prayerCity?: string;
+  prayerMethod: PrayerCalcMethod;
+  calendar: CalendarPreference;
+  consequenceSensitivity: ConsequenceSensitivity;
+  notifications: NotificationPreferences;
   onboardingComplete: boolean;
   createdAt: string;
 }

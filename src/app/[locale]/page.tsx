@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { HabitChecklist } from '@/components/HabitChecklist';
 import { CompletionRing } from '@/components/CompletionRing';
@@ -78,8 +79,8 @@ function Home() {
               {t('home.compoundOfDay')}
             </p>
             <p className="pt-1 leading-relaxed text-ink-800">{rotating.line}</p>
-            <p className="pt-2 text-xs text-ink-500">
-              {rotating.habit.name} ›
+            <p className="inline-flex items-center gap-1 pt-2 text-xs text-ink-500">
+              {rotating.habit.name} <ChevronEnd className="h-3 w-3" />
             </p>
           </Card>
         </Link>
@@ -94,8 +95,8 @@ function Home() {
             <p className="pt-1 text-sm leading-relaxed text-ink-700">
               {t('rewards.homeBannerBody')}
             </p>
-            <p className="pt-2 text-sm font-medium text-leaf-700">
-              {t('rewards.homeBannerCta')} ›
+            <p className="inline-flex items-center gap-1 pt-2 text-sm font-medium text-leaf-700">
+              {t('rewards.homeBannerCta')} <ChevronEnd className="h-4 w-4" />
             </p>
           </Card>
         </Link>

@@ -6,10 +6,21 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { ArrowBack } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
+import type { ConsequenceSensitivity } from '@/domain/types';
+
+function sliceForSensitivity(
+  lines: string[],
+  level: ConsequenceSensitivity,
+): string[] {
+  if (level === 'off') return [];
+  if (level === 'mild') return lines.slice(0, 1);
+  return lines;
+}
 
 export default function HabitDetailPage() {
   return (
@@ -31,9 +42,13 @@ function HabitDetail() {
   );
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
+  const sensitivity = useAppStore(
+    (s) => s.profile?.consequenceSensitivity ?? 'honest',
+  );
 
   const fmt = useNumberFormatter();
-  const [showStakes, setShowStakes] = useState(false);
+  const [showStakesRaw, setShowStakes] = useState(false);
+  const showStakes = showStakesRaw && sensitivity !== 'off';
 
   const narrative = useMemo(() => {
     if (!habit) return null;
@@ -54,9 +69,9 @@ function HabitDetail() {
     <div className="space-y-5">
       <Link
         href={category ? `/categories/${category.id}` : '/categories'}
-        className="inline-flex items-center text-sm text-ink-500 hover:text-ink-800"
+        className="inline-flex items-center gap-1 text-sm text-ink-500 hover:text-ink-800"
       >
-        ← {category?.name ?? t('common.back')}
+        <ArrowBack /> {category?.name ?? t('common.back')}
       </Link>
 
       <header className="space-y-2">
@@ -90,27 +105,38 @@ function HabitDetail() {
             {showStakes ? t('habitDetail.atStake') : t('habitDetail.ifYouKeep')}
           </h2>
           <ul className="space-y-2 text-ink-700">
-            {(showStakes ? narrative.consequenceLines : narrative.projectionLines).map(
-              (line, i) => (
-                <li key={i} className="flex gap-2">
-                  <span
-                    aria-hidden
-                    className={`mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
-                      showStakes ? 'bg-red-500' : 'bg-leaf-500'
-                    }`}
-                  />
-                  <span className="leading-relaxed">{line}</span>
-                </li>
-              ),
-            )}
+            {(showStakes
+              ? sliceForSensitivity(narrative.consequenceLines, sensitivity)
+              : narrative.projectionLines
+            ).map((line, i) => (
+              <li key={i} className="flex gap-2">
+                <span
+                  aria-hidden
+                  className={`mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+                    showStakes ? 'bg-red-500' : 'bg-leaf-500'
+                  }`}
+                />
+                <span
+                  className={`leading-relaxed ${
+                    showStakes && sensitivity === 'full' ? 'font-medium text-red-800' : ''
+                  }`}
+                >
+                  {line}
+                </span>
+              </li>
+            ))}
           </ul>
-          <button
-            type="button"
-            onClick={() => setShowStakes((s) => !s)}
-            className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
-          >
-            {showStakes ? t('habitDetail.showProjection') : t('habitDetail.showAtStake')}
-          </button>
+          {sensitivity !== 'off' && (
+            <button
+              type="button"
+              onClick={() => setShowStakes((s) => !s)}
+              className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
+            >
+              {showStakes
+                ? t('habitDetail.showProjection')
+                : t('habitDetail.showAtStake')}
+            </button>
+          )}
         </Card>
       )}
 
