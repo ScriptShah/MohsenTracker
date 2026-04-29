@@ -8,11 +8,14 @@ import type {
   Category,
   CategoryKey,
   DailySummary,
+  DopamineReset,
   Habit,
   HabitLog,
   PendingReward,
   Profile,
   PunishmentOption,
+  ResetCheckIn,
+  ResetTier,
   RewardOption,
   RewardOrigin,
   RewardTier,
@@ -25,7 +28,7 @@ import {
 import { dateKey, nextDayKey, previousDayKey, todayKey } from './dates';
 import { isLogSuccessful, recomputeStreak } from './streaks';
 import { validatePunishment, type SafetyResult } from './safety';
-import { parseISO } from 'date-fns';
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 interface AppState {
   profile: Profile | null;
@@ -46,6 +49,9 @@ interface AppState {
 
   /* Book Tracker (spec §20) */
   books: Book[];
+
+  /* Dopamine Reset (spec §19) */
+  resets: DopamineReset[];
 
   /* mutations */
   initFromOnboarding: (args: {
@@ -80,6 +86,18 @@ interface AppState {
     fields: { rating?: 1 | 2 | 3 | 4 | 5; review?: string; favouriteQuote?: string },
   ) => void;
   deleteBook: (id: string) => void;
+
+  /* Dopamine Reset */
+  startReset: (tier: ResetTier, target: string) => DopamineReset;
+  logResetCheckIn: (
+    id: string,
+    fields: { mood: number; insteadOf?: string; urges?: string },
+    date?: string,
+  ) => void;
+  logResetRelapse: (id: string, reflection?: string) => void;
+  completeReset: (id: string) => void;
+  abandonReset: (id: string) => void;
+  deleteReset: (id: string) => void;
 
   reset: () => void;
 }
@@ -144,6 +162,7 @@ export const useAppStore = create<AppState>()(
       pendingRewards: [],
       activePunishments: [],
       books: [],
+      resets: [],
 
       initFromOnboarding: ({
         profile,
@@ -170,6 +189,7 @@ export const useAppStore = create<AppState>()(
           activePunishments: [],
           lastReconciledDate: undefined,
           books: [],
+          resets: [],
         });
       },
 
@@ -487,6 +507,113 @@ export const useAppStore = create<AppState>()(
       deleteBook: (id) =>
         set((s) => ({ books: s.books.filter((b) => b.id !== id) })),
 
+      startReset: (tier, target) => {
+        const targetDays =
+          tier === 'weekly24h'
+            ? 1
+            : tier === 'monthly7d'
+            ? 7
+            : tier === 'quarterly30d'
+            ? 30
+            : 90;
+        const now = new Date().toISOString();
+        const reset: DopamineReset = {
+          id: newId('rst'),
+          tier,
+          targetDays,
+          target: target.trim() || 'reset',
+          status: 'active',
+          startedAt: now,
+          currentStreakStartedAt: now,
+          lifetimeCleanDays: 0,
+          relapses: [],
+          checkIns: {},
+          createdAt: now,
+        };
+        set((s) => ({ resets: [reset, ...s.resets] }));
+        return reset;
+      },
+
+      logResetCheckIn: (id, fields, date) => {
+        const day = date ?? todayKey();
+        const checkIn: ResetCheckIn = {
+          date: day,
+          mood: Math.max(1, Math.min(5, Math.round(fields.mood))),
+          insteadOf: fields.insteadOf?.trim() || undefined,
+          urges: fields.urges?.trim() || undefined,
+          loggedAt: new Date().toISOString(),
+        };
+        set((s) => ({
+          resets: s.resets.map((r) =>
+            r.id === id ? { ...r, checkIns: { ...r.checkIns, [day]: checkIn } } : r,
+          ),
+        }));
+      },
+
+      logResetRelapse: (id, reflection) => {
+        const now = new Date();
+        set((s) => ({
+          resets: s.resets.map((r) => {
+            if (r.id !== id) return r;
+            const cleanDays =
+              differenceInCalendarDays(now, parseISO(r.currentStreakStartedAt)) + 1;
+            return {
+              ...r,
+              currentStreakStartedAt: now.toISOString(),
+              lifetimeCleanDays: r.lifetimeCleanDays + Math.max(0, cleanDays),
+              relapses: [
+                ...r.relapses,
+                {
+                  at: now.toISOString(),
+                  reflection: reflection?.trim() || undefined,
+                  daysCleanBefore: Math.max(0, cleanDays),
+                },
+              ],
+            };
+          }),
+        }));
+      },
+
+      completeReset: (id) => {
+        const now = new Date().toISOString();
+        set((s) => ({
+          resets: s.resets.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  status: 'completed' as const,
+                  completedAt: now,
+                  lifetimeCleanDays:
+                    r.lifetimeCleanDays +
+                    (differenceInCalendarDays(
+                      new Date(),
+                      parseISO(r.currentStreakStartedAt),
+                    ) +
+                      1),
+                }
+              : r,
+          ),
+        }));
+      },
+
+      abandonReset: (id) => {
+        const now = new Date().toISOString();
+        set((s) => ({
+          resets: s.resets.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  status: 'abandoned' as const,
+                  abandonedAt: now,
+                }
+              : r,
+          ),
+        }));
+      },
+
+      deleteReset: (id) =>
+        set((s) => ({ resets: s.resets.filter((r) => r.id !== id) })),
+
       reset: () =>
         set({
           profile: null,
@@ -501,12 +628,13 @@ export const useAppStore = create<AppState>()(
           activePunishments: [],
           lastReconciledDate: undefined,
           books: [],
+          resets: [],
         }),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 5,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -514,6 +642,7 @@ export const useAppStore = create<AppState>()(
         persisted.pendingRewards = persisted.pendingRewards ?? [];
         persisted.activePunishments = persisted.activePunishments ?? [];
         persisted.books = persisted.books ?? [];
+        persisted.resets = persisted.resets ?? [];
         if (persisted.profile) {
           persisted.profile.theme = persisted.profile.theme ?? 'auto';
           persisted.profile.ramadanAutoMode =

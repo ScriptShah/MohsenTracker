@@ -15,6 +15,7 @@ import { dailyQuoteIndex } from '@/lib/futureSelf';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { pagesRead, progressPercent } from '@/lib/books';
+import { currentDay, stageFor } from '@/lib/reset';
 
 export default function HomePage() {
   return (
@@ -38,6 +39,7 @@ function Home() {
       .filter((b) => b.status === 'reading')
       .sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0],
   );
+  const activeReset = useAppStore((s) => s.resets.find((r) => r.status === 'active'));
   const fmt = useNumberFormatter();
 
   useEffect(() => {
@@ -104,6 +106,39 @@ function Home() {
             </p>
             <p className="inline-flex items-center gap-1 pt-2 text-sm font-medium text-leaf-700">
               {t('rewards.homeBannerCta')} <ChevronEnd className="h-4 w-4" />
+            </p>
+          </Card>
+        </Link>
+      )}
+
+      {activeReset ? (
+        <Link href="/reset" className="block">
+          <Card className="border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
+            <p className="text-xs uppercase tracking-wide text-leaf-700">
+              {t('reset.homeActiveTitle')} · {activeReset.target}
+            </p>
+            <p className="numeral pt-1 text-2xl font-semibold leading-none text-ink-900">
+              {t('reset.dayCounter', {
+                n: fmt(currentDay(activeReset)),
+                total: fmt(activeReset.targetDays),
+              })}
+            </p>
+            <p className="pt-1 text-xs text-ink-500">
+              {t(`reset.stage.${stageFor(activeReset)}` as any)}
+            </p>
+          </Card>
+        </Link>
+      ) : (
+        <Link href="/reset" className="block">
+          <Card className="border-sand-200 bg-sand-50">
+            <p className="text-xs uppercase tracking-wide text-sand-600">
+              {t('reset.homeStartCta')}
+            </p>
+            <p className="pt-1 text-sm leading-relaxed text-ink-700">
+              {t('reset.homeStartBody')}
+            </p>
+            <p className="inline-flex items-center gap-1 pt-2 text-sm font-medium text-leaf-700">
+              {t('reset.title')} <ChevronEnd className="h-4 w-4" />
             </p>
           </Card>
         </Link>

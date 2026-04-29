@@ -131,6 +131,57 @@ export interface PendingReward {
   claimedAt?: string;
 }
 
+/* ── Dopamine Reset (spec §19) ─────────────────────────────────────────── */
+
+export type ResetTier = 'weekly24h' | 'monthly7d' | 'quarterly30d' | 'deep90d';
+export type ResetStatus = 'active' | 'completed' | 'abandoned';
+
+export type ResetStage =
+  | 'cravings'
+  | 'adjustment'
+  | 'clarity'
+  | 'restoration'
+  | 'integration'
+  | 'mastery';
+
+export interface ResetCheckIn {
+  date: string;            // YYYY-MM-DD
+  /** 1 = struggling, 5 = thriving. */
+  mood: number;
+  /** What the user did instead of the thing they're resetting from. */
+  insteadOf?: string;
+  /** Urges journal — free text. */
+  urges?: string;
+  loggedAt: string;
+}
+
+export interface ResetRelapse {
+  at: string;
+  reflection?: string;
+  /** How many clean days were on the streak before this relapse. */
+  daysCleanBefore: number;
+}
+
+export interface DopamineReset {
+  id: string;
+  tier: ResetTier;
+  targetDays: number;
+  /** Free-text label for what the user is taking a break from. */
+  target: string;
+  status: ResetStatus;
+  startedAt: string;
+  completedAt?: string;
+  abandonedAt?: string;
+  /** ISO timestamp; resets to "now" on every relapse. */
+  currentStreakStartedAt: string;
+  /** Sum of clean days across all earlier streaks of THIS reset. Spec §19.7
+   * keeps "lifetime clean days" growing even when the streak resets. */
+  lifetimeCleanDays: number;
+  relapses: ResetRelapse[];
+  checkIns: Record<string, ResetCheckIn>;
+  createdAt: string;
+}
+
 /* ── Book Tracker (spec §20) ──────────────────────────────────────────── */
 
 export type BookFormat = 'physical' | 'ebook' | 'audiobook';
