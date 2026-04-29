@@ -59,7 +59,11 @@ export interface Streak {
 
 export interface Profile {
   name: string;
+  /** Optional; Future Self screen prompts to fill it if missing. */
+  futureSelfName?: string;
   futureSelfVision: string;
+  /** The "why" — the reason that drives the user when motivation fades (spec §5.1). */
+  whyItMatters?: string;
   language: 'en' | 'fa';
   numeralSystem: 'western' | 'persian';
   onboardingComplete: boolean;

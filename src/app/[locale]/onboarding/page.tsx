@@ -9,7 +9,7 @@ import { useAppStore } from '@/lib/store';
 import { seedCategories } from '@/domain/seed';
 import type { CategoryKey, Profile } from '@/domain/types';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 6;
 
 export default function OnboardingPage() {
   const t = useTranslations();
@@ -19,7 +19,9 @@ export default function OnboardingPage() {
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [futureSelfName, setFutureSelfName] = useState('');
   const [vision, setVision] = useState('');
+  const [why, setWhy] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<CategoryKey[]>(
     seedCategories.map((c) => c.key),
   );
@@ -30,7 +32,9 @@ export default function OnboardingPage() {
   const finish = () => {
     const profile: Profile = {
       name: name.trim() || (locale === 'fa' ? 'دوست' : 'friend'),
+      futureSelfName: futureSelfName.trim() || undefined,
       futureSelfVision: vision.trim(),
+      whyItMatters: why.trim() || undefined,
       language: locale,
       numeralSystem: locale === 'fa' ? 'persian' : 'western',
       onboardingComplete: true,
@@ -83,6 +87,24 @@ export default function OnboardingPage() {
 
       {step === 2 && (
         <Card className="space-y-3">
+          <h2 className="text-xl font-semibold">{t('onboarding.futureSelfNameTitle')}</h2>
+          <p className="text-ink-600">
+            {t('onboarding.futureSelfNameBody', {
+              example: t('onboarding.futureSelfNameExample'),
+            })}
+          </p>
+          <input
+            value={futureSelfName}
+            onChange={(e) => setFutureSelfName(e.target.value)}
+            placeholder={t('onboarding.futureSelfNamePlaceholder')}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
+            autoFocus
+          />
+        </Card>
+      )}
+
+      {step === 3 && (
+        <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.visionTitle')}</h2>
           <p className="text-ink-600">{t('onboarding.visionBody')}</p>
           <textarea
@@ -91,11 +113,27 @@ export default function OnboardingPage() {
             rows={5}
             placeholder={t('onboarding.visionPlaceholder')}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
+            autoFocus
           />
         </Card>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
+        <Card className="space-y-3">
+          <h2 className="text-xl font-semibold">{t('onboarding.whyTitle')}</h2>
+          <p className="text-ink-600">{t('onboarding.whyBody')}</p>
+          <textarea
+            value={why}
+            onChange={(e) => setWhy(e.target.value)}
+            rows={5}
+            placeholder={t('onboarding.whyPlaceholder')}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
+            autoFocus
+          />
+        </Card>
+      )}
+
+      {step === 5 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.categoriesTitle')}</h2>
           <p className="text-ink-600">{t('onboarding.categoriesBody')}</p>
@@ -167,12 +205,10 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 function LanguageToggle() {
-  const router = useRouter();
   const locale = useLocale();
   const switchTo = locale === 'en' ? 'fa' : 'en';
   const label = switchTo === 'fa' ? 'فارسی' : 'English';
   const onClick = () => {
-    // Hard navigation so middleware sets dir correctly.
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.replace(/^\/(en|fa)/, `/${switchTo}`);
       window.location.href = path;

@@ -34,9 +34,16 @@
     "languageBody": "You can change this anytime in settings.",
     "profileTitle": "What should we call you?",
     "namePlaceholder": "Your name",
-    "visionTitle": "Who is your next version?",
-    "visionBody": "Describe the person you want to become in one or two sentences. We'll show this on your dashboard so you remember why you started.",
+    "futureSelfNameTitle": "What's the name of your future self?",
+    "futureSelfNameBody": "A label for who you're becoming. Something like \"{example}\". You'll see this every day.",
+    "futureSelfNameExample": "Mohsen 2.0",
+    "futureSelfNamePlaceholder": "e.g. Mohsen 2.0",
+    "visionTitle": "Who do you want to become in 1 year?",
+    "visionBody": "Describe the person you want to be in 2–3 sentences. We'll show this on your dashboard so you remember why you started.",
     "visionPlaceholder": "I am a person who prays on time, reads daily, and treats my family with kindness…",
+    "whyTitle": "Why does this matter to you?",
+    "whyBody": "When motivation fades, your reason is what keeps you going. Write it like you'd say it out loud.",
+    "whyPlaceholder": "Because I want my children to see a father who keeps his word, prays on time, and never gives up…",
     "categoriesTitle": "Pick what you'll track",
     "categoriesBody": "Start with what feels right. You can change this later.",
     "finish": "Finish setup"
@@ -100,6 +107,34 @@
     "yearly": "{value} per year",
     "decade": "{value} in a decade",
     "lifetime": "{value} in a lifetime"
+  },
+  "futureSelf": {
+    "daysIn": "Day {n} of your transformation",
+    "thirtyDayTitle": "Last 30 days",
+    "thirtyDayHint": "How consistent you've been per category.",
+    "edit": "Edit",
+    "editTitle": "Edit your future self",
+    "save": "Save changes",
+    "compoundTitle": "Today's compound truth",
+    "noVision": "Describe the person you're becoming.",
+    "noWhy": "Add the reason that drives you.",
+    "noFutureSelfName": "Give your future self a name.",
+    "setUp": "Set up future self",
+    "becoming": "You are becoming",
+    "fields": {
+      "futureSelfName": "Future self name",
+      "vision": "1-year vision",
+      "why": "Why it matters"
+    },
+    "quotes": {
+      "q0": "10 pages a day → 12 books a year → 120 books in a decade. Still a small daily act, but a transformed life.",
+      "q1": "30 minutes of movement daily → 182 hours a year — enough to walk from London to Paris twice.",
+      "q2": "1 hour less scrolling daily → 15 full days reclaimed every year.",
+      "q3": "5 pages of Quran daily → completes the Quran every 4 months. Three khatmas a year.",
+      "q4": "Tahajjud once a week → 52 nights of closeness with your Lord this year.",
+      "q5": "1 act of sadaqah daily → 365 acts a year. Charity that keeps giving.",
+      "q6": "15 minutes of learning daily → 91 hours of mastery a year. Compounded over a decade, a new identity."
+    }
   },
   "presets": {
     "fajr": "Pray Fajr on time",
