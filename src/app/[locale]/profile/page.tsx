@@ -184,9 +184,14 @@ function Profile() {
         </Field>
 
         <Field label={t('settings.ramadanAuto')} hint={t('settings.ramadanAutoBody')}>
-          <Toggle
-            active={profile.ramadanAutoMode}
-            onChange={(v) => setProfile({ ramadanAutoMode: v })}
+          <SegmentedThree
+            value={profile.ramadanMode}
+            options={[
+              { value: 'auto', label: t('settings.ramadanModes.auto') },
+              { value: 'on', label: t('settings.ramadanModes.on') },
+              { value: 'off', label: t('settings.ramadanModes.off') },
+            ]}
+            onChange={(v) => setProfile({ ramadanMode: v as 'auto' | 'on' | 'off' })}
           />
         </Field>
       </Card>
@@ -535,6 +540,33 @@ function Readout({
 }
 
 function SegmentedTwo<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-xl border border-ink-200 bg-white p-1">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`tap-44 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            value === o.value ? 'bg-leaf-600 text-white' : 'text-ink-700'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SegmentedThree<T extends string>({
   value,
   options,
   onChange,

@@ -38,7 +38,7 @@ export default function OnboardingPage() {
       language: locale,
       numeralSystem: locale === 'fa' ? 'persian' : 'western',
       theme: 'auto',
-      ramadanAutoMode: true,
+      ramadanMode: 'auto',
       prayerMethod: locale === 'fa' ? 'tehran' : 'mwl',
       calendar: locale === 'fa' ? 'jalali' : 'gregorian',
       consequenceSensitivity: 'honest',

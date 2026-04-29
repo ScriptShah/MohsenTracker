@@ -16,6 +16,8 @@ import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { pagesRead, progressPercent } from '@/lib/books';
 import { currentDay, stageFor } from '@/lib/reset';
+import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
+import { IftarCountdown } from '@/components/IftarCountdown';
 
 export default function HomePage() {
   return (
@@ -41,6 +43,17 @@ function Home() {
   );
   const activeReset = useAppStore((s) => s.resets.find((r) => r.status === 'active'));
   const fmt = useNumberFormatter();
+
+  const phase = useMemo(() => ramadanPhase(), []);
+  const ramadanOn = profile ? isRamadanModeActive(profile.ramadanMode) : false;
+  const ensureRamadan = useAppStore((s) => s.ensureRamadanRecord);
+  const currentRamadan = useAppStore((s) =>
+    s.ramadan.find((r) => r.hijriYear === phase.hijri.year),
+  );
+
+  useEffect(() => {
+    if (ramadanOn) ensureRamadan(phase.hijri.year);
+  }, [ramadanOn, phase.hijri.year, ensureRamadan]);
 
   useEffect(() => {
     if (!profile?.onboardingComplete) router.replace('/onboarding');
@@ -70,16 +83,67 @@ function Home() {
   const rate = total === 0 ? 0 : done / total;
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6${ramadanOn ? ' bg-gradient-to-b from-sand-50 via-transparent to-transparent' : ''}`}
+    >
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">
             {t(greeting as any, { name: profile.name })}
           </h1>
-          <p className="text-sm text-ink-500">{t('common.today')}</p>
+          {ramadanOn ? (
+            <p className="numeral text-sm text-leaf-700">
+              ☪ {t('ramadan.dayOf', { n: fmt(phase.dayOfRamadan ?? 1) })}
+            </p>
+          ) : (
+            <p className="text-sm text-ink-500">{t('common.today')}</p>
+          )}
         </div>
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
+
+      {ramadanOn && currentRamadan && (
+        <Link href="/ramadan" className="block">
+          <Card className="space-y-3 border-leaf-200 bg-gradient-to-br from-leaf-50 via-white to-sand-50">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-leaf-700">
+              <span aria-hidden>🌙</span>
+              <span>{t('ramadan.title')}</span>
+            </div>
+            <IftarCountdown iftarTime={currentRamadan.iftarTime} />
+            <p className="text-sm text-leaf-700">{t('ramadan.openHub')} ›</p>
+          </Card>
+        </Link>
+      )}
+
+      {!ramadanOn && phase.phase === 'pre' && (
+        <Link href="/ramadan" className="block">
+          <Card className="border-sand-200 bg-sand-50">
+            <p className="text-xs uppercase tracking-wide text-sand-600">
+              {phase.daysUntilRamadan === 1
+                ? t('ramadan.preBanner.titleOne')
+                : t('ramadan.preBanner.title', {
+                    n: fmt(phase.daysUntilRamadan ?? 14),
+                  })}
+            </p>
+            <p className="pt-1 text-sm leading-relaxed text-ink-700">
+              {t('ramadan.preBanner.body')}
+            </p>
+          </Card>
+        </Link>
+      )}
+
+      {!ramadanOn && phase.phase === 'shawwal' && (
+        <Link href="/ramadan" className="block">
+          <Card className="border-sand-200 bg-sand-50">
+            <p className="text-xs uppercase tracking-wide text-sand-600">
+              {t('ramadan.shawwalBanner.title')}
+            </p>
+            <p className="pt-1 text-sm leading-relaxed text-ink-700">
+              {t('ramadan.shawwalBanner.body')}
+            </p>
+          </Card>
+        </Link>
+      )}
 
       {rotating && (
         <Link href={`/habits/${rotating.habit.id}`} className="block">

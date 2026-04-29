@@ -14,6 +14,7 @@ import type {
   PendingReward,
   Profile,
   PunishmentOption,
+  RamadanProgress,
   ResetCheckIn,
   ResetTier,
   RewardOption,
@@ -52,6 +53,9 @@ interface AppState {
 
   /* Dopamine Reset (spec §19) */
   resets: DopamineReset[];
+
+  /* Ramadan (spec §6.1) — one record per Hijri year. */
+  ramadan: RamadanProgress[];
 
   /* mutations */
   initFromOnboarding: (args: {
@@ -98,6 +102,17 @@ interface AppState {
   completeReset: (id: string) => void;
   abandonReset: (id: string) => void;
   deleteReset: (id: string) => void;
+
+  /* Ramadan */
+  ensureRamadanRecord: (hijriYear: number) => RamadanProgress;
+  setIftarTime: (hijriYear: number, time: string) => void;
+  setRamadanFasts: (hijriYear: number, count: number) => void;
+  setJuzRead: (hijriYear: number, count: number) => void;
+  setTaraweehNights: (hijriYear: number, count: number) => void;
+  addSadaqah: (hijriYear: number, amount: number) => void;
+  toggleLaylatNight: (hijriYear: number, date: string) => void;
+  setShawwalFasts: (hijriYear: number, count: number) => void;
+  toggleRamadanPrayer: (hijriYear: number, date: string, prayer: string) => void;
 
   reset: () => void;
 }
@@ -163,6 +178,7 @@ export const useAppStore = create<AppState>()(
       activePunishments: [],
       books: [],
       resets: [],
+      ramadan: [],
 
       initFromOnboarding: ({
         profile,
@@ -190,6 +206,7 @@ export const useAppStore = create<AppState>()(
           lastReconciledDate: undefined,
           books: [],
           resets: [],
+          ramadan: [],
         });
       },
 
@@ -614,6 +631,103 @@ export const useAppStore = create<AppState>()(
       deleteReset: (id) =>
         set((s) => ({ resets: s.resets.filter((r) => r.id !== id) })),
 
+      ensureRamadanRecord: (hijriYear) => {
+        const existing = get().ramadan.find((r) => r.hijriYear === hijriYear);
+        if (existing) return existing;
+        const fresh: RamadanProgress = {
+          hijriYear,
+          fastsCompleted: 0,
+          juzRead: 0,
+          taraweehNights: 0,
+          sadaqahTotal: 0,
+          laylatNights: {},
+          shawwalFasts: 0,
+          iftarTime: '18:30',
+          prayersByDate: {},
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ ramadan: [...s.ramadan, fresh] }));
+        return fresh;
+      },
+
+      setIftarTime: (hijriYear, time) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear ? { ...r, iftarTime: time } : r,
+          ),
+        })),
+
+      setRamadanFasts: (hijriYear, count) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear
+              ? { ...r, fastsCompleted: Math.max(0, Math.min(30, Math.floor(count))) }
+              : r,
+          ),
+        })),
+
+      setJuzRead: (hijriYear, count) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear
+              ? { ...r, juzRead: Math.max(0, Math.min(30, Math.floor(count))) }
+              : r,
+          ),
+        })),
+
+      setTaraweehNights: (hijriYear, count) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear
+              ? { ...r, taraweehNights: Math.max(0, Math.min(30, Math.floor(count))) }
+              : r,
+          ),
+        })),
+
+      addSadaqah: (hijriYear, amount) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear
+              ? { ...r, sadaqahTotal: Math.max(0, r.sadaqahTotal + Math.max(0, amount)) }
+              : r,
+          ),
+        })),
+
+      toggleLaylatNight: (hijriYear, date) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) => {
+            if (r.hijriYear !== hijriYear) return r;
+            const next = { ...r.laylatNights };
+            if (next[date]) delete next[date];
+            else next[date] = true;
+            return { ...r, laylatNights: next };
+          }),
+        })),
+
+      setShawwalFasts: (hijriYear, count) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) =>
+            r.hijriYear === hijriYear
+              ? { ...r, shawwalFasts: Math.max(0, Math.min(6, Math.floor(count))) }
+              : r,
+          ),
+        })),
+
+      toggleRamadanPrayer: (hijriYear, date, prayer) =>
+        set((s) => ({
+          ramadan: s.ramadan.map((r) => {
+            if (r.hijriYear !== hijriYear) return r;
+            const list = r.prayersByDate[date] ?? [];
+            const next = list.includes(prayer)
+              ? list.filter((p) => p !== prayer)
+              : [...list, prayer];
+            return {
+              ...r,
+              prayersByDate: { ...r.prayersByDate, [date]: next },
+            };
+          }),
+        })),
+
       reset: () =>
         set({
           profile: null,
@@ -629,12 +743,13 @@ export const useAppStore = create<AppState>()(
           lastReconciledDate: undefined,
           books: [],
           resets: [],
+          ramadan: [],
         }),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -643,10 +758,18 @@ export const useAppStore = create<AppState>()(
         persisted.activePunishments = persisted.activePunishments ?? [];
         persisted.books = persisted.books ?? [];
         persisted.resets = persisted.resets ?? [];
+        persisted.ramadan = (persisted.ramadan ?? []).map((r: any) => ({
+          ...r,
+          prayersByDate: r.prayersByDate ?? {},
+        }));
         if (persisted.profile) {
           persisted.profile.theme = persisted.profile.theme ?? 'auto';
-          persisted.profile.ramadanAutoMode =
-            persisted.profile.ramadanAutoMode ?? true;
+          // Convert old boolean ramadanAutoMode → tri-state ramadanMode.
+          if (persisted.profile.ramadanMode === undefined) {
+            persisted.profile.ramadanMode =
+              persisted.profile.ramadanAutoMode === false ? 'off' : 'auto';
+          }
+          delete persisted.profile.ramadanAutoMode;
           persisted.profile.prayerMethod = persisted.profile.prayerMethod ?? 'mwl';
           persisted.profile.calendar = persisted.profile.calendar ?? 'gregorian';
           persisted.profile.consequenceSensitivity =

@@ -63,6 +63,7 @@ export type ThemeMode = 'auto' | 'light';
 export type CalendarPreference = 'gregorian' | 'jalali' | 'hijri';
 export type PrayerCalcMethod = 'mwl' | 'isna' | 'tehran' | 'umm-al-qura';
 export type ConsequenceSensitivity = 'off' | 'mild' | 'honest' | 'full';
+export type RamadanModeSetting = 'auto' | 'on' | 'off';
 
 export interface NotificationPreferences {
   enabled: boolean;
@@ -83,7 +84,8 @@ export interface Profile {
   numeralSystem: 'western' | 'persian';
   /** General theme preference. 'auto' allows Ramadan mode to take over (spec §6.1). */
   theme: ThemeMode;
-  ramadanAutoMode: boolean;
+  /** auto = activate during Ramadan; on = always on; off = never. */
+  ramadanMode: RamadanModeSetting;
   /** Free-text city or one of the curated dropdown values. */
   prayerCity?: string;
   prayerMethod: PrayerCalcMethod;
@@ -129,6 +131,29 @@ export interface PendingReward {
   earnedAt: string;
   /** Set when the user marks it as enjoyed/redeemed. */
   claimedAt?: string;
+}
+
+/* ── Ramadan progress (spec §6.1) ──────────────────────────────────────── */
+
+export interface RamadanProgress {
+  hijriYear: number;
+  /** Days the user fasted (0..30). */
+  fastsCompleted: number;
+  /** Quran juz read this Ramadan (0..30). */
+  juzRead: number;
+  /** Number of nights Taraweeh was attended. */
+  taraweehNights: number;
+  /** Cumulative sadaqah given this Ramadan (currency-agnostic). */
+  sadaqahTotal: number;
+  /** Laylat al-Qadr nights worshipped — Gregorian YYYY-MM-DD → marked. */
+  laylatNights: Record<string, boolean>;
+  /** Six fasts of Shawwal — completed count (0..6). */
+  shawwalFasts: number;
+  /** User-set Iftar time HH:mm (24h). */
+  iftarTime: string;
+  /** YYYY-MM-DD → array of prayer keys done that day (fajr, dhuhr, …, tahajjud). */
+  prayersByDate: Record<string, string[]>;
+  createdAt: string;
 }
 
 /* ── Dopamine Reset (spec §19) ─────────────────────────────────────────── */
