@@ -98,6 +98,14 @@
       "relationships": "Relationships"
     }
   },
+  "install": {
+    "title": "Install MohsenTracker",
+    "androidBody": "Install the app for fullscreen use, faster loads, and offline habit logging.",
+    "installButton": "Install",
+    "iosStep1": "Tap",
+    "iosStep2": "Then \"Add to Home Screen\"",
+    "dismiss": "Dismiss"
+  },
   "splash": {
     "thoughts": "Your thoughts become your words.",
     "words": "Your words become your actions.",

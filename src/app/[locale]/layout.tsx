@@ -10,6 +10,7 @@ import { ThemeApplier } from '@/components/ThemeApplier';
 import { RouteGuard } from '@/components/RouteGuard';
 import { CloudSync } from '@/components/CloudSync';
 import { SplashScreen } from '@/components/SplashScreen';
+import { InstallPrompt } from '@/components/InstallPrompt';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -79,6 +80,7 @@ export default async function LocaleLayout({
             {children}
           </main>
           <BottomNav />
+          <InstallPrompt />
         </NextIntlClientProvider>
       </body>
     </html>
