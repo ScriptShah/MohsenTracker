@@ -6,6 +6,7 @@ import { Inter, Vazirmatn } from 'next/font/google';
 import { locales, localeDirection, type Locale } from '@/i18n/config';
 import { BottomNav } from '@/components/BottomNav';
 import { TopBar } from '@/components/TopBar';
+import { ThemeApplier } from '@/components/ThemeApplier';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -51,6 +52,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir} className={`${inter.variable} ${vazirmatn.variable}`}>
       <body className="min-h-screen pb-20">
         <NextIntlClientProvider messages={messages} locale={locale}>
+          <ThemeApplier />
           <main className="mx-auto w-full max-w-screen-sm px-4 pt-4">
             <TopBar />
             {children}

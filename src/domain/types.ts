@@ -59,7 +59,7 @@ export interface Streak {
   lastCompleted?: string;
 }
 
-export type ThemeMode = 'auto' | 'light';
+export type ThemeMode = 'auto' | 'light' | 'dark';
 export type CalendarPreference = 'gregorian' | 'jalali' | 'hijri';
 export type PrayerCalcMethod = 'mwl' | 'isna' | 'tehran' | 'umm-al-qura';
 export type ConsequenceSensitivity = 'off' | 'mild' | 'honest' | 'full';

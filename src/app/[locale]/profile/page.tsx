@@ -20,7 +20,7 @@ import type {
 const CONSEQUENCE_LEVELS: ConsequenceSensitivity[] = ['off', 'mild', 'honest', 'full'];
 const PRAYER_METHODS: PrayerCalcMethod[] = ['mwl', 'isna', 'tehran', 'umm-al-qura'];
 const CALENDARS: CalendarPreference[] = ['gregorian', 'jalali', 'hijri'];
-const THEMES: ThemeMode[] = ['auto', 'light'];
+const THEMES: ThemeMode[] = ['auto', 'light', 'dark'];
 const CITY_KEYS = [
   'tehran',
   'mashhad',

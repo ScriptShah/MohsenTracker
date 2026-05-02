@@ -814,7 +814,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 7,
+      version: 8,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];

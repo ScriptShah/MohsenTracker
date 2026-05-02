@@ -434,8 +434,9 @@
     "calendarHijri": "Hijri",
     "themeSection": "Theme",
     "theme": "Theme mode",
-    "themeAuto": "Auto (lets Ramadan mode take over)",
+    "themeAuto": "Auto (follows your device)",
     "themeLight": "Light",
+    "themeDark": "Dark",
     "ramadanAuto": "Ramadan mode",
     "ramadanAutoBody": "Auto activates on the 1st of Ramadan. Force on to preview the dashboard, off to never switch.",
     "ramadanModes": {
