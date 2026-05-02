@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { LeafLogo } from '@/components/LeafLogo';
 import { SignInForm } from '@/components/SignInForm';
 import { useAppStore } from '@/lib/store';
 import { presetHabits, seedCategories } from '@/domain/seed';
@@ -119,7 +120,10 @@ export default function OnboardingPage() {
       <ProgressBar value={(step + 1) / TOTAL_STEPS} />
 
       {step === 0 && (
-        <Card className="space-y-3">
+        <Card className="space-y-3 text-center">
+          <div className="flex justify-center pb-1">
+            <LeafLogo size={72} />
+          </div>
           <h1 className="text-2xl font-semibold">{t('onboarding.welcomeTitle')}</h1>
           <p className="text-ink-600">{t('onboarding.welcomeBody')}</p>
           <p className="pt-2 text-sm italic text-leaf-700">{t('app.tagline')}</p>
