@@ -7,14 +7,18 @@ import type { Habit } from '@/domain/types';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
 import { isLogSuccessful } from '@/lib/streaks';
+import { useLiveCounts } from '@/lib/useLiveCounts';
+import { useNumberFormatter } from '@/lib/format';
 import { ChevronEnd } from './Chevron';
 
 export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const t = useTranslations();
+  const fmt = useNumberFormatter();
   const today = todayKey();
   const logs = useAppStore((s) => s.logs[today] ?? {});
   const streaks = useAppStore((s) => s.streaks);
   const toggleHabit = useAppStore((s) => s.toggleHabit);
+  const liveCounts = useLiveCounts();
 
   if (habits.length === 0) {
     return <p className="text-ink-500">{t('home.noHabits')}</p>;
@@ -26,6 +30,10 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
         const log = logs[habit.id];
         const done = isLogSuccessful(habit, log);
         const streak = streaks[habit.id]?.current ?? 0;
+        const liveCount =
+          habit.type === 'good' && habit.presetKey
+            ? liveCounts[habit.presetKey] ?? 0
+            : 0;
         return (
           <li key={habit.id}>
             <Link
@@ -103,6 +111,11 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                         ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
                       </>
                     )}
+                  </span>
+                )}
+                {liveCount > 0 && (
+                  <span className="numeral block text-[11px] text-leaf-700">
+                    🌱 {t('home.liveCount', { n: fmt(liveCount) })}
                   </span>
                 )}
               </span>

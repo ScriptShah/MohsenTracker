@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Security rules for the live habit-count feature.
+// - Public counts (`habitCounts/{date}`) are readable by any authenticated
+//   user (including anonymous) and writable by them. The client uses a
+//   Firestore transaction that reads + writes within a single op so the
+//   increment is atomic. Tightening this further requires a Cloud Function
+//   trigger and a separate write-only "events" collection.
+// - Per-user tick records (`habitTicks/{uid}/days/{date}`) are isolated to
+//   the owning user, so a user can only mark themselves as having ticked.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /habitCounts/{date} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /habitTicks/{uid}/days/{date} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

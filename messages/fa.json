@@ -61,7 +61,8 @@
     "compoundOfDay": "اثر مرکّب",
     "startStreak": "امروز زنجیره‌ات را شروع کن.",
     "streakDays": "زنجیرهٔ {days} روزه",
-    "streakDaysOne": "زنجیرهٔ ۱ روزه"
+    "streakDaysOne": "زنجیرهٔ ۱ روزه",
+    "liveCount": "{n} نفر امروز در حالِ انجام این هستند"
   },
   "categories": {
     "title": "دسته‌ها",

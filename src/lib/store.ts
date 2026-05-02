@@ -29,6 +29,7 @@ import {
 import { dateKey, nextDayKey, previousDayKey, todayKey } from './dates';
 import { isLogSuccessful, recomputeStreak } from './streaks';
 import { validatePunishment, type SafetyResult } from './safety';
+import { tickHabit } from './livecounts';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 interface AppState {
@@ -334,6 +335,19 @@ export const useAppStore = create<AppState>()(
         }));
 
         if (day !== todayKey()) return;
+
+        // Best-effort: bump the public live counter for good preset habits
+        // when the user transitions from incomplete → complete today.
+        const completedNow = get().logs[day]?.[habitId]?.completed ?? false;
+        const habitDef = get().habits.find((h) => h.id === habitId);
+        if (
+          completedNow &&
+          habitDef &&
+          habitDef.type === 'good' &&
+          habitDef.presetKey
+        ) {
+          void tickHabit(habitDef.presetKey);
+        }
 
         const additions: PendingReward[] = [];
         const state = get();
