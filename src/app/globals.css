@@ -108,6 +108,8 @@ body {
 .dark .border-ink-300 { border-color: rgb(71 85 105); }  /* ink-600 */
 .dark .border-leaf-200 { border-color: rgb(6 95 70); }   /* leaf-800 */
 .dark .border-sand-200 { border-color: rgb(168 90 32 / 0.6); }
+.dark .border-sand-300 { border-color: rgb(168 90 32 / 0.7); }
+.dark .border-sand-400 { border-color: rgb(217 145 70); }
 .dark .divide-ink-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(51 65 85); }
 
 /* Text + currentColor for SVG strokes — invert the ink scale */
@@ -124,6 +126,8 @@ body {
 .dark .text-leaf-600 { color: rgb(52 211 153); }
 .dark .text-leaf-700 { color: rgb(110 231 183); } /* leaf-300 reads on dark */
 .dark .text-leaf-800 { color: rgb(167 243 208); } /* leaf-200 */
+.dark .text-sand-300 { color: rgb(217 145 70); }  /* sand-400 — quote-mark glyph */
+.dark .text-sand-400 { color: rgb(230 180 117); } /* sand-300 */
 .dark .text-sand-500 { color: rgb(217 145 70); }
 .dark .text-sand-600 { color: rgb(230 180 117); } /* sand-300 */
 .dark .text-sand-700 { color: rgb(241 212 173); } /* sand-200 */
