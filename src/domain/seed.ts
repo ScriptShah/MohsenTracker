@@ -40,6 +40,11 @@ export const presetHabits: PresetHabit[] = [
   { presetKey: 'water', category: 'health', type: 'good', unit: 'glasses', target: 8 },
   { presetKey: 'exercise', category: 'health', type: 'good', unit: 'minutes', target: 30 },
   { presetKey: 'steps', category: 'health', type: 'good', unit: 'steps', target: 8000 },
+  { presetKey: 'pushups', category: 'health', type: 'good', unit: 'reps', target: 30 },
+  { presetKey: 'squats', category: 'health', type: 'good', unit: 'reps', target: 30 },
+  { presetKey: 'jumpRope', category: 'health', type: 'good', unit: 'minutes', target: 10 },
+  { presetKey: 'walking', category: 'health', type: 'good', unit: 'minutes', target: 30 },
+  { presetKey: 'running', category: 'health', type: 'good', unit: 'minutes', target: 20 },
   { presetKey: 'screenTime', category: 'health', type: 'bad', unit: 'hours', limit: 2 },
   { presetKey: 'junkFood', category: 'health', type: 'bad', unit: 'servings', limit: 0 },
 
