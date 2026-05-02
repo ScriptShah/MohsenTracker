@@ -137,13 +137,13 @@ function Checkmark({ active }: { active: boolean }) {
   return (
     <span
       className={clsx(
-        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition',
         active ? 'border-leaf-600 bg-leaf-600 text-white animate-pop' : 'border-ink-300 bg-white',
       )}
       aria-hidden
     >
       {active && (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
           <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}

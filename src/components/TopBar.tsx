@@ -13,14 +13,14 @@ export function TopBar() {
   if (pathname === '/profile' || pathname === '/onboarding') return null;
 
   return (
-    <div className="mb-3 flex items-center justify-end gap-1.5">
+    <div className="mb-3 flex items-center justify-end gap-2">
       <ThemeToggle />
       <Link
         href="/profile"
         aria-label={t('nav.profile')}
-        className="tap-44 flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
+        className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
       >
-        <UserIcon className="h-4 w-4" />
+        <UserIcon className="h-5 w-5" />
       </Link>
     </div>
   );
@@ -60,9 +60,9 @@ function ThemeToggle() {
       onClick={cycle}
       aria-label={label}
       title={label}
-      className="tap-44 flex h-9 w-9 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
+      className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-5 w-5" />
     </button>
   );
 }

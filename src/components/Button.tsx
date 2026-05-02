@@ -13,7 +13,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
     <button
       ref={ref}
       className={clsx(
-        'tap-44 inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
+        'tap-44 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-base font-medium transition disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm',
         variant === 'primary' && 'bg-leaf-600 text-white hover:bg-leaf-700 active:bg-leaf-800',
         variant === 'secondary' &&
           'border border-ink-200 bg-white text-ink-800 hover:border-ink-300 hover:bg-ink-50',

@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-white/90 backdrop-blur-sm"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm"
       aria-label="Primary"
     >
       <ul className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2">
@@ -30,11 +30,11 @@ export function BottomNav() {
               <Link
                 href={href}
                 className={clsx(
-                  'tap-44 flex flex-col items-center justify-center gap-0.5 py-2 text-[11px]',
+                  'tap-44 flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium',
                   active ? 'text-leaf-600' : 'text-ink-500',
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-6 w-6" />
                 <span>{t(key)}</span>
               </Link>
             </li>

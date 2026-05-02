@@ -50,7 +50,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={dir} className={`${inter.variable} ${vazirmatn.variable}`}>
-      <body className="min-h-screen pb-20">
+      <body className="min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeApplier />
           <main className="mx-auto w-full max-w-screen-sm px-4 pt-4">
