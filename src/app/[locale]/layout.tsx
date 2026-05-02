@@ -32,7 +32,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    apple: [{ url: '/icon.svg' }],
+    // iOS 16.4+ accepts SVG for apple-touch-icon. Older iOS will fall
+    // back to a screenshot — to fix that you need a PNG at
+    // public/apple-icon.png (180x180); drop one in and Next will pick it
+    // up automatically via metadata.
+    apple: [
+      { url: '/apple-icon.svg', type: 'image/svg+xml' },
+    ],
   },
 };
 

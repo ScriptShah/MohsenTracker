@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import gsap from 'gsap';
-import clsx from 'clsx';
 import { LeafLogo } from './LeafLogo';
 
 const STEP_KEYS = [
@@ -16,12 +15,15 @@ const STEP_KEYS = [
 ] as const;
 
 const SESSION_KEY = 'splash_seen_session';
+// Page 0 = logo + tagline. Pages 1..N = one quote each.
+const TOTAL_PAGES = 1 + STEP_KEYS.length;
 
 export function SplashScreen() {
   const t = useTranslations();
   const [hidden, setHidden] = useState(true);
+  const [pageIndex, setPageIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const stepRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const pageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -30,158 +32,168 @@ export function SplashScreen() {
     setHidden(false);
   }, []);
 
+  // Run an entrance animation each time the page changes.
   useEffect(() => {
-    if (hidden || !rootRef.current) return;
-
+    if (hidden || !pageRef.current) return;
     const ctx = gsap.context(() => {
-      // Main reveal timeline.
-      const tl = gsap.timeline({
-        defaults: { duration: 0.7, ease: 'power3.out' },
-      });
-
-      tl.from('.splash-logo', {
-        scale: 0.5,
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from('.splash-icon', {
+        scale: 0.4,
         opacity: 0,
-        duration: 0.9,
+        duration: 0.7,
         ease: 'back.out(1.6)',
       })
         .from(
-          '.splash-title',
-          { y: 14, opacity: 0, duration: 0.5 },
+          '.splash-text',
+          { y: 24, opacity: 0, duration: 0.6 },
           '-=0.35',
         )
         .from(
-          '.splash-tagline',
-          { y: 12, opacity: 0, duration: 0.45 },
-          '-=0.3',
+          '.splash-hint',
+          { opacity: 0, duration: 0.4 },
+          '-=0.2',
         );
+    }, pageRef);
+    return () => ctx.revert();
+  }, [pageIndex, hidden]);
 
-      // Cascade the chain — each row pops in with a tiny scale bounce.
-      tl.from(
-        stepRefs.current,
-        {
-          y: 24,
-          opacity: 0,
-          scale: 0.92,
-          duration: 0.55,
-          ease: 'back.out(1.4)',
-          stagger: 0.18,
-        },
-        '+=0.1',
-      );
-
-      // Settle, then fade the whole thing out.
-      tl.to({}, { duration: 1.6 }).to(rootRef.current, {
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power2.inOut',
-        onComplete: () => setHidden(true),
-      });
-
-      // Ambient float on the leaf.
-      gsap.to('.splash-logo', {
-        y: -5,
+  // Ambient float on the logo while it's the active page.
+  useEffect(() => {
+    if (hidden || pageIndex !== 0) return;
+    const ctx = gsap.context(() => {
+      gsap.to('.splash-icon', {
+        y: -8,
         duration: 2,
         ease: 'sine.inOut',
         yoyo: true,
         repeat: -1,
       });
-    }, rootRef);
-
+    }, pageRef);
     return () => ctx.revert();
-  }, [hidden]);
+  }, [pageIndex, hidden]);
+
+  const dismiss = useCallback(() => {
+    if (!rootRef.current) {
+      setHidden(true);
+      return;
+    }
+    gsap.to(rootRef.current, {
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power2.inOut',
+      onComplete: () => setHidden(true),
+    });
+  }, []);
+
+  const onTap = useCallback(() => {
+    if (pageIndex < TOTAL_PAGES - 1) {
+      setPageIndex((p) => p + 1);
+    } else {
+      dismiss();
+    }
+  }, [pageIndex, dismiss]);
 
   if (hidden) return null;
+
+  const isLogo = pageIndex === 0;
+  const stepKey = isLogo ? null : STEP_KEYS[pageIndex - 1];
+  const Icon = stepKey ? ICONS[stepKey] : null;
+  const colors = stepKey ? COLORS[stepKey] : null;
 
   return (
     <div
       ref={rootRef}
-      onClick={() => setHidden(true)}
+      onClick={onTap}
       role="dialog"
       aria-label="Welcome"
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-leaf-50 via-white to-sand-50 px-6 py-8"
+      className="splash-bg fixed inset-0 z-[100] flex flex-col items-center justify-between px-6 py-10"
     >
-      <div className="flex flex-col items-center gap-2">
-        <span className="splash-logo inline-block drop-shadow-[0_8px_24px_rgb(16_185_129_/_0.35)]">
-          <LeafLogo size={104} />
-        </span>
-        <h1 className="splash-title text-2xl font-semibold text-ink-900">
-          {t('app.name')}
-        </h1>
-        <p className="splash-tagline text-xs italic text-leaf-700">
-          {t('app.tagline')}
-        </p>
+      {/* spacer so content centers between safe areas */}
+      <div />
+
+      <div
+        ref={pageRef}
+        key={pageIndex}
+        className="flex w-full max-w-md flex-col items-center gap-6 text-center"
+      >
+        {isLogo ? (
+          <>
+            <span className="splash-icon inline-block drop-shadow-[0_8px_24px_rgb(16_185_129_/_0.35)]">
+              <LeafLogo size={160} />
+            </span>
+            <div className="splash-text space-y-2">
+              <h1 className="text-4xl font-semibold text-ink-900">
+                {t('app.name')}
+              </h1>
+              <p className="text-base italic text-leaf-700">{t('app.tagline')}</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <BigIcon3D variant={stepKey!} />
+            <p className="splash-text px-2 text-2xl font-medium leading-relaxed text-ink-900">
+              {t(`splash.${stepKey}` as any)}
+            </p>
+            <span className="numeral text-xs text-ink-500">
+              {pageIndex} / {TOTAL_PAGES - 1}
+            </span>
+          </>
+        )}
       </div>
 
-      <ul className="w-full max-w-xs space-y-2.5">
-        {STEP_KEYS.map((key, i) => {
-          const Icon = ICONS[key];
-          return (
-            <li
-              key={key}
-              ref={(el) => {
-                stepRefs.current[i] = el;
-              }}
-              className="flex items-center gap-3 rounded-xl border border-ink-200 bg-white px-3 py-2 shadow-sm"
-            >
-              <Icon3D variant={key} />
-              <span className="text-sm leading-snug text-ink-800">
-                {t(`splash.${key}` as any)}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setHidden(true);
-        }}
-        className="text-xs text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline"
-      >
-        {t('splash.skip')}
-      </button>
+      <div className="splash-hint flex flex-col items-center gap-3 pb-4">
+        <p className="text-sm text-ink-500">
+          {pageIndex < TOTAL_PAGES - 1
+            ? t('splash.tapToContinue')
+            : t('splash.tapToBegin')}
+        </p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            dismiss();
+          }}
+          className="text-xs text-ink-400 underline-offset-4 hover:text-ink-600 hover:underline"
+        >
+          {t('splash.skip')}
+        </button>
+      </div>
     </div>
   );
 }
 
-/* ── 3D-styled icons ─────────────────────────────────────────────────── */
+/* ── Big 3D-styled icon for the per-quote pages ─────────────────────── */
 
-/** Each icon sits on a round chip with a soft gradient + inner highlight
- *  and an outer drop shadow to give it a subtle 3D / pill feel. The icon
- *  glyph itself is a white outline so it pops against the chip. */
-function Icon3D({ variant }: { variant: keyof typeof ICONS }) {
+function BigIcon3D({ variant }: { variant: keyof typeof ICONS }) {
   const colors = COLORS[variant];
   const Icon = ICONS[variant];
   return (
     <span
-      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-[0_4px_10px_-2px_rgb(0_0_0/0.18)]"
+      className="splash-icon relative flex h-32 w-32 items-center justify-center rounded-[2rem] text-white shadow-[0_18px_40px_-12px_rgb(0_0_0/0.35)]"
       style={{
         background: `linear-gradient(145deg, ${colors.light}, ${colors.dark})`,
       }}
       aria-hidden
     >
       <span
-        className="pointer-events-none absolute inset-0 rounded-full"
+        className="pointer-events-none absolute inset-0 rounded-[2rem]"
         style={{
           background:
-            'linear-gradient(180deg, rgb(255 255 255 / 0.35) 0%, rgb(255 255 255 / 0) 55%)',
+            'linear-gradient(180deg, rgb(255 255 255 / 0.4) 0%, rgb(255 255 255 / 0) 55%)',
         }}
       />
-      <Icon className="relative h-5 w-5" />
+      <Icon className="relative h-16 w-16" />
     </span>
   );
 }
 
 const COLORS = {
-  thoughts:  { light: '#a78bfa', dark: '#7c3aed' }, // violet
-  words:     { light: '#60a5fa', dark: '#2563eb' }, // blue
-  actions:   { light: '#fb923c', dark: '#ea580c' }, // orange
-  habits:    { light: '#34d399', dark: '#059669' }, // leaf
-  character: { light: '#facc15', dark: '#ca8a04' }, // amber
-  destiny:   { light: '#f472b6', dark: '#db2777' }, // pink
+  thoughts:  { light: '#a78bfa', dark: '#7c3aed' },
+  words:     { light: '#60a5fa', dark: '#2563eb' },
+  actions:   { light: '#fb923c', dark: '#ea580c' },
+  habits:    { light: '#34d399', dark: '#059669' },
+  character: { light: '#facc15', dark: '#ca8a04' },
+  destiny:   { light: '#f472b6', dark: '#db2777' },
 } as const;
 
 const ICONS = {
@@ -199,7 +211,7 @@ function svg(props: React.SVGProps<SVGSVGElement>, children: React.ReactNode) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}

@@ -105,7 +105,9 @@
     "habits": "Your habits build your character.",
     "character": "Your character shapes your destiny.",
     "destiny": "Design who you're becoming.",
-    "skip": "Skip"
+    "skip": "Skip",
+    "tapToContinue": "Tap to continue",
+    "tapToBegin": "Tap to begin"
   },
   "auth": {
     "signinTitle": "Sign in",

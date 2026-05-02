@@ -15,7 +15,19 @@
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-size: 16px;
 }
+/* Slightly larger root on phones so habit chips, buttons, and labels
+   read comfortably without thumbing into the corner. */
+@media (max-width: 640px) {
+  html { font-size: 17px; }
+}
+
+/* Splash root must stay fully opaque even in dark mode — my .dark
+   gradient overrides set leaf-50 / sand-50 with alpha < 1 to soften
+   tinted cards, which would let the welcome screen bleed through here. */
+.splash-bg { background-color: #ecfdf5; }      /* leaf-50 solid */
+.dark .splash-bg { background-color: #0f172a; } /* ink-900 solid */
 
 body {
   @apply bg-ink-50 text-ink-900;
