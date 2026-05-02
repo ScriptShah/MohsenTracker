@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
+import { LeafLogo } from '@/components/LeafLogo';
 import type { ThemeMode } from '@/domain/types';
 
 export function TopBar() {
@@ -13,15 +14,21 @@ export function TopBar() {
   if (pathname === '/profile' || pathname === '/onboarding') return null;
 
   return (
-    <div className="sticky top-0 z-30 -mx-4 mb-3 flex items-center justify-end gap-2 border-b border-ink-200 bg-ink-50/90 px-4 py-2 backdrop-blur-sm">
-      <ThemeToggle />
-      <Link
-        href="/profile"
-        aria-label={t('nav.profile')}
-        className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
-      >
-        <UserIcon className="h-5 w-5" />
+    <div className="sticky top-0 z-30 -mx-4 mb-3 flex items-center justify-between gap-2 border-b border-ink-200 bg-ink-50/90 px-4 py-2 backdrop-blur-sm">
+      <Link href="/" className="flex items-center gap-2 text-ink-800">
+        <LeafLogo size={28} />
+        <span className="text-sm font-semibold">{t('app.name')}</span>
       </Link>
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        <Link
+          href="/profile"
+          aria-label={t('nav.profile')}
+          className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
+        >
+          <UserIcon className="h-5 w-5" />
+        </Link>
+      </div>
     </div>
   );
 }
