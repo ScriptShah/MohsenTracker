@@ -131,46 +131,191 @@ function CategoryStrengths({
   if (rows.length === 0) return null;
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-4">
       <div>
         <h2 className="text-sm font-medium text-ink-700">
           {t('progress.strengths.title')}
         </h2>
         <p className="text-xs text-ink-500">{t('progress.strengths.body')}</p>
       </div>
-      <ul className="space-y-2.5">
-        {rows.map(({ category, rate, habitCount }) => {
+      {rows.length >= 3 ? (
+        <CategoryRadar rows={rows} />
+      ) : (
+        <CategoryBars rows={rows} />
+      )}
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1 text-xs">
+        {rows.map(({ category, rate }) => {
           const pct = Math.round(rate * 100);
           const tier = strengthTier(rate);
           return (
-            <li key={category.id} className="space-y-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1.5">
-                  <span aria-hidden>{category.icon}</span>
-                  <span className="font-medium">{category.name}</span>
-                  <span className="numeral text-[11px] text-ink-500">
-                    · {fmt(habitCount)}
-                  </span>
-                </span>
-                <span className={clsx('numeral text-xs font-semibold', tierTextClass(tier))}>
-                  {fmt(pct)}%
-                  <span className="ms-1 text-[10px] font-normal text-ink-500">
-                    {t(`progress.strengths.tier.${tier}` as any)}
-                  </span>
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
-                <div
-                  className={clsx('h-full transition-all', tierBarClass(tier))}
-                  style={{ width: `${Math.max(2, pct)}%` }}
-                />
-              </div>
+            <li key={category.id} className="flex items-center justify-between">
+              <span className="flex items-center gap-1 truncate">
+                <span aria-hidden>{category.icon}</span>
+                <span className="truncate">{category.name}</span>
+              </span>
+              <span className={clsx('numeral font-semibold', tierTextClass(tier))}>
+                {fmt(pct)}%
+              </span>
             </li>
           );
         })}
       </ul>
     </Card>
   );
+}
+
+/** GitHub-style activity-overview radar — one axis per active category,
+ *  polygon plots the user's last-30-days completion rate per axis. */
+function CategoryRadar({ rows }: { rows: StrengthRow[] }) {
+  const fmt = useNumberFormatter();
+  const size = 320;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 96;
+  const labelRadius = radius + 22;
+
+  const points = rows.map((row, i) => {
+    const angle = (Math.PI * 2 * i) / rows.length - Math.PI / 2;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+      row,
+      angle,
+      x: cx + cos * radius * row.rate,
+      y: cy + sin * radius * row.rate,
+      axisX: cx + cos * radius,
+      axisY: cy + sin * radius,
+      labelX: cx + cos * labelRadius,
+      labelY: cy + sin * labelRadius,
+    };
+  });
+
+  const polygon = points.map((p) => `${p.x},${p.y}`).join(' ');
+  const grid = [0.25, 0.5, 0.75, 1].map((level) =>
+    rows
+      .map((_, i) => {
+        const a = (Math.PI * 2 * i) / rows.length - Math.PI / 2;
+        return `${cx + Math.cos(a) * radius * level},${cy + Math.sin(a) * radius * level}`;
+      })
+      .join(' '),
+  );
+
+  return (
+    <div className="flex justify-center">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="h-auto w-full max-w-[320px]"
+        role="img"
+      >
+        {grid.map((g, i) => (
+          <polygon
+            key={i}
+            points={g}
+            fill="none"
+            stroke="currentColor"
+            className="text-ink-200"
+            strokeWidth={1}
+          />
+        ))}
+        {points.map((p, i) => (
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={p.axisX}
+            y2={p.axisY}
+            stroke="currentColor"
+            className="text-ink-200"
+            strokeWidth={1}
+          />
+        ))}
+        <polygon
+          points={polygon}
+          fill="rgb(16 185 129 / 0.22)"
+          stroke="rgb(16 185 129)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        {points.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r={3.5}
+            fill="rgb(16 185 129)"
+          />
+        ))}
+        {points.map((p, i) => {
+          const anchor =
+            p.labelX < cx - 4 ? 'end' : p.labelX > cx + 4 ? 'start' : 'middle';
+          const pct = Math.round(p.row.rate * 100);
+          return (
+            <g key={i}>
+              <text
+                x={p.labelX}
+                y={p.labelY - 4}
+                textAnchor={anchor}
+                className="fill-leaf-700 text-[12px] font-semibold"
+                style={{ direction: 'ltr', unicodeBidi: 'isolate' }}
+              >
+                {fmt(pct)}%
+              </text>
+              <text
+                x={p.labelX}
+                y={p.labelY + 10}
+                textAnchor={anchor}
+                className="fill-current text-[11px]"
+              >
+                {p.row.category.icon} {shortLabel(p.row.category.name)}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/** Compact bar fallback for users with fewer than 3 active categories. */
+function CategoryBars({ rows }: { rows: StrengthRow[] }) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  return (
+    <ul className="space-y-2">
+      {rows.map(({ category, rate }) => {
+        const pct = Math.round(rate * 100);
+        const tier = strengthTier(rate);
+        return (
+          <li key={category.id} className="space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1.5">
+                <span aria-hidden>{category.icon}</span>
+                <span className="font-medium">{category.name}</span>
+              </span>
+              <span className={clsx('numeral text-xs font-semibold', tierTextClass(tier))}>
+                {fmt(pct)}%
+                <span className="ms-1 text-[10px] font-normal text-ink-500">
+                  {t(`progress.strengths.tier.${tier}` as any)}
+                </span>
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
+              <div
+                className={clsx('h-full transition-all', tierBarClass(tier))}
+                style={{ width: `${Math.max(2, pct)}%` }}
+              />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** First word of the category name, capped — keeps radar labels uncrowded. */
+function shortLabel(name: string): string {
+  const head = name.split(/\s+/)[0] ?? name;
+  return head.length > 10 ? head.slice(0, 10) + '…' : head;
 }
 
 type Tier = 'strong' | 'medium' | 'weak' | 'empty';
