@@ -32,10 +32,12 @@ export function Heatmap({ summaries }: Props) {
   // Build the cell list in COLUMN-major order so it lines up with the
   // CSS grid's `grid-flow-col` placement: items 0–6 fill column 1 top to
   // bottom (one week, Sun→Sat), items 7–13 fill column 2, etc.
+  // Reverse the week order so today's week is the leftmost column —
+  // mobile viewers see their current streak without horizontal scroll.
   const cells: { key: string; dateKey: string | null }[] = [];
   const cols = grid[0]?.length ?? 0;
   const rows = grid.length;
-  for (let week = 0; week < cols; week++) {
+  for (let week = cols - 1; week >= 0; week--) {
     for (let dow = 0; dow < rows; dow++) {
       const dateKey = grid[dow][week];
       cells.push({ key: `${week}-${dow}`, dateKey });
