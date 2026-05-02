@@ -593,6 +593,18 @@
       "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
       "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
       "lowMood": "Paused after a low check-in. Come back when you're steadier."
+    },
+    "books": {
+      "title": "Your books",
+      "subtitle": "Pages you log here count toward this habit's streak.",
+      "noActive": "No books in progress yet.",
+      "addBook": "Add a book",
+      "logPlaceholder": "Pages today",
+      "logSave": "Log",
+      "openBook": "Open",
+      "connectTitle": "Connect this habit to your books",
+      "connectBody": "Pages you log on any book will count toward this habit's daily total.",
+      "connect": "Connect to books"
     }
   },
   "narratives": {

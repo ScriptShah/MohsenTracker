@@ -1,18 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { ArrowBack } from '@/components/Chevron';
+import { ArrowBack, ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
+import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { shouldMuteConsequences } from '@/lib/sensitivity';
-import type { ConsequenceSensitivity } from '@/domain/types';
+import { pagesRead, progressPercent } from '@/lib/books';
+import { todayKey } from '@/lib/dates';
+import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
 function sliceForSensitivity(
   lines: string[],
@@ -182,6 +185,8 @@ function HabitDetail() {
         </Card>
       )}
 
+      <BooksSection habit={habit} />
+
       <Card className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="text-sm font-medium text-ink-800">
@@ -218,6 +223,144 @@ function HabitDetail() {
           className="text-red-600 hover:bg-red-50"
         >
           {t('habitDetail.deleteHabit')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Spec §20.11: when a habit is the user's reading habit, expose their
+ *  books inline so they can pick which one to log pages on without leaving
+ *  the habit screen. Eligibility is presetKey === 'reading' or unit === 'pages'.
+ */
+function BooksSection({ habit }: { habit: Habit }) {
+  const t = useTranslations();
+  const readingHabitId = useAppStore((s) => s.profile?.readingHabitId);
+  const setReadingHabit = useAppStore((s) => s.setReadingHabit);
+  const books = useAppStore((s) => s.books);
+
+  const isLinked = readingHabitId === habit.id;
+  const isCandidate = habit.presetKey === 'reading';
+
+  if (!isLinked && !isCandidate) return null;
+
+  if (!isLinked) {
+    return (
+      <Card className="space-y-3 border-sand-200 bg-sand-50">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-sand-600">
+            {t('habitDetail.books.connectTitle')}
+          </p>
+          <p className="pt-1 text-sm leading-relaxed text-ink-700">
+            {t('habitDetail.books.connectBody')}
+          </p>
+        </div>
+        <Button type="button" onClick={() => setReadingHabit(habit.id)}>
+          {t('habitDetail.books.connect')}
+        </Button>
+      </Card>
+    );
+  }
+
+  const reading = books.filter((b) => b.status === 'reading');
+
+  return (
+    <Card className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('habitDetail.books.title')}
+        </h2>
+        <p className="text-xs text-ink-500">{t('habitDetail.books.subtitle')}</p>
+      </div>
+
+      {reading.length === 0 ? (
+        <p className="text-sm text-ink-500">{t('habitDetail.books.noActive')}</p>
+      ) : (
+        <ul className="space-y-2">
+          {reading.map((b) => (
+            <li key={b.id}>
+              <BookLogRow book={b} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Link
+        href="/books/new"
+        className="tap-44 flex items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-4 py-3 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
+      >
+        + {t('habitDetail.books.addBook')}
+      </Link>
+    </Card>
+  );
+}
+
+function BookLogRow({ book }: { book: Book }) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const logBookPages = useAppStore((s) => s.logBookPages);
+
+  const [value, setValue] = useState('');
+
+  useEffect(() => {
+    const v = book.pagesByDate[todayKey()];
+    setValue(v ? String(v) : '');
+  }, [book.id, book.pagesByDate]);
+
+  const read = pagesRead(book);
+  const pct = progressPercent(book);
+
+  const onLog = () => {
+    const n = Math.max(0, Math.floor(Number(value) || 0));
+    logBookPages(book.id, n);
+  };
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-ink-200 bg-white p-2">
+      <Link href={`/books/${book.id}`} className="shrink-0">
+        <BookCover book={book} size="sm" />
+      </Link>
+      <div className="min-w-0 flex-1 space-y-1">
+        <Link
+          href={`/books/${book.id}`}
+          className="line-clamp-1 text-sm font-medium hover:text-leaf-700"
+        >
+          {book.title}
+        </Link>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
+          <div
+            className="h-full bg-leaf-500 transition-all"
+            style={{ width: `${Math.round(pct * 100)}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[11px] text-ink-500">
+          <span className="numeral">
+            {t('books.progressShort', {
+              read: fmt(read),
+              total: fmt(book.totalPages),
+            })}
+          </span>
+          <Link
+            href={`/books/${book.id}`}
+            className="inline-flex items-center gap-0.5 text-leaf-700 hover:underline"
+          >
+            {t('habitDetail.books.openBook')}
+            <ChevronEnd className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          placeholder={t('habitDetail.books.logPlaceholder')}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="numeral w-16 rounded-lg border border-ink-200 px-2 py-1.5 text-sm outline-none focus:border-leaf-500"
+        />
+        <Button type="button" onClick={onLog} className="px-3 py-1.5 text-xs">
+          {t('habitDetail.books.logSave')}
         </Button>
       </div>
     </div>
