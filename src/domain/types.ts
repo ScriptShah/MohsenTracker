@@ -92,6 +92,9 @@ export interface Profile {
   calendar: CalendarPreference;
   consequenceSensitivity: ConsequenceSensitivity;
   notifications: NotificationPreferences;
+  /** Habit id of the user's reading habit. Book page logs feed this habit's
+   *  daily total via the store's sync helper (spec §20.11). */
+  readingHabitId?: string;
   onboardingComplete: boolean;
   createdAt: string;
 }

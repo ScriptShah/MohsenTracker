@@ -90,6 +90,9 @@ interface AppState {
     fields: { rating?: 1 | 2 | 3 | 4 | 5; review?: string; favouriteQuote?: string },
   ) => void;
   deleteBook: (id: string) => void;
+  /** Link the books module to a habit (spec §20.11). Pass undefined to unlink.
+   *  When linking, backfills the habit's daily logs from existing book pages. */
+  setReadingHabit: (habitId: string | undefined) => void;
 
   /* Dopamine Reset */
   startReset: (tier: ResetTier, target: string) => DopamineReset;
@@ -150,6 +153,38 @@ function recomputeStreakFor(state: AppState, habitId: string): Streak | null {
   }
   const prevLongest = state.streaks[habitId]?.longest ?? 0;
   return recomputeStreak(habit, byDate, prevLongest);
+}
+
+/** Spec §20.11: book pages drive the linked reading habit's daily total. */
+function syncReadingHabitForDate(
+  state: AppState,
+  date: string,
+): Pick<AppState, 'logs' | 'summaries' | 'streaks'> | null {
+  const habitId = state.profile?.readingHabitId;
+  if (!habitId) return null;
+  const habit = state.habits.find((h) => h.id === habitId);
+  if (!habit) return null;
+
+  let sum = 0;
+  for (const b of state.books) sum += b.pagesByDate[date] ?? 0;
+
+  const dayLogs = { ...(state.logs[date] ?? {}) };
+  const completed =
+    habit.type === 'good'
+      ? habit.target === undefined
+        ? sum > 0
+        : sum >= habit.target
+      : sum <= (habit.limit ?? 0);
+  dayLogs[habitId] = { habitId, date, value: sum, completed };
+  const nextLogs = { ...state.logs, [date]: dayLogs };
+  const probe: AppState = { ...state, logs: nextLogs };
+  const summary = recomputeSummary(probe, date);
+  const streak = recomputeStreakFor(probe, habitId);
+  return {
+    logs: nextLogs,
+    summaries: { ...state.summaries, [date]: summary },
+    streaks: streak ? { ...state.streaks, [habitId]: streak } : state.streaks,
+  };
 }
 
 function pickRewardOptionId(tier: RewardTier, options: RewardOption[]): string | undefined {
@@ -247,7 +282,11 @@ export const useAppStore = create<AppState>()(
           // Drop pending streak rewards for the deleted habit too.
           const pendingRewards = s.pendingRewards.filter((r) => r.habitId !== habitId);
           const activePunishments = s.activePunishments.filter((p) => p.habitId !== habitId);
-          return { habits, logs, streaks, pendingRewards, activePunishments };
+          const profile =
+            s.profile && s.profile.readingHabitId === habitId
+              ? { ...s.profile, readingHabitId: undefined }
+              : s.profile;
+          return { habits, logs, streaks, pendingRewards, activePunishments, profile };
         });
         const today = todayKey();
         set((s) => ({ summaries: { ...s.summaries, [today]: recomputeSummary(get(), today) } }));
@@ -493,7 +532,6 @@ export const useAppStore = create<AppState>()(
           books: s.books.map((b) => {
             if (b.id !== id) return b;
             const next = { ...b.pagesByDate, [day]: sanitized };
-            const total = Object.values(next).reduce((a, n) => a + n, 0);
             // If they cross totalPages with a log, leave them as 'reading' —
             // the user explicitly clicks Mark as Complete to enter the
             // rating/review flow. We just don't go higher than totalPages
@@ -501,8 +539,8 @@ export const useAppStore = create<AppState>()(
             return { ...b, pagesByDate: next };
           }),
         }));
-        // Suppress unused.
-        void sanitized;
+        const synced = syncReadingHabitForDate(get(), day);
+        if (synced) set(synced);
       },
 
       completeBook: (id, fields) =>
@@ -521,8 +559,30 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      deleteBook: (id) =>
-        set((s) => ({ books: s.books.filter((b) => b.id !== id) })),
+      deleteBook: (id) => {
+        const book = get().books.find((b) => b.id === id);
+        const datesAffected = book ? Object.keys(book.pagesByDate) : [];
+        set((s) => ({ books: s.books.filter((b) => b.id !== id) }));
+        for (const d of datesAffected) {
+          const synced = syncReadingHabitForDate(get(), d);
+          if (synced) set(synced);
+        }
+      },
+
+      setReadingHabit: (habitId) => {
+        const { profile } = get();
+        if (!profile) return;
+        set({ profile: { ...profile, readingHabitId: habitId } });
+        if (!habitId) return;
+        const dateSet = new Set<string>();
+        for (const b of get().books) {
+          for (const d of Object.keys(b.pagesByDate)) dateSet.add(d);
+        }
+        for (const d of dateSet) {
+          const synced = syncReadingHabitForDate(get(), d);
+          if (synced) set(synced);
+        }
+      },
 
       startReset: (tier, target) => {
         const targetDays =
@@ -749,7 +809,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 6,
+      version: 7,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -779,6 +839,8 @@ export const useAppStore = create<AppState>()(
             dailyTime: '09:00',
             perHabit: {},
           };
+          // v7: optional pointer to a "reading" habit (spec §20.11).
+          persisted.profile.readingHabitId = persisted.profile.readingHabitId ?? undefined;
         }
         return persisted;
       },
