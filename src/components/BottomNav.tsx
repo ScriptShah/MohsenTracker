@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/routing';
 import { Link } from '@/i18n/routing';
+import { useAppStore } from '@/lib/store';
 import clsx from 'clsx';
 
 const items = [
@@ -16,6 +17,15 @@ const items = [
 export function BottomNav() {
   const t = useTranslations('nav');
   const pathname = usePathname();
+  const onboardingComplete = useAppStore(
+    (s) => s.profile?.onboardingComplete ?? false,
+  );
+
+  // Don't render the nav until the user has completed onboarding (which
+  // includes the sign-in step). Visitors who haven't logged in shouldn't
+  // see any of these destinations — even via direct URL — and the
+  // RouteGuard already handles the redirect.
+  if (!onboardingComplete) return null;
 
   return (
     <nav

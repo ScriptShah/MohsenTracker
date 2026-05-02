@@ -7,6 +7,7 @@ import { locales, localeDirection, type Locale } from '@/i18n/config';
 import { BottomNav } from '@/components/BottomNav';
 import { TopBar } from '@/components/TopBar';
 import { ThemeApplier } from '@/components/ThemeApplier';
+import { RouteGuard } from '@/components/RouteGuard';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -53,6 +54,7 @@ export default async function LocaleLayout({
       <body className="min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeApplier />
+          <RouteGuard />
           <main className="mx-auto w-full max-w-screen-sm px-4 pt-4">
             <TopBar />
             {children}
