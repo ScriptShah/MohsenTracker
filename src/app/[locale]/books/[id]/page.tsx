@@ -37,6 +37,15 @@ function BookDetail() {
   const completeBook = useAppStore((s) => s.completeBook);
   const updateBook = useAppStore((s) => s.updateBook);
   const deleteBook = useAppStore((s) => s.deleteBook);
+  const readingHabitId = useAppStore((s) => s.profile?.readingHabitId);
+  const readingHabit = useAppStore((s) =>
+    s.profile?.readingHabitId
+      ? s.habits.find((h) => h.id === s.profile!.readingHabitId)
+      : undefined,
+  );
+  const readingStreak = useAppStore((s) =>
+    readingHabitId ? s.streaks[readingHabitId]?.current ?? 0 : 0,
+  );
 
   const [today, setToday] = useState('');
   const [showCompletion, setShowCompletion] = useState(false);
@@ -171,6 +180,18 @@ function BookDetail() {
                 {t('books.logSave')}
               </Button>
             </div>
+            {readingHabit && (
+              <p className="numeral text-[11px] text-leaf-700">
+                {t(
+                  readingStreak === 0
+                    ? 'books.habitLink.detailFooterZero'
+                    : readingStreak === 1
+                    ? 'books.habitLink.detailFooterOne'
+                    : 'books.habitLink.detailFooter',
+                  { name: readingHabit.name, streak: fmt(readingStreak) },
+                )}
+              </p>
+            )}
           </div>
 
           <Button

@@ -53,6 +53,7 @@ function Profile() {
   const profile = useAppStore((s) => s.profile);
   const habits = useAppStore((s) => s.habits);
   const setProfile = useAppStore((s) => s.setProfile);
+  const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const reset = useAppStore((s) => s.reset);
   const pendingCount = useAppStore(
     (s) => s.pendingRewards.filter((r) => !r.claimedAt).length,
@@ -328,6 +329,28 @@ function Profile() {
             </button>
           ))}
         </div>
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('settings.readingHabitSection')}
+        </h2>
+        <p className="text-xs text-ink-500">{t('settings.readingHabitBody')}</p>
+        <select
+          value={profile.readingHabitId ?? ''}
+          onChange={(e) => setReadingHabit(e.target.value || undefined)}
+          className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 outline-none focus:border-leaf-500"
+        >
+          <option value="">{t('settings.readingHabitNone')}</option>
+          {habits
+            .filter((h) => h.type === 'good')
+            .map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+                {h.unit ? ` (${h.unit})` : ''}
+              </option>
+            ))}
+        </select>
       </Card>
 
       <Link href="/rewards" className="block">

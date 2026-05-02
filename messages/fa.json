@@ -393,7 +393,10 @@
       "unlinkedBody": "کتاب‌ها را به یک عادتِ روزانهٔ خواندن وصل کن تا صفحه‌هایی که می‌خوانی در رشتهٔ عادت ثبت شود.",
       "connectExisting": "اتصال به {name}",
       "createNew": "ساختِ عادتِ روزانهٔ خواندن",
-      "unlink": "قطعِ اتصال"
+      "unlink": "قطعِ اتصال",
+      "detailFooter": "در {name} حساب می‌شود · رشتهٔ {streak} روزه",
+      "detailFooterOne": "در {name} حساب می‌شود · رشتهٔ ۱ روزه",
+      "detailFooterZero": "در {name} حساب می‌شود"
     },
     "feature": {
       "homeReadingTitle": "در دستِ خواندن",
@@ -452,6 +455,9 @@
     "notifNote": "اعلان‌های پوش وقتی Firebase Cloud Messaging متصل شود فعال می‌شوند. تا آن زمان تنظیماتت محلی ذخیره می‌شود.",
     "consequenceSection": "پیامِ پیامد",
     "consequenceBody": "صفحهٔ «اگر کنار بگذاری» چقدر صریح باشد؟",
+    "readingHabitSection": "عادتِ خواندن",
+    "readingHabitBody": "صفحه‌هایی که در کتاب‌ها ثبت می‌کنی در مجموعِ روزانهٔ این عادت حساب می‌شود. رشته و نقشهٔ فعالیت خودکار به‌روز می‌شوند.",
+    "readingHabitNone": "هیچ‌کدام — کتاب‌ها مستقل از عادت‌ها بمانند",
     "consequence": {
       "off": "خاموش",
       "mild": "ملایم",

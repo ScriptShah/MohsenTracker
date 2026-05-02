@@ -399,7 +399,10 @@
       "unlinkedBody": "Connect Books to a daily reading habit so book pages count toward your streak.",
       "connectExisting": "Connect to {name}",
       "createNew": "Create a daily reading habit",
-      "unlink": "Unlink"
+      "unlink": "Unlink",
+      "detailFooter": "Counts toward {name} · {streak} day streak",
+      "detailFooterOne": "Counts toward {name} · 1 day streak",
+      "detailFooterZero": "Counts toward {name}"
     },
     "completionCelebration": "✨ Mashallah!"
   },
@@ -452,6 +455,9 @@
     "notifNote": "Push notifications go live when Firebase Cloud Messaging is connected. Until then your preferences are stored locally.",
     "consequenceSection": "Consequence messaging",
     "consequenceBody": "How blunt should the \"what's at stake\" panel be on each habit?",
+    "readingHabitSection": "Reading habit",
+    "readingHabitBody": "Pages logged on books count toward this habit's daily total. Streak and heatmap update automatically.",
+    "readingHabitNone": "None — keep books separate from habits",
     "consequence": {
       "off": "Off",
       "mild": "Mild",
