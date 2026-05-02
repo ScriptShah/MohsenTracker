@@ -58,6 +58,16 @@ body {
 .dark .bg-leaf-100 { background-color: rgb(6 95 70 / 0.4); }
 .dark .bg-sand-100 { background-color: rgb(168 90 32 / 0.25); }
 
+/* Heatmap intensity scale: in light mode bg-leaf-200 → bg-leaf-800 reads
+   "lighter to darker" against a white background. In dark mode the same
+   scale needs to read "dimmer to brighter" against a dark background, so
+   we invert the lightness while keeping the hue. */
+.dark .bg-leaf-200 { background-color: rgb(6 95 70); }     /* leaf-800 */
+.dark .bg-leaf-400 { background-color: rgb(5 150 105); }   /* leaf-600 */
+.dark .bg-leaf-600 { background-color: rgb(52 211 153); }  /* leaf-400 */
+.dark .bg-leaf-800 { background-color: rgb(110 231 183); } /* leaf-300 */
+.dark .bg-leaf-500 { background-color: rgb(52 211 153); }  /* leaf-400 — progress bars stay vivid */
+
 /* Borders */
 .dark .border-ink-100 { border-color: rgb(51 65 85); }   /* ink-700 */
 .dark .border-ink-200 { border-color: rgb(51 65 85); }
