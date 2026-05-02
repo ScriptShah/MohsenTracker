@@ -103,7 +103,7 @@ function FutureSelf() {
         </p>
       </header>
 
-      <Card className="bg-gradient-to-br from-leaf-50 via-white to-sand-50">
+      <Card className="border-leaf-200 bg-leaf-50">
         {vision ? (
           <p className="text-lg leading-relaxed text-ink-800">{vision}</p>
         ) : (
