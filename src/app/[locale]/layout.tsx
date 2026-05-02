@@ -32,14 +32,15 @@ export const metadata: Metadata = {
     startupImage: ['/icon.svg'],
   },
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    // iOS 16.4+ accepts SVG for apple-touch-icon. Older iOS will fall
-    // back to a screenshot — to fix that you need a PNG at
-    // public/apple-icon.png (180x180); drop one in and Next will pick it
-    // up automatically via metadata.
-    apple: [
-      { url: '/apple-icon.svg', type: 'image/svg+xml' },
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
     ],
+    // 180×180 PNG generated from public/icon.svg by scripts/generate-pwa-icons.mjs
+    // (runs in prebuild). iOS uses this when the user adds the app to
+    // their home screen — without a PNG, iOS falls back to a screenshot.
+    apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
   },
 };
 
