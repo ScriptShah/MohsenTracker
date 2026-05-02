@@ -107,12 +107,12 @@
     "dismiss": "Dismiss"
   },
   "splash": {
-    "thoughts": "Your thoughts become your words.",
-    "words": "Your words become your actions.",
-    "actions": "Your actions become your habits.",
-    "habits": "Your habits build your character.",
-    "character": "Your character shapes your destiny.",
-    "destiny": "Design who you're becoming.",
+    "thoughts": "Every thought is a seed. Plant carefully.",
+    "words": "What you tell yourself becomes the truth you live by.",
+    "actions": "Each action is a vote for who you're becoming.",
+    "habits": "Habits compound — so does neglect.",
+    "character": "You are what you repeat. Not what you intend.",
+    "destiny": "Today is the only day you actually have. Use it.",
     "skip": "Skip",
     "tapToContinue": "Tap to continue",
     "tapToBegin": "Tap to begin"
