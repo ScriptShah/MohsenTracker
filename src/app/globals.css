@@ -15,12 +15,6 @@
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-size: 16px;
-}
-/* Slightly larger root on phones so habit chips, buttons, and labels
-   read comfortably without thumbing into the corner. */
-@media (max-width: 640px) {
-  html { font-size: 17px; }
 }
 
 /* Splash root must stay fully opaque even in dark mode — my .dark
