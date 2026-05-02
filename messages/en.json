@@ -169,6 +169,10 @@
     "noStreaks": "Complete a habit today to start a streak.",
     "less": "Less",
     "more": "More",
+    "dailyBars": {
+      "title": "Last 14 days",
+      "body": "Daily completion rate. Today is highlighted on the right."
+    },
     "strengths": {
       "title": "Strong vs weak",
       "body": "Average completion across the last 30 days. Strongest categories first.",

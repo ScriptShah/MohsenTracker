@@ -41,6 +41,9 @@ function Progress() {
         <Heatmap summaries={summaries} />
       </Card>
 
+      <DailyBars summaries={summaries} />
+
+
       <CategoryStrengths
         habits={habits}
         categories={categories}
@@ -316,6 +319,98 @@ function CategoryBars({ rows }: { rows: StrengthRow[] }) {
 function shortLabel(name: string): string {
   const head = name.split(/\s+/)[0] ?? name;
   return head.length > 10 ? head.slice(0, 10) + '…' : head;
+}
+
+/** A vertical bar chart of the user's last 14 days of completion. Each
+ *  bar's height is the day's `completionRate` (0..1). Today is the
+ *  rightmost bar. Empty days render as a thin floor so the timeline is
+ *  legible even before any data exists. */
+function DailyBars({
+  summaries,
+}: {
+  summaries: Record<string, { completionRate: number; completedCount: number; totalHabits: number }>;
+}) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+
+  const days = useMemo(() => {
+    const out: { key: string; rate: number; done: number; total: number; label: string }[] = [];
+    const today = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = dateKey(d);
+      const s = summaries[key];
+      out.push({
+        key,
+        rate: s?.completionRate ?? 0,
+        done: s?.completedCount ?? 0,
+        total: s?.totalHabits ?? 0,
+        label: d.toLocaleDateString(undefined, { weekday: 'short' }),
+      });
+    }
+    return out;
+  }, [summaries]);
+
+  const maxBarHeight = 80;
+
+  return (
+    <Card className="space-y-3">
+      <div>
+        <h2 className="text-sm font-medium text-ink-700">
+          {t('progress.dailyBars.title')}
+        </h2>
+        <p className="text-xs text-ink-500">{t('progress.dailyBars.body')}</p>
+      </div>
+      <div
+        className="flex items-end justify-between gap-1.5 overflow-x-auto"
+        // The series is naturally LTR (oldest → today reads left→right).
+        dir="ltr"
+      >
+        {days.map((d, i) => {
+          const isToday = i === days.length - 1;
+          const pct = Math.round(d.rate * 100);
+          const barH = Math.max(2, Math.round(d.rate * maxBarHeight));
+          return (
+            <div
+              key={d.key}
+              className="flex min-w-0 flex-1 flex-col items-center gap-1"
+              title={`${d.key}: ${pct}% (${d.done}/${d.total})`}
+            >
+              <span className="numeral text-[10px] text-ink-500">{pct}%</span>
+              <div
+                className="flex w-full items-end justify-center"
+                style={{ height: maxBarHeight }}
+              >
+                <div
+                  className={clsx(
+                    'w-full max-w-5 rounded-md transition-all',
+                    pct >= 80
+                      ? 'bg-leaf-500'
+                      : pct >= 50
+                      ? 'bg-leaf-300'
+                      : pct > 0
+                      ? 'bg-sand-300'
+                      : 'bg-ink-100',
+                    isToday && 'ring-2 ring-leaf-600 ring-offset-1',
+                  )}
+                  style={{ height: barH }}
+                />
+              </div>
+              <span
+                className={clsx(
+                  'text-[10px]',
+                  isToday ? 'font-semibold text-leaf-700' : 'text-ink-500',
+                )}
+              >
+                {d.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
 }
 
 type Tier = 'strong' | 'medium' | 'weak' | 'empty';
