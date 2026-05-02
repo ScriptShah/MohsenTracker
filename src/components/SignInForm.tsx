@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { Card } from './Card';
 import {
   createAccountWithEmail,
+  signInAsGuest,
   signInWithEmail,
   signInWithGoogle,
 } from '@/lib/auth';
@@ -24,6 +25,15 @@ export function SignInForm({ onDone }: { onDone?: () => void }) {
     setError(null);
     setLoading(true);
     const res = await signInWithGoogle();
+    setLoading(false);
+    if (res.ok) onDone?.();
+    else setError(translateError(res.error, t));
+  };
+
+  const onGuest = async () => {
+    setError(null);
+    setLoading(true);
+    const res = await signInAsGuest();
     setLoading(false);
     if (res.ok) onDone?.();
     else setError(translateError(res.error, t));
@@ -99,6 +109,20 @@ export function SignInForm({ onDone }: { onDone?: () => void }) {
       >
         {t(mode === 'signin' ? 'auth.toggleToSignUp' : 'auth.toggleToSignIn')}
       </button>
+
+      <div className="border-t border-ink-100 pt-3">
+        <button
+          type="button"
+          onClick={onGuest}
+          disabled={loading}
+          className="block w-full text-center text-xs text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline disabled:opacity-50"
+        >
+          {t('auth.continueAsGuest')}
+        </button>
+        <p className="pt-1 text-center text-[10px] text-ink-400">
+          {t('auth.guestNote')}
+        </p>
+      </div>
     </Card>
   );
 }

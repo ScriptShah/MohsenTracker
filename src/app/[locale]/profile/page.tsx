@@ -415,17 +415,22 @@ function AuthSection() {
   if (auth.status === 'loading') return null;
 
   if (auth.status === 'signed-in') {
-    const username = emailUsername(auth.email) || auth.displayName || '';
+    const username = auth.isAnonymous
+      ? t('auth.guestLabel')
+      : emailUsername(auth.email) || auth.displayName || '';
     return (
       <Card className="space-y-2 border-leaf-200 bg-leaf-50">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-leaf-700">
-              {t('auth.username')}
+              {auth.isAnonymous ? t('auth.guestSignedIn') : t('auth.username')}
             </p>
             <p className="truncate font-medium">{username}</p>
-            {auth.email && (
+            {auth.email && !auth.isAnonymous && (
               <p className="truncate text-xs text-ink-500">{auth.email}</p>
+            )}
+            {auth.isAnonymous && (
+              <p className="text-xs text-ink-500">{t('auth.guestHint')}</p>
             )}
           </div>
           <Button

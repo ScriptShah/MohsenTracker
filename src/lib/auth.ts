@@ -5,6 +5,7 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as fbSignOut,
@@ -15,7 +16,13 @@ import { firebaseEnabled, getFirebase } from './firebase';
 export type AuthState =
   | { status: 'loading' }
   | { status: 'signed-out' }
-  | { status: 'signed-in'; uid: string; email: string | null; displayName: string | null };
+  | {
+      status: 'signed-in';
+      uid: string;
+      email: string | null;
+      displayName: string | null;
+      isAnonymous: boolean;
+    };
 
 let cache: AuthState = { status: 'loading' };
 const subs = new Set<(s: AuthState) => void>();
@@ -38,6 +45,7 @@ function start() {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
+          isAnonymous: user.isAnonymous,
         }
       : { status: 'signed-out' };
     subs.forEach((cb) => cb(cache));
@@ -105,6 +113,17 @@ export async function createAccountWithEmail(
   if (!fb) return { ok: false, error: 'firebase-disabled' };
   try {
     await createUserWithEmailAndPassword(fb.auth, email, password);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.code ?? e?.message ?? 'unknown' };
+  }
+}
+
+export async function signInAsGuest(): Promise<AuthResult> {
+  const fb = getFirebase();
+  if (!fb) return { ok: false, error: 'firebase-disabled' };
+  try {
+    await signInAnonymously(fb.auth);
     return { ok: true };
   } catch (e: any) {
     return { ok: false, error: e?.code ?? e?.message ?? 'unknown' };

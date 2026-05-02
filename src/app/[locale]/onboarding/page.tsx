@@ -136,12 +136,16 @@ export default function OnboardingPage() {
             auth.status === 'signed-in' ? (
               <Card className="border-leaf-200 bg-leaf-50">
                 <p className="text-xs uppercase tracking-wide text-leaf-700">
-                  {t('onboarding.signedInLead')}
+                  {auth.isAnonymous
+                    ? t('auth.guestSignedIn')
+                    : t('onboarding.signedInLead')}
                 </p>
                 <p className="pt-1 font-medium">
-                  {emailUsername(auth.email) || auth.displayName || ''}
+                  {auth.isAnonymous
+                    ? t('auth.guestLabel')
+                    : emailUsername(auth.email) || auth.displayName || ''}
                 </p>
-                {auth.email && (
+                {auth.email && !auth.isAnonymous && (
                   <p className="text-xs text-ink-500">{auth.email}</p>
                 )}
               </Card>

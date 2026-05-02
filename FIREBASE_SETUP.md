@@ -47,15 +47,18 @@ Settings → Environment Variables** in the Vercel dashboard.
 
 ### 4. Enable sign-in providers
 
-The app uses Google + Email/Password sign-in. Anonymous auth is **not**
-used.
+The app supports three sign-in options. Enable all three for the best
+UX (users pick whichever they prefer).
 
 1. Firebase console → **Build → Authentication → Get started**.
 2. Under **Sign-in method**, click **Google** → toggle **Enable** → pick
    the support email → **Save**. (One-tap social sign-in.)
 3. Click **Add new provider → Email/Password** → toggle **Enable** →
    **Save**. (Email + password fallback for users who don't want Google.)
-4. Under the **Settings → Authorized domains** tab, make sure
+4. Click **Add new provider → Anonymous** → toggle **Enable** → **Save**.
+   (Lets users try the app without giving an email; they can convert to
+   a real account later.)
+5. Under the **Settings → Authorized domains** tab, make sure
    `localhost` is listed (it usually is by default) and **add your Vercel
    domain** (e.g. `mohsentracker.vercel.app`) so Google sign-in works in
    production.
