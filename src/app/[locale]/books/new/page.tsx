@@ -108,7 +108,11 @@ function NewBook() {
             required
           />
         </Field>
-        <Field label={t('books.field.totalPages')}>
+        <Field
+          label={t(
+            format === 'audiobook' ? 'books.field.totalMinutes' : 'books.field.totalPages',
+          )}
+        >
           <input
             type="number"
             inputMode="numeric"

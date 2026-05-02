@@ -14,7 +14,7 @@ import { todayKey } from '@/lib/dates';
 import { dailyQuoteIndex } from '@/lib/futureSelf';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
-import { pagesRead, progressPercent } from '@/lib/books';
+import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { currentDay, stageFor } from '@/lib/reset';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
@@ -226,10 +226,15 @@ function Home() {
                 />
               </div>
               <p className="numeral text-[11px] text-ink-500">
-                {t('books.progressShort', {
-                  read: fmt(pagesRead(currentBook)),
-                  total: fmt(currentBook.totalPages),
-                })}
+                {t(
+                  isAudiobook(currentBook)
+                    ? 'books.progressShortMinutes'
+                    : 'books.progressShort',
+                  {
+                    read: fmt(pagesRead(currentBook)),
+                    total: fmt(currentBook.totalPages),
+                  },
+                )}
               </p>
             </div>
             <ChevronEnd className="h-4 w-4 text-ink-300" />

@@ -165,8 +165,13 @@ function syncReadingHabitForDate(
   const habit = state.habits.find((h) => h.id === habitId);
   if (!habit) return null;
 
+  // Sum only pages-based books. Audiobooks are minutes — different unit,
+  // mustn't pollute a pages-based reading habit's daily total.
   let sum = 0;
-  for (const b of state.books) sum += b.pagesByDate[date] ?? 0;
+  for (const b of state.books) {
+    if (b.format === 'audiobook') continue;
+    sum += b.pagesByDate[date] ?? 0;
+  }
 
   const dayLogs = { ...(state.logs[date] ?? {}) };
   const completed =

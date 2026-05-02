@@ -13,7 +13,7 @@ import { useAppStore } from '@/lib/store';
 import { getNarrative } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { shouldMuteConsequences } from '@/lib/sensitivity';
-import { pagesRead, progressPercent } from '@/lib/books';
+import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { todayKey } from '@/lib/dates';
 import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
@@ -309,6 +309,8 @@ function BookLogRow({ book }: { book: Book }) {
 
   const read = pagesRead(book);
   const pct = progressPercent(book);
+  const audio = isAudiobook(book);
+  const progressKey = audio ? 'books.progressShortMinutes' : 'books.progressShort';
 
   const onLog = () => {
     const n = Math.max(0, Math.floor(Number(value) || 0));
@@ -335,7 +337,7 @@ function BookLogRow({ book }: { book: Book }) {
         </div>
         <div className="flex items-center justify-between text-[11px] text-ink-500">
           <span className="numeral">
-            {t('books.progressShort', {
+            {t(progressKey, {
               read: fmt(read),
               total: fmt(book.totalPages),
             })}

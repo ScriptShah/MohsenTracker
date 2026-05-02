@@ -13,6 +13,7 @@ import { useAppStore } from '@/lib/store';
 import { useNumberFormatter } from '@/lib/format';
 import {
   estimatedDaysLeft,
+  isAudiobook,
   pagesRead,
   progressPercent,
   recentPace,
@@ -75,6 +76,11 @@ function BookDetail() {
   const left = Math.max(0, book.totalPages - read);
   const pace = recentPace(book);
   const daysLeft = estimatedDaysLeft(book);
+  const audio = isAudiobook(book);
+  const progressKey = audio ? 'books.progressShortMinutes' : 'books.progressShort';
+  const paceKey = audio ? 'books.paceLineMinutes' : 'books.paceLine';
+  const logTodayKey = audio ? 'books.logTodayMinutes' : 'books.logToday';
+  const totalLabelKey = audio ? 'books.field.totalMinutes' : 'books.field.totalPages';
 
   const onLog = () => {
     const n = Math.max(0, Math.floor(Number(today) || 0));
@@ -112,7 +118,7 @@ function BookDetail() {
           <p className="text-sm text-ink-600">{book.author}</p>
           <p className="text-xs text-ink-500">
             <span className="numeral">{fmt(book.totalPages)}</span>{' '}
-            {t('books.field.totalPages').toLowerCase()} · {t(`books.format.${book.format}` as any)} ·{' '}
+            {t(totalLabelKey).toLowerCase()} · {t(`books.format.${book.format}` as any)} ·{' '}
             {t(`books.category.${book.category}` as any)}
           </p>
           {book.status === 'completed' && book.rating && (
@@ -135,7 +141,7 @@ function BookDetail() {
             </div>
             <div className="flex items-center justify-between text-xs text-ink-500">
               <span className="numeral">
-                {t('books.progressShort', {
+                {t(progressKey, {
                   read: fmt(read),
                   total: fmt(book.totalPages),
                 })}
@@ -151,7 +157,7 @@ function BookDetail() {
             {daysLeft !== null && pace > 0 ? (
               <p className="text-sm text-ink-700">
                 <span className="numeral">
-                  {t('books.paceLine', {
+                  {t(paceKey, {
                     daysLeft: fmt(daysLeft),
                     pace: fmt(Math.round(pace)),
                   })}
@@ -164,7 +170,7 @@ function BookDetail() {
 
           <div className="space-y-2">
             <label className="block text-xs font-medium text-ink-700">
-              {t('books.logToday')}
+              {t(logTodayKey)}
             </label>
             <div className="flex items-center gap-2">
               <input

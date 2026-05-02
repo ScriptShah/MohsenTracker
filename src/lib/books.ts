@@ -1,5 +1,16 @@
-import type { Book, BookCategoryKey } from '@/domain/types';
+import type { Book, BookCategoryKey, BookFormat } from '@/domain/types';
 import { dateKey } from './dates';
+
+/** Audiobooks store *minutes* in pagesByDate / totalPages instead of pages.
+ *  Use this helper everywhere so display + math stay consistent. */
+export function isAudiobook(book: Book): boolean {
+  return book.format === 'audiobook';
+}
+
+/** "pages" for physical/ebook, "minutes" for audiobook. */
+export function bookUnit(book: Book): 'pages' | 'minutes' {
+  return isAudiobook(book) ? 'minutes' : 'pages';
+}
 
 export function pagesRead(book: Book): number {
   return Object.values(book.pagesByDate).reduce((a, b) => a + b, 0);
@@ -39,8 +50,21 @@ export function estimatedDaysLeft(book: Book): number | null {
 export function pagesReadInYear(books: Book[], year: number): number {
   let total = 0;
   for (const b of books) {
+    if (isAudiobook(b)) continue;
     for (const [date, pages] of Object.entries(b.pagesByDate)) {
       if (parseInt(date.slice(0, 4), 10) === year) total += pages;
+    }
+  }
+  return total;
+}
+
+/** Sum of audiobook minutes logged in the given year. */
+export function audioMinutesInYear(books: Book[], year: number): number {
+  let total = 0;
+  for (const b of books) {
+    if (!isAudiobook(b)) continue;
+    for (const [date, minutes] of Object.entries(b.pagesByDate)) {
+      if (parseInt(date.slice(0, 4), 10) === year) total += minutes;
     }
   }
   return total;

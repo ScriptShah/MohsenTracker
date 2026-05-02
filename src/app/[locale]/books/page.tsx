@@ -8,7 +8,7 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
-import { progressPercent, pagesRead } from '@/lib/books';
+import { isAudiobook, progressPercent, pagesRead } from '@/lib/books';
 import { useNumberFormatter } from '@/lib/format';
 import type { Book, Habit } from '@/domain/types';
 
@@ -210,6 +210,9 @@ function ReadingRow({
 }) {
   const read = pagesRead(book);
   const pct = progressPercent(book);
+  const progressKey = isAudiobook(book)
+    ? 'books.progressShortMinutes'
+    : 'books.progressShort';
   return (
     <Link href={`/books/${book.id}`} className="block">
       <Card className="flex items-center gap-3 transition hover:border-ink-300">
@@ -225,7 +228,7 @@ function ReadingRow({
           </div>
           <div className="flex items-center justify-between text-[11px] text-ink-500">
             <span className="numeral">
-              {t('books.progressShort', { read: fmt(read), total: fmt(book.totalPages) })}
+              {t(progressKey, { read: fmt(read), total: fmt(book.totalPages) })}
             </span>
             <span className="numeral">
               {t('books.progressPercent', { n: fmt(Math.round(pct * 100)) })}

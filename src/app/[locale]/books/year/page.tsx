@@ -10,6 +10,7 @@ import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
 import { useNumberFormatter } from '@/lib/format';
 import {
+  audioMinutesInYear,
   booksCompletedInYear,
   categoryBreakdown,
   pagesReadInYear,
@@ -46,7 +47,9 @@ function YearReview() {
 
   const completed = booksCompletedInYear(books, year);
   const totalPages = pagesReadInYear(books, year);
-  const hours = readingHoursEstimate(totalPages);
+  const totalMinutes = audioMinutesInYear(books, year);
+  // Estimate hours from pages (~2 min/page) + add audio minutes directly.
+  const hours = readingHoursEstimate(totalPages) + Math.round(totalMinutes / 60);
   const breakdown = categoryBreakdown(completed);
 
   return (
@@ -80,7 +83,9 @@ function YearReview() {
         </label>
       </header>
 
-      <Card className="grid grid-cols-3 gap-3 bg-gradient-to-br from-leaf-50 to-white">
+      <Card
+        className={`grid ${totalMinutes > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-3 bg-gradient-to-br from-leaf-50 to-white`}
+      >
         <Stat
           big={fmt(completed.length)}
           label={
@@ -93,6 +98,12 @@ function YearReview() {
           big={fmt(totalPages)}
           label={t('books.yearReview.totalsPages', { n: fmt(totalPages) })}
         />
+        {totalMinutes > 0 && (
+          <Stat
+            big={fmt(totalMinutes)}
+            label={t('books.yearReview.totalsMinutes', { n: fmt(totalMinutes) })}
+          />
+        )}
         <Stat
           big={fmt(hours)}
           label={t('books.yearReview.totalsHours', { n: fmt(hours) })}
