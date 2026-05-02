@@ -83,13 +83,14 @@ export function buildSeedCategories(translate: (key: CategoryKey) => string): Ca
 }
 
 export function buildSeedHabits(
-  selectedCategoryKeys: CategoryKey[],
+  selectedPresetKeys: string[],
   translate: (presetKey: string) => string,
 ): Habit[] {
   const now = new Date().toISOString();
+  const set = new Set(selectedPresetKeys);
   return presetHabits
-    .filter((p) => selectedCategoryKeys.includes(p.category))
-    .map((p, idx) => ({
+    .filter((p) => set.has(p.presetKey))
+    .map((p) => ({
       id: `habit_${p.presetKey}`,
       categoryId: `cat_${p.category}`,
       presetKey: p.presetKey,

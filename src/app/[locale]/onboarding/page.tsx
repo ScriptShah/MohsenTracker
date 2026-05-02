@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useAppStore } from '@/lib/store';
-import { seedCategories } from '@/domain/seed';
+import { presetHabits, seedCategories } from '@/domain/seed';
 import type { CategoryKey, Profile } from '@/domain/types';
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 export default function OnboardingPage() {
   const t = useTranslations();
@@ -24,6 +24,9 @@ export default function OnboardingPage() {
   const [why, setWhy] = useState('');
   const [selectedKeys, setSelectedKeys] = useState<CategoryKey[]>(
     seedCategories.map((c) => c.key),
+  );
+  const [selectedPresets, setSelectedPresets] = useState<Set<string>>(
+    () => new Set(presetHabits.map((p) => p.presetKey)),
   );
 
   const next = () => setStep((s) => Math.min(TOTAL_STEPS - 1, s + 1));
@@ -46,9 +49,15 @@ export default function OnboardingPage() {
       onboardingComplete: true,
       createdAt: new Date().toISOString(),
     };
+    // Only keep presets whose category is still selected.
+    const finalPresets = [...selectedPresets].filter((k) => {
+      const p = presetHabits.find((p) => p.presetKey === k);
+      return p && selectedKeys.includes(p.category);
+    });
     initFromOnboarding({
       profile,
       selectedCategoryKeys: selectedKeys,
+      selectedPresetKeys: finalPresets,
       presetTranslate: (key) => t(`presets.${key}` as any),
       categoryTranslate: (key) => t(`categories.names.${key}` as any),
     });
@@ -56,9 +65,30 @@ export default function OnboardingPage() {
   };
 
   const toggleCategory = (key: CategoryKey) => {
-    setSelectedKeys((arr) =>
-      arr.includes(key) ? arr.filter((k) => k !== key) : [...arr, key],
-    );
+    setSelectedKeys((arr) => {
+      const had = arr.includes(key);
+      // Sync the preset set so toggling a category cleanly adds/removes
+      // every preset under it. The user can then fine-tune in step 6.
+      setSelectedPresets((ps) => {
+        const next = new Set(ps);
+        for (const p of presetHabits) {
+          if (p.category !== key) continue;
+          if (had) next.delete(p.presetKey);
+          else next.add(p.presetKey);
+        }
+        return next;
+      });
+      return had ? arr.filter((k) => k !== key) : [...arr, key];
+    });
+  };
+
+  const togglePreset = (key: string) => {
+    setSelectedPresets((ps) => {
+      const next = new Set(ps);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
   return (
@@ -146,6 +176,10 @@ export default function OnboardingPage() {
           <ul className="space-y-2">
             {seedCategories.map((c) => {
               const active = selectedKeys.includes(c.key);
+              const inCat = presetHabits.filter((p) => p.category === c.key).length;
+              const picked = presetHabits.filter(
+                (p) => p.category === c.key && selectedPresets.has(p.presetKey),
+              ).length;
               return (
                 <li key={c.key}>
                   <button
@@ -164,8 +198,18 @@ export default function OnboardingPage() {
                     >
                       {c.icon}
                     </span>
-                    <span className="flex-1 font-medium">
-                      {t(`categories.names.${c.key}` as any)}
+                    <span className="flex-1">
+                      <span className="block font-medium">
+                        {t(`categories.names.${c.key}` as any)}
+                      </span>
+                      {active && inCat > 0 && (
+                        <span className="numeral block text-[11px] text-ink-500">
+                          {t('onboarding.habitsSelected', {
+                            picked,
+                            total: inCat,
+                          })}
+                        </span>
+                      )}
                     </span>
                     <span
                       className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
@@ -183,6 +227,14 @@ export default function OnboardingPage() {
         </Card>
       )}
 
+      {step === 6 && (
+        <HabitsPicker
+          selectedKeys={selectedKeys}
+          selectedPresets={selectedPresets}
+          togglePreset={togglePreset}
+        />
+      )}
+
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" onClick={back} disabled={step === 0}>
           {t('common.back')}
@@ -196,6 +248,80 @@ export default function OnboardingPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function HabitsPicker({
+  selectedKeys,
+  selectedPresets,
+  togglePreset,
+}: {
+  selectedKeys: CategoryKey[];
+  selectedPresets: Set<string>;
+  togglePreset: (key: string) => void;
+}) {
+  const t = useTranslations();
+  const grouped = useMemo(() => {
+    return selectedKeys
+      .map((k) => ({
+        key: k,
+        seed: seedCategories.find((c) => c.key === k)!,
+        presets: presetHabits.filter((p) => p.category === k),
+      }))
+      .filter((g) => g.presets.length > 0);
+  }, [selectedKeys]);
+
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h2 className="text-xl font-semibold">{t('onboarding.habitsTitle')}</h2>
+        <p className="text-ink-600">{t('onboarding.habitsBody')}</p>
+      </div>
+      {grouped.length === 0 ? (
+        <p className="text-sm text-ink-500">{t('onboarding.habitsNoCategories')}</p>
+      ) : (
+        grouped.map(({ key, seed, presets }) => (
+          <section key={key} className="space-y-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-ink-800">
+              <span aria-hidden>{seed.icon}</span>
+              {t(`categories.names.${key}` as any)}
+            </h3>
+            <ul className="space-y-1.5">
+              {presets.map((p) => {
+                const checked = selectedPresets.has(p.presetKey);
+                return (
+                  <li key={p.presetKey}>
+                    <button
+                      type="button"
+                      onClick={() => togglePreset(p.presetKey)}
+                      className={`tap-44 flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-start ${
+                        checked
+                          ? 'border-leaf-500 bg-leaf-50'
+                          : 'border-ink-200 bg-white'
+                      }`}
+                    >
+                      <span className="flex-1 text-sm">
+                        {t(`presets.${p.presetKey}` as any)}
+                      </span>
+                      <span
+                        className={`flex h-5 w-5 items-center justify-center rounded-full border-2 text-[11px] ${
+                          checked
+                            ? 'border-leaf-500 bg-leaf-500 text-white'
+                            : 'border-ink-300'
+                        }`}
+                        aria-hidden
+                      >
+                        {checked ? '✓' : ''}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))
+      )}
+    </Card>
   );
 }
 

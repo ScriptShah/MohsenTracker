@@ -47,6 +47,10 @@
     "whyPlaceholder": "Because I want my children to see a father who keeps his word, prays on time, and never gives up…",
     "categoriesTitle": "Pick what you'll track",
     "categoriesBody": "Start with what feels right. You can change this later.",
+    "habitsTitle": "Pick your starting habits",
+    "habitsBody": "Tap to keep or drop each habit. You can always add more from /habits/new.",
+    "habitsSelected": "{picked} of {total} habits",
+    "habitsNoCategories": "Pick at least one category first.",
     "finish": "Finish setup"
   },
   "home": {

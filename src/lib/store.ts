@@ -25,6 +25,7 @@ import type {
 import {
   buildSeedCategories,
   buildSeedHabits,
+  presetHabits,
 } from '@/domain/seed';
 import { dateKey, nextDayKey, previousDayKey, todayKey } from './dates';
 import { isLogSuccessful, recomputeStreak } from './streaks';
@@ -62,6 +63,10 @@ interface AppState {
   initFromOnboarding: (args: {
     profile: Profile;
     selectedCategoryKeys: CategoryKey[];
+    /** Preset habit keys the user picked during the per-category step.
+     *  When omitted, every preset in `selectedCategoryKeys` is used (legacy
+     *  back-compat). */
+    selectedPresetKeys?: string[];
     presetTranslate: (presetKey: string) => string;
     categoryTranslate: (key: CategoryKey) => string;
   }) => void;
@@ -232,6 +237,7 @@ export const useAppStore = create<AppState>()(
       initFromOnboarding: ({
         profile,
         selectedCategoryKeys,
+        selectedPresetKeys,
         presetTranslate,
         categoryTranslate,
       }) => {
@@ -240,7 +246,12 @@ export const useAppStore = create<AppState>()(
           ...c,
           isActive: selectedCategoryKeys.includes(c.key as CategoryKey),
         }));
-        const habits = buildSeedHabits(selectedCategoryKeys, presetTranslate);
+        // If the caller didn't pass an explicit preset list, fall back to
+        // every preset under the selected categories (legacy behavior).
+        const presetKeys = selectedPresetKeys ?? presetHabits
+          .filter((p) => selectedCategoryKeys.includes(p.category))
+          .map((p) => p.presetKey);
+        const habits = buildSeedHabits(presetKeys, presetTranslate);
         set({
           profile,
           categories,
