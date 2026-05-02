@@ -10,6 +10,7 @@ import { useAppStore } from '@/lib/store';
 import { presetHabits, seedCategories } from '@/domain/seed';
 import { useAuth, emailUsername } from '@/lib/auth';
 import { firebaseEnabled } from '@/lib/firebase';
+import { useRandomPlaceholder } from '@/lib/placeholders';
 import type { CategoryKey, Profile } from '@/domain/types';
 
 const TOTAL_STEPS = 8;
@@ -22,6 +23,8 @@ export default function OnboardingPage() {
 
   const auth = useAuth();
   const authActive = firebaseEnabled();
+  const visionPlaceholder = useRandomPlaceholder('vision');
+  const whyPlaceholder = useRandomPlaceholder('why');
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
@@ -161,6 +164,7 @@ export default function OnboardingPage() {
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.namePlaceholder')}
             maxLength={50}
+            required
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -194,8 +198,9 @@ export default function OnboardingPage() {
             value={vision}
             onChange={(e) => setVision(e.target.value)}
             rows={5}
-            placeholder={t('onboarding.visionPlaceholder')}
+            placeholder={visionPlaceholder}
             maxLength={500}
+            required
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -210,7 +215,7 @@ export default function OnboardingPage() {
             value={why}
             onChange={(e) => setWhy(e.target.value)}
             rows={5}
-            placeholder={t('onboarding.whyPlaceholder')}
+            placeholder={whyPlaceholder}
             maxLength={500}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
@@ -289,13 +294,19 @@ export default function OnboardingPage() {
           {t('common.back')}
         </Button>
         {step < TOTAL_STEPS - 1 ? (
-          <Button onClick={next} disabled={!stepValid(step, name, selectedKeys)}>
+          <Button
+            onClick={next}
+            disabled={!stepValid(step, { name, vision, selectedKeys })}
+          >
             {t('common.next')}
           </Button>
         ) : (
           <Button
             onClick={finish}
-            disabled={selectedKeys.length === 0 || !stepValid(step, name, selectedKeys)}
+            disabled={
+              selectedKeys.length === 0 ||
+              !stepValid(step, { name, vision, selectedKeys })
+            }
           >
             {t('onboarding.finish')}
           </Button>
@@ -305,16 +316,20 @@ export default function OnboardingPage() {
   );
 }
 
-/** Per-step required-field gate. Only enforces the strictly necessary
- *  fields (name on step 2, at least one category on step 6); the rest
- *  may be skipped. */
+/** Per-step required-field gate. Necessary fields:
+ *  - step 2: name (≥1 trimmed char)
+ *  - step 4: future-self vision (≥1 trimmed char) — the spec calls this
+ *    the emotional core, so don't let users skip it.
+ *  - step 6: at least one category picked.
+ *  Other steps (sign-in, future-self name, why-it-matters, habits picker)
+ *  are all skippable. */
 function stepValid(
   step: number,
-  name: string,
-  selectedKeys: CategoryKey[],
+  s: { name: string; vision: string; selectedKeys: CategoryKey[] },
 ): boolean {
-  if (step === 2) return name.trim().length > 0;
-  if (step === 6) return selectedKeys.length > 0;
+  if (step === 2) return s.name.trim().length > 0;
+  if (step === 4) return s.vision.trim().length > 0;
+  if (step === 6) return s.selectedKeys.length > 0;
   return true;
 }
 
