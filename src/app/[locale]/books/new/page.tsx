@@ -95,6 +95,7 @@ function NewBook() {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            maxLength={200}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             required
             autoFocus
@@ -104,6 +105,7 @@ function NewBook() {
           <input
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
+            maxLength={100}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             required
           />
@@ -117,6 +119,7 @@ function NewBook() {
             type="number"
             inputMode="numeric"
             min={1}
+            max={100000}
             value={totalPages}
             onChange={(e) => setTotalPages(e.target.value)}
             className="numeral w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
@@ -157,6 +160,7 @@ function NewBook() {
             onChange={(e) => setWhyReading(e.target.value)}
             rows={3}
             placeholder={t('books.field.whyReadingPlaceholder')}
+            maxLength={300}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
           />
         </Field>

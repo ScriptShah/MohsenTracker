@@ -129,6 +129,7 @@ function NewCategoryForm({ onClose }: { onClose: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('categories.namePlaceholder')}
+            maxLength={40}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             autoFocus
             required

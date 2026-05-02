@@ -79,6 +79,7 @@ function NewHabit() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('habit.namePlaceholder')}
+            maxLength={60}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             required
           />
@@ -121,6 +122,7 @@ function NewHabit() {
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               placeholder={t('habit.unitPlaceholder')}
+              maxLength={20}
               className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             />
           </Field>
@@ -129,6 +131,8 @@ function NewHabit() {
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
+                max={100000}
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
                 className="numeral w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
@@ -139,6 +143,8 @@ function NewHabit() {
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
+                max={100000}
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
                 className="numeral w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
@@ -153,6 +159,7 @@ function NewHabit() {
               value={replacementName}
               onChange={(e) => setReplacementName(e.target.value)}
               placeholder={t('habit.replacementPlaceholder')}
+              maxLength={60}
               className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
             />
           </Field>

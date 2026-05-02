@@ -160,6 +160,7 @@ export default function OnboardingPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('onboarding.namePlaceholder')}
+            maxLength={50}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -178,6 +179,7 @@ export default function OnboardingPage() {
             value={futureSelfName}
             onChange={(e) => setFutureSelfName(e.target.value)}
             placeholder={t('onboarding.futureSelfNamePlaceholder')}
+            maxLength={50}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -193,6 +195,7 @@ export default function OnboardingPage() {
             onChange={(e) => setVision(e.target.value)}
             rows={5}
             placeholder={t('onboarding.visionPlaceholder')}
+            maxLength={500}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -208,6 +211,7 @@ export default function OnboardingPage() {
             onChange={(e) => setWhy(e.target.value)}
             rows={5}
             placeholder={t('onboarding.whyPlaceholder')}
+            maxLength={500}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 text-base outline-none focus:border-leaf-500"
             autoFocus
           />
@@ -285,15 +289,33 @@ export default function OnboardingPage() {
           {t('common.back')}
         </Button>
         {step < TOTAL_STEPS - 1 ? (
-          <Button onClick={next}>{t('common.next')}</Button>
+          <Button onClick={next} disabled={!stepValid(step, name, selectedKeys)}>
+            {t('common.next')}
+          </Button>
         ) : (
-          <Button onClick={finish} disabled={selectedKeys.length === 0}>
+          <Button
+            onClick={finish}
+            disabled={selectedKeys.length === 0 || !stepValid(step, name, selectedKeys)}
+          >
             {t('onboarding.finish')}
           </Button>
         )}
       </div>
     </div>
   );
+}
+
+/** Per-step required-field gate. Only enforces the strictly necessary
+ *  fields (name on step 2, at least one category on step 6); the rest
+ *  may be skipped. */
+function stepValid(
+  step: number,
+  name: string,
+  selectedKeys: CategoryKey[],
+): boolean {
+  if (step === 2) return name.trim().length > 0;
+  if (step === 6) return selectedKeys.length > 0;
+  return true;
 }
 
 function HabitsPicker({
