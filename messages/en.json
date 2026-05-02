@@ -98,6 +98,15 @@
       "relationships": "Relationships"
     }
   },
+  "splash": {
+    "thoughts": "Your thoughts become your words.",
+    "words": "Your words become your actions.",
+    "actions": "Your actions become your habits.",
+    "habits": "Your habits build your character.",
+    "character": "Your character shapes your destiny.",
+    "destiny": "Design who you're becoming.",
+    "skip": "Skip"
+  },
   "auth": {
     "signinTitle": "Sign in",
     "signupTitle": "Create account",

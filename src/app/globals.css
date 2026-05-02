@@ -144,6 +144,29 @@ body {
 .dark .via-transparent { --tw-gradient-via: transparent; }
 .dark .to-sand-50 { --tw-gradient-to: rgb(168 90 32 / 0.2) var(--tw-gradient-to-position); }
 
+/* ── Splash screen animations ──────────────────────────────────────── */
+@keyframes splash-fade-up {
+  0%   { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes splash-fade-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes splash-line-grow {
+  0%   { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+@keyframes splash-logo-float {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+.splash-fade-up   { animation: splash-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards; opacity: 0; }
+.splash-fade-out  { animation: splash-fade-out 600ms ease-out forwards; }
+.splash-line-grow { animation: splash-line-grow 500ms ease-out forwards; transform-origin: top; transform: scaleY(0); }
+.splash-logo-float { animation: splash-logo-float 3.5s ease-in-out infinite; }
+
 /* Numbers stay LTR even inside RTL UI (spec §13). */
 .numeral {
   direction: ltr;
