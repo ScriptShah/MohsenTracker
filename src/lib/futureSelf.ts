@@ -58,12 +58,18 @@ export function dailyQuoteIndex(quoteCount: number): number {
   return ((days % quoteCount) + quoteCount) % quoteCount;
 }
 
-/** Indices of futureSelf.quotes.* that reference Islamic practices
- *  (q3 Quran, q4 Tahajjud, q5 Sadaqah). Filtered out for users who
- *  didn't pick the Islamic category, so the rotating compound-quote
- *  card on /future-self stays on-context for everyone. */
-const ISLAMIC_QUOTE_INDICES: ReadonlySet<number> = new Set([3, 4, 5]);
-const TOTAL_QUOTES = 7;
+/** Indices of futureSelf.quotes.* that reference Islamic practices or
+ *  the Prophetic tradition. Filtered out for users who didn't pick the
+ *  Islamic category, so the rotating compound-quote card on
+ *  /future-self stays on-context for everyone.
+ *
+ *  q0..q6:   compound-effect lines (q3-q5 Islamic).
+ *  q7..q11:  Prophetic wisdom on consistency, growth, character,
+ *            truthfulness, and environment design (all Islamic). */
+const ISLAMIC_QUOTE_INDICES: ReadonlySet<number> = new Set([
+  3, 4, 5, 7, 8, 9, 10, 11,
+]);
+const TOTAL_QUOTES = 12;
 
 /** Today's quote index, optionally filtered to non-Islamic indices. */
 export function dailyCompoundQuoteIdx(islamicActive: boolean): number {
