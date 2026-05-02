@@ -48,6 +48,18 @@ body {
 .dark .bg-ink-300 { background-color: rgb(71 85 105); }  /* ink-600 — keeps "empty" bars dark */
 .dark .bg-ink-400 { background-color: rgb(100 116 139); }/* ink-500 */
 
+/* Toggle switch knobs need to stay LIGHT in dark mode so they read against
+   the off-state track. Plain `bg-white` would inherit the global override
+   and disappear. */
+.toggle-knob { background-color: white; }
+.dark .toggle-knob { background-color: rgb(226 232 240); } /* ink-200 light */
+
+/* Placeholder text on inputs — soft on light, soft on dark */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(100 116 139); /* ink-500 */
+}
+
 /* Translucent navs / overlays */
 .dark .bg-white\/80 { background-color: rgb(30 41 59 / 0.8); }
 .dark .bg-white\/90 { background-color: rgb(30 41 59 / 0.9); }
@@ -78,7 +90,9 @@ body {
 .dark .border-sand-200 { border-color: rgb(168 90 32 / 0.6); }
 .dark .divide-ink-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(51 65 85); }
 
-/* Text — invert the ink scale */
+/* Text + currentColor for SVG strokes — invert the ink scale */
+.dark .text-ink-100 { color: rgb(51 65 85); }   /* ink-700 — outlines/dim strokes */
+.dark .text-ink-200 { color: rgb(71 85 105); }  /* ink-600 — used by CompletionRing empty stroke */
 .dark .text-ink-300 { color: rgb(100 116 139); } /* ink-500 */
 .dark .text-ink-400 { color: rgb(148 163 184); } /* ink-400 */
 .dark .text-ink-500 { color: rgb(148 163 184); }

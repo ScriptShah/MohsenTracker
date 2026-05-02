@@ -225,7 +225,7 @@ function HabitDetail() {
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            className={`toggle-knob absolute top-0.5 h-5 w-5 rounded-full shadow transition-all ${
               habit.isCritical ? 'start-[22px]' : 'start-0.5'
             }`}
             aria-hidden
