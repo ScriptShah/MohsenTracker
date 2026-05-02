@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/routing';
@@ -8,6 +8,7 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
+import { presetHabits } from '@/domain/seed';
 
 export default function NewHabitPage() {
   return (
@@ -69,6 +70,8 @@ function NewHabit() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <h1 className="text-xl font-semibold">{t('habit.newTitle')}</h1>
+
+      <PresetPicker />
 
       <Card className="space-y-4">
         <Field label={t('habit.name')}>
@@ -209,5 +212,65 @@ function TypeChip({
     >
       {label}
     </button>
+  );
+}
+
+/** One-tap add for the seed habits the user doesn't already have. */
+function PresetPicker() {
+  const t = useTranslations();
+  const router = useRouter();
+  const search = useSearchParams();
+  const initialCategoryId = search.get('categoryId') ?? '';
+  const habits = useAppStore((s) => s.habits);
+  const categories = useAppStore((s) => s.categories);
+  const addHabit = useAppStore((s) => s.addHabit);
+
+  const available = useMemo(() => {
+    const haveByPreset = new Set(habits.map((h) => h.presetKey).filter(Boolean));
+    return presetHabits.filter((p) => !haveByPreset.has(p.presetKey));
+  }, [habits]);
+
+  if (available.length === 0) return null;
+
+  const onPick = (presetKey: string) => {
+    const preset = presetHabits.find((p) => p.presetKey === presetKey);
+    if (!preset) return;
+    const cat = categories.find((c) => c.key === preset.category && c.isActive)
+      ?? categories.find((c) => c.isActive);
+    if (!cat) return;
+    addHabit({
+      categoryId: cat.id,
+      presetKey: preset.presetKey,
+      name: t(`presets.${preset.presetKey}` as any),
+      type: preset.type,
+      unit: preset.unit,
+      target: preset.target,
+      limit: preset.limit,
+      frequency: 'daily',
+    });
+    router.replace(initialCategoryId ? `/categories/${initialCategoryId}` : '/');
+  };
+
+  return (
+    <Card className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('habit.presetsTitle')}
+        </h2>
+        <p className="text-xs text-ink-500">{t('habit.presetsBody')}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {available.map((p) => (
+          <button
+            key={p.presetKey}
+            type="button"
+            onClick={() => onPick(p.presetKey)}
+            className="tap-44 rounded-xl border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-leaf-400 hover:text-leaf-700"
+          >
+            + {t(`presets.${p.presetKey}` as any)}
+          </button>
+        ))}
+      </div>
+    </Card>
   );
 }

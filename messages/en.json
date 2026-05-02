@@ -94,7 +94,9 @@
     "replacement": "Replacement habit",
     "replacementHint": "What good habit will you do instead?",
     "replacementPlaceholder": "Read instead of scrolling",
-    "create": "Create habit"
+    "create": "Create habit",
+    "presetsTitle": "Pick from presets",
+    "presetsBody": "One-tap add for the habits you don't have yet."
   },
   "progress": {
     "title": "Progress",

@@ -94,7 +94,9 @@
     "replacement": "عادت جای‌گزین",
     "replacementHint": "به‌جای آن چه عادت خوبی انجام می‌دهی؟",
     "replacementPlaceholder": "خواندن به‌جای اسکرول کردن",
-    "create": "ساخت عادت"
+    "create": "ساخت عادت",
+    "presetsTitle": "از پیش‌فرض‌ها انتخاب کن",
+    "presetsBody": "افزودنِ یک‌ضربه‌ای برای عادت‌هایی که هنوز نداری."
   },
   "progress": {
     "title": "پیشرفت",
