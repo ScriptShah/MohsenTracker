@@ -27,7 +27,20 @@ function bucket(rate: number | undefined): number {
 
 export function Heatmap({ summaries }: Props) {
   const t = useTranslations('progress');
-  const grid = heatmapGrid();
+  const grid = heatmapGrid(); // grid[dow][week]
+
+  // Build the cell list in COLUMN-major order so it lines up with the
+  // CSS grid's `grid-flow-col` placement: items 0–6 fill column 1 top to
+  // bottom (one week, Sun→Sat), items 7–13 fill column 2, etc.
+  const cells: { key: string; dateKey: string | null }[] = [];
+  const cols = grid[0]?.length ?? 0;
+  const rows = grid.length;
+  for (let week = 0; week < cols; week++) {
+    for (let dow = 0; dow < rows; dow++) {
+      const dateKey = grid[dow][week];
+      cells.push({ key: `${week}-${dow}`, dateKey });
+    }
+  }
 
   return (
     <div className="space-y-2">
@@ -37,14 +50,14 @@ export function Heatmap({ summaries }: Props) {
         dir="ltr"
       >
         <div className="inline-grid grid-flow-col grid-rows-7 gap-[2px] p-1">
-          {grid.flat().map((dateKey, idx) => {
+          {cells.map(({ key, dateKey }) => {
             if (!dateKey) {
-              return <div key={idx} className="h-3 w-3" />;
+              return <div key={key} className="h-3 w-3" />;
             }
             const rate = summaries[dateKey]?.completionRate;
             return (
               <div
-                key={dateKey}
+                key={key}
                 title={`${dateKey}: ${
                   rate === undefined ? '—' : Math.round(rate * 100) + '%'
                 }`}
