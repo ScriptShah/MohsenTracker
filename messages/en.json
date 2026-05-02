@@ -71,6 +71,13 @@
   "categories": {
     "title": "Categories",
     "addHabit": "Add habit",
+    "addCustom": "New category",
+    "newTitle": "Custom category",
+    "newName": "Name",
+    "newIcon": "Icon",
+    "newColor": "Color",
+    "namePlaceholder": "Hobbies, Side project, Marriage…",
+    "create": "Create",
     "habitsCount": "{n} habits",
     "habitsCountOne": "1 habit",
     "noHabitsInCategory": "No habits here yet.",
