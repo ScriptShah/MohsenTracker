@@ -389,6 +389,18 @@
       "categoryCardTitle": "Books",
       "categoryCardBody": "Track what you're reading, finish more of it, see your year in books."
     },
+    "habitLink": {
+      "linkedTitle": "Linked to your reading habit",
+      "linkedBody": "{name} · {streak} day streak",
+      "linkedBodyOne": "{name} · 1 day streak",
+      "linkedBodyZero": "{name}",
+      "viewHabit": "View habit",
+      "unlinkedTitle": "Track this in your habits",
+      "unlinkedBody": "Connect Books to a daily reading habit so book pages count toward your streak.",
+      "connectExisting": "Connect to {name}",
+      "createNew": "Create a daily reading habit",
+      "unlink": "Unlink"
+    },
     "completionCelebration": "✨ Mashallah!"
   },
   "settings": {

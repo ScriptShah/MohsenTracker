@@ -3,13 +3,14 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
 import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
 import { progressPercent, pagesRead } from '@/lib/books';
 import { useNumberFormatter } from '@/lib/format';
-import type { Book } from '@/domain/types';
+import type { Book, Habit } from '@/domain/types';
 
 export default function BooksPage() {
   return (
@@ -45,6 +46,8 @@ function BooksShelf() {
           {t('books.yearReviewLink')} <ChevronEnd className="h-3.5 w-3.5" />
         </Link>
       </header>
+
+      <HabitLinkBanner hasBooks={books.length > 0} />
 
       {reading.length > 5 && (
         <Card className="border-sand-200 bg-sand-50 text-sm text-sand-700">
@@ -100,6 +103,99 @@ function BooksShelf() {
         )}
       </section>
     </div>
+  );
+}
+
+function HabitLinkBanner({ hasBooks }: { hasBooks: boolean }) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const profile = useAppStore((s) => s.profile);
+  const habits = useAppStore((s) => s.habits);
+  const categories = useAppStore((s) => s.categories);
+  const streaks = useAppStore((s) => s.streaks);
+  const setReadingHabit = useAppStore((s) => s.setReadingHabit);
+  const addHabit = useAppStore((s) => s.addHabit);
+
+  const readingHabit: Habit | undefined = profile?.readingHabitId
+    ? habits.find((h) => h.id === profile.readingHabitId)
+    : undefined;
+
+  if (readingHabit) {
+    const streak = streaks[readingHabit.id]?.current ?? 0;
+    const bodyKey =
+      streak === 0
+        ? 'books.habitLink.linkedBodyZero'
+        : streak === 1
+        ? 'books.habitLink.linkedBodyOne'
+        : 'books.habitLink.linkedBody';
+    return (
+      <Card className="flex items-center justify-between gap-3 border-leaf-200 bg-leaf-50">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-wide text-leaf-700">
+            {t('books.habitLink.linkedTitle')}
+          </p>
+          <p className="numeral pt-1 text-sm text-ink-700">
+            {t(bodyKey, { name: readingHabit.name, streak: fmt(streak) })}
+          </p>
+        </div>
+        <Link
+          href={`/habits/${readingHabit.id}`}
+          className="inline-flex items-center gap-1 text-xs text-leaf-700 underline-offset-4 hover:underline"
+        >
+          {t('books.habitLink.viewHabit')} <ChevronEnd className="h-3 w-3" />
+        </Link>
+      </Card>
+    );
+  }
+
+  if (!hasBooks) return null;
+
+  const candidate =
+    habits.find((h) => h.presetKey === 'reading') ??
+    habits.find((h) => h.unit === 'pages' && h.type === 'good');
+
+  const onConnect = () => {
+    if (candidate) setReadingHabit(candidate.id);
+  };
+
+  const onCreateAndLink = () => {
+    const growth = categories.find((c) => c.key === 'growth' && c.isActive)
+      ?? categories.find((c) => c.isActive);
+    if (!growth) return;
+    const habit = addHabit({
+      categoryId: growth.id,
+      presetKey: 'reading',
+      name: t('presets.reading'),
+      type: 'good',
+      unit: 'pages',
+      target: 10,
+      frequency: 'daily',
+    });
+    setReadingHabit(habit.id);
+  };
+
+  return (
+    <Card className="space-y-3 border-sand-200 bg-sand-50">
+      <div>
+        <p className="text-xs uppercase tracking-wide text-sand-600">
+          {t('books.habitLink.unlinkedTitle')}
+        </p>
+        <p className="pt-1 text-sm leading-relaxed text-ink-700">
+          {t('books.habitLink.unlinkedBody')}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {candidate ? (
+          <Button type="button" onClick={onConnect}>
+            {t('books.habitLink.connectExisting', { name: candidate.name })}
+          </Button>
+        ) : (
+          <Button type="button" onClick={onCreateAndLink}>
+            {t('books.habitLink.createNew')}
+          </Button>
+        )}
+      </div>
+    </Card>
   );
 }
 

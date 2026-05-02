@@ -383,6 +383,18 @@
       "noBooks": "هنوز کتابِ تمام‌شده‌ای در این سال نیست.",
       "shelfTitle": "قفسهٔ تو"
     },
+    "habitLink": {
+      "linkedTitle": "متصل به عادتِ خواندن",
+      "linkedBody": "{name} · رشتهٔ {streak} روزه",
+      "linkedBodyOne": "{name} · رشتهٔ ۱ روزه",
+      "linkedBodyZero": "{name}",
+      "viewHabit": "نمایش عادت",
+      "unlinkedTitle": "این را به عادت‌هایت وصل کن",
+      "unlinkedBody": "کتاب‌ها را به یک عادتِ روزانهٔ خواندن وصل کن تا صفحه‌هایی که می‌خوانی در رشتهٔ عادت ثبت شود.",
+      "connectExisting": "اتصال به {name}",
+      "createNew": "ساختِ عادتِ روزانهٔ خواندن",
+      "unlink": "قطعِ اتصال"
+    },
     "feature": {
       "homeReadingTitle": "در دستِ خواندن",
       "homeReadingCta": "بازکردنِ کتاب ›",
