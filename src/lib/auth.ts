@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
   signInAnonymously,
   signInWithEmailAndPassword,
@@ -11,6 +12,7 @@ import {
   signOut as fbSignOut,
   type User,
 } from 'firebase/auth';
+import { collection, deleteDoc, getDocs } from 'firebase/firestore';
 import { firebaseEnabled, getFirebase } from './firebase';
 
 export type AuthState =
@@ -134,4 +136,31 @@ export async function signOutUser(): Promise<void> {
   const fb = getFirebase();
   if (!fb) return;
   await fbSignOut(fb.auth);
+}
+
+/** Hard-delete the current user. Removes their Firestore tick history
+ *  (best-effort) and then deletes the auth record. Firebase requires a
+ *  recent sign-in for non-anonymous deletes — if too much time has
+ *  passed, returns `requires-recent-login` and the caller should ask the
+ *  user to sign in again, then retry. */
+export async function deleteAccount(): Promise<AuthResult> {
+  const fb = getFirebase();
+  if (!fb) return { ok: false, error: 'firebase-disabled' };
+  const user = fb.auth.currentUser;
+  if (!user) return { ok: false, error: 'no-user' };
+  try {
+    // Best-effort wipe of the user's tick docs. Permission-denied or
+    // missing collection both fall through silently.
+    try {
+      const ticksRef = collection(fb.db, 'habitTicks', user.uid, 'days');
+      const ticks = await getDocs(ticksRef);
+      await Promise.all(ticks.docs.map((d) => deleteDoc(d.ref)));
+    } catch {
+      /* swallow */
+    }
+    await deleteUser(user);
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.code ?? e?.message ?? 'unknown' };
+  }
 }

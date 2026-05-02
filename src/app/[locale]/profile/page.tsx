@@ -9,7 +9,7 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useUnitLabel } from '@/lib/units';
-import { useAuth, emailUsername, signOutUser } from '@/lib/auth';
+import { useAuth, deleteAccount, emailUsername, signOutUser } from '@/lib/auth';
 import { firebaseEnabled } from '@/lib/firebase';
 import { SignInForm } from '@/components/SignInForm';
 import type {
@@ -78,7 +78,7 @@ function Profile() {
   }
 
   const onSignOut = () => {
-    if (!confirm(t('settings.signOutConfirm'))) return;
+    if (!confirm(t('settings.resetProgressConfirm'))) return;
     reset();
     router.replace('/onboarding');
   };
@@ -397,14 +397,61 @@ function Profile() {
 
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-ink-800">
-          {t('settings.signOut')}
+          {t('settings.resetProgressTitle')}
         </h2>
-        <p className="text-xs text-ink-500">{t('settings.signOutHint')}</p>
+        <p className="text-xs text-ink-500">
+          {t('settings.resetProgressHint')}
+        </p>
         <Button variant="danger" onClick={onSignOut}>
-          {t('settings.signOut')}
+          {t('settings.resetProgress')}
         </Button>
       </Card>
+
+      <DeleteAccountCard />
     </div>
+  );
+}
+
+function DeleteAccountCard() {
+  const t = useTranslations();
+  const router = useRouter();
+  const auth = useAuth();
+  const reset = useAppStore((s) => s.reset);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  if (!firebaseEnabled() || auth.status !== 'signed-in') return null;
+
+  const onDelete = async () => {
+    if (!confirm(t('settings.deleteAccountConfirm'))) return;
+    setErr(null);
+    setBusy(true);
+    const res = await deleteAccount();
+    if (!res.ok) {
+      setBusy(false);
+      if (res.error.includes('requires-recent-login')) {
+        setErr(t('settings.deleteAccountReauth'));
+        return;
+      }
+      setErr(t('settings.deleteAccountFailed'));
+      return;
+    }
+    // Wipe local store too so the next visitor sees a clean state.
+    reset();
+    router.replace('/onboarding');
+  };
+
+  return (
+    <Card className="space-y-3 border-red-200 bg-red-50">
+      <h2 className="text-sm font-semibold text-red-800">
+        {t('settings.deleteAccountTitle')}
+      </h2>
+      <p className="text-xs text-red-700">{t('settings.deleteAccountHint')}</p>
+      {err && <p className="text-xs font-medium text-red-700">{err}</p>}
+      <Button variant="danger" onClick={onDelete} disabled={busy}>
+        {t('settings.deleteAccount')}
+      </Button>
+    </Card>
   );
 }
 
