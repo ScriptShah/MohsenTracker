@@ -154,6 +154,33 @@ const builders: Record<string, Builder> = {
     };
   },
 
+  steps: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const stepsPerDay = effective(habit, ctx, 8000);
+    // Average adult step length ~0.762 m. Convert to km.
+    const STEP_M = 0.762;
+    const kmYearly = Math.max(1, Math.round((stepsPerDay * STEP_M * 365) / 1000));
+    const kmDecade = kmYearly * 10;
+    // A "neighbourhood lap" ≈ 2 km is a relatable comparison; the
+    // narrative says "roughly N times around your neighbourhood".
+    const laps = Math.max(1, Math.round(kmYearly / 2));
+    return {
+      projectionLines: [
+        t('narratives.steps.p1', { km: fmt(kmYearly), laps: fmt(laps) }),
+        t('narratives.steps.p2', { decadeKm: fmt(kmDecade) }),
+      ],
+      consequenceLines: [
+        t('narratives.steps.c1', { km: fmt(kmYearly) }),
+        t('narratives.steps.c2'),
+      ],
+      reversalLines: [
+        t('narratives.steps.r1'),
+        t('narratives.steps.r2'),
+      ],
+      hadith: hadithFromKey(t, 'steps'),
+    };
+  },
+
   exercise: (ctx) => {
     const { habit, t, fmt } = ctx;
     const minPerDay = effective(habit, ctx, 30);

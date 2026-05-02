@@ -737,6 +737,16 @@
       "hadithText": "And whoever fears Allah, He will make for him a way out, and provide for him from where he does not expect.",
       "hadithSource": "Surah At-Talaq 65:2-3"
     },
+    "steps": {
+      "p1": "Walking {km} km this year — roughly {laps} times around your neighbourhood.",
+      "p2": "Over a decade, {decadeKm} km on foot — farther than the long way around the planet.",
+      "c1": "Skip the walks and you forfeit roughly {km} km of free, easy movement every year.",
+      "c2": "Sedentary years compound into joint stiffness, lower mood, and a measurably higher risk of depression and back pain.",
+      "r1": "One daily walk this week — fifteen minutes, no headphones if you can.",
+      "r2": "Stack it on top of something you already do: a walk after dinner, or to the masjid / shop / friend's place instead of driving.",
+      "hadithText": "Walking to the mosque is one of the deeds whose reward is multiplied with every step.",
+      "hadithSource": "Sahih Muslim 654"
+    },
     "exercise": {
       "p1": "{hours} hours of movement a year.",
       "p2": "About {km} km on foot — like walking London to Paris {trips, plural, =1 {once} other {# times}}.",
