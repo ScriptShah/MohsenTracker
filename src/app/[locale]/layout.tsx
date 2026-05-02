@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { TopBar } from '@/components/TopBar';
 import { ThemeApplier } from '@/components/ThemeApplier';
 import { RouteGuard } from '@/components/RouteGuard';
+import { CloudSync } from '@/components/CloudSync';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
@@ -64,6 +65,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeApplier />
           <RouteGuard />
+          <CloudSync />
           <main className="mx-auto w-full max-w-screen-sm px-4 pt-4">
             <TopBar />
             {children}
