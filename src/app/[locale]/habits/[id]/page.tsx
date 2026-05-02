@@ -105,12 +105,18 @@ function HabitDetail() {
           )}
           {habit.unit &&
             (habit.type === 'good' && habit.target !== undefined ? (
-              <span className="text-ink-500">
-                <span className="numeral">{fmt(habit.target)}</span> {unitLabel(habit.unit)} / day
+              <span className="numeral text-ink-500">
+                {t('habitDetail.dailyTarget', {
+                  value: fmt(habit.target),
+                  unit: unitLabel(habit.unit),
+                })}
               </span>
             ) : habit.type === 'bad' && habit.limit !== undefined ? (
-              <span className="text-ink-500">
-                ≤ <span className="numeral">{fmt(habit.limit)}</span> {unitLabel(habit.unit)} / day
+              <span className="numeral text-ink-500">
+                {t('habitDetail.dailyLimit', {
+                  value: fmt(habit.limit),
+                  unit: unitLabel(habit.unit),
+                })}
               </span>
             ) : null)}
         </div>

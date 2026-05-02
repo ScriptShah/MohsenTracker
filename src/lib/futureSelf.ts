@@ -57,3 +57,20 @@ export function dailyQuoteIndex(quoteCount: number): number {
   const days = differenceInCalendarDays(new Date(), startOfYear(new Date()));
   return ((days % quoteCount) + quoteCount) % quoteCount;
 }
+
+/** Indices of futureSelf.quotes.* that reference Islamic practices
+ *  (q3 Quran, q4 Tahajjud, q5 Sadaqah). Filtered out for users who
+ *  didn't pick the Islamic category, so the rotating compound-quote
+ *  card on /future-self stays on-context for everyone. */
+const ISLAMIC_QUOTE_INDICES: ReadonlySet<number> = new Set([3, 4, 5]);
+const TOTAL_QUOTES = 7;
+
+/** Today's quote index, optionally filtered to non-Islamic indices. */
+export function dailyCompoundQuoteIdx(islamicActive: boolean): number {
+  if (islamicActive) return dailyQuoteIndex(TOTAL_QUOTES);
+  const allowed: number[] = [];
+  for (let i = 0; i < TOTAL_QUOTES; i++) {
+    if (!ISLAMIC_QUOTE_INDICES.has(i)) allowed.push(i);
+  }
+  return allowed[dailyQuoteIndex(allowed.length)] ?? 0;
+}

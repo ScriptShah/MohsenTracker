@@ -9,11 +9,9 @@ import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import {
   categoryConsistency30Day,
-  dailyQuoteIndex,
+  dailyCompoundQuoteIdx,
   daysSinceStart,
 } from '@/lib/futureSelf';
-
-const QUOTE_COUNT = 7;
 
 export default function FutureSelfPage() {
   return (
@@ -44,7 +42,14 @@ function FutureSelf() {
     [profile],
   );
 
-  const quoteIdx = useMemo(() => dailyQuoteIndex(QUOTE_COUNT), []);
+  const islamicActive = useMemo(
+    () => categories.some((c) => c.key === 'islamic' && c.isActive),
+    [categories],
+  );
+  const quoteIdx = useMemo(
+    () => dailyCompoundQuoteIdx(islamicActive),
+    [islamicActive],
+  );
 
   const consistencies = useMemo(() => {
     return categories.map((c) => ({
