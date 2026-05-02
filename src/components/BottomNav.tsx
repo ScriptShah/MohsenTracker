@@ -10,7 +10,7 @@ const items = [
   { href: '/categories', key: 'categories', icon: GridIcon },
   { href: '/progress', key: 'progress', icon: ChartIcon },
   { href: '/future-self', key: 'futureSelf', icon: StarIcon },
-  { href: '/profile', key: 'profile', icon: UserIcon },
+  { href: '/books', key: 'books', icon: BookIcon },
 ] as const;
 
 export function BottomNav() {
@@ -79,11 +79,14 @@ function StarIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-function UserIcon(props: React.SVGProps<SVGSVGElement>) {
+function BookIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 22a8 8 0 0 1 16 0" strokeLinecap="round" />
+      <path
+        d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z"
+        strokeLinejoin="round"
+      />
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" strokeLinejoin="round" />
     </svg>
   );
 }
