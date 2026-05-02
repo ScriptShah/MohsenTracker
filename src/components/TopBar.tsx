@@ -13,7 +13,7 @@ export function TopBar() {
   if (pathname === '/profile' || pathname === '/onboarding') return null;
 
   return (
-    <div className="mb-3 flex items-center justify-end gap-2">
+    <div className="sticky top-0 z-30 -mx-4 mb-3 flex items-center justify-end gap-2 border-b border-ink-200 bg-ink-50/90 px-4 py-2 backdrop-blur-sm">
       <ThemeToggle />
       <Link
         href="/profile"
