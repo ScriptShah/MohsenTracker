@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import clsx from 'clsx';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
@@ -22,13 +23,30 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const liveCounts = useLiveCounts();
   const unitLabel = useUnitLabel();
 
+  const [showDone, setShowDone] = useState(false);
+
   if (habits.length === 0) {
     return <p className="text-ink-500">{t('home.noHabits')}</p>;
   }
 
+  const pending: Habit[] = [];
+  const done: Habit[] = [];
+  for (const h of habits) {
+    if (isLogSuccessful(h, logs[h.id])) done.push(h);
+    else pending.push(h);
+  }
+
+  const visibleHabits = showDone ? habits : pending;
+
   return (
-    <ul className="space-y-2">
-      {habits.map((habit) => {
+    <div className="space-y-2">
+      {pending.length === 0 && !showDone && (
+        <p className="rounded-xl border border-leaf-200 bg-leaf-50 px-3 py-2 text-sm text-leaf-700">
+          {t('home.allDone')}
+        </p>
+      )}
+      <ul className="space-y-2">
+      {visibleHabits.map((habit) => {
         const log = logs[habit.id];
         const done = isLogSuccessful(habit, log);
         const streak = streaks[habit.id]?.current ?? 0;
@@ -131,7 +149,19 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
           </li>
         );
       })}
-    </ul>
+      </ul>
+      {done.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowDone((v) => !v)}
+          className="block w-full text-center text-xs text-leaf-700 underline-offset-4 hover:underline"
+        >
+          {showDone
+            ? t('home.hideDone', { n: fmt(done.length) })
+            : t('home.showDone', { n: fmt(done.length) })}
+        </button>
+      )}
+    </div>
   );
 }
 

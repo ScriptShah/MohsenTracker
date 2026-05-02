@@ -70,7 +70,10 @@
     "startStreak": "Start your streak today.",
     "streakDays": "{days} day streak",
     "streakDaysOne": "1 day streak",
-    "liveCount": "{n} doing this today"
+    "liveCount": "{n} doing this today",
+    "allDone": "All habits done for today. Beautiful work.",
+    "showDone": "Show done ({n})",
+    "hideDone": "Hide done ({n})"
   },
   "categories": {
     "title": "Categories",

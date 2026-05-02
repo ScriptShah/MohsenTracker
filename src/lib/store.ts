@@ -378,6 +378,16 @@ export const useAppStore = create<AppState>()(
         const prevRate = get().summaries[day]?.completionRate ?? 0;
         const prevStreak = get().streaks[habitId]?.current ?? 0;
 
+        // The linked reading habit is driven exclusively by book page logs.
+        // Manual toggles are a no-op so users can't mark "Read a book" done
+        // without actually reading. We still re-run the sync so the log
+        // reflects today's book totals (in case a stale entry exists).
+        if (get().profile?.readingHabitId === habitId) {
+          const synced = syncReadingHabitForDate(get(), day);
+          if (synced) set(synced);
+          return;
+        }
+
         set((s) => {
           const dayLogs = { ...(s.logs[day] ?? {}) };
           const habit = s.habits.find((h) => h.id === habitId);
