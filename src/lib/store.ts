@@ -67,6 +67,14 @@ interface AppState {
   }) => void;
   setLanguage: (lang: 'en' | 'fa') => void;
   setProfile: (patch: Partial<Profile>) => void;
+  /** Create a new active category (custom or matching a default key). */
+  addCategory: (input: { name: string; icon: string; color: string; key?: CategoryKey }) => Category;
+  /** Patch fields on an existing category. */
+  updateCategory: (id: string, patch: Partial<Category>) => void;
+  /** Soft delete: marks isActive=false + sets archivedAt. Habits are kept. */
+  archiveCategory: (id: string) => void;
+  /** Restore a previously archived category. */
+  restoreCategory: (id: string) => void;
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
@@ -262,6 +270,56 @@ export const useAppStore = create<AppState>()(
         if (!profile) return;
         set({ profile: { ...profile, ...patch } });
       },
+
+      addCategory: ({ name, icon, color, key }) => {
+        const id = key ? `cat_${key}` : newId('cat');
+        const order = get().categories.reduce((m, c) => Math.max(m, c.order), -1) + 1;
+        const cat: Category = {
+          id,
+          key,
+          name: name.trim() || 'Category',
+          icon: icon || '◇',
+          color: color || '#64748b',
+          order,
+          isDefault: !!key,
+          isActive: true,
+        };
+        set((s) => {
+          // If a category with the same id already exists (e.g. previously
+          // archived default), restore it instead of duplicating.
+          const idx = s.categories.findIndex((c) => c.id === id);
+          if (idx >= 0) {
+            const next = [...s.categories];
+            next[idx] = { ...next[idx], isActive: true, archivedAt: undefined, name: cat.name, icon: cat.icon, color: cat.color };
+            return { categories: next };
+          }
+          return { categories: [...s.categories, cat] };
+        });
+        return cat;
+      },
+
+      updateCategory: (id, patch) =>
+        set((s) => ({
+          categories: s.categories.map((c) =>
+            c.id === id ? { ...c, ...patch } : c,
+          ),
+        })),
+
+      archiveCategory: (id) =>
+        set((s) => ({
+          categories: s.categories.map((c) =>
+            c.id === id
+              ? { ...c, isActive: false, archivedAt: new Date().toISOString() }
+              : c,
+          ),
+        })),
+
+      restoreCategory: (id) =>
+        set((s) => ({
+          categories: s.categories.map((c) =>
+            c.id === id ? { ...c, isActive: true, archivedAt: undefined } : c,
+          ),
+        })),
 
       addHabit: (input) => {
         const id = newId('habit');

@@ -8,7 +8,7 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
-import { presetHabits } from '@/domain/seed';
+import { presetHabits, seedCategories } from '@/domain/seed';
 
 export default function NewHabitPage() {
   return (
@@ -224,6 +224,7 @@ function PresetPicker() {
   const habits = useAppStore((s) => s.habits);
   const categories = useAppStore((s) => s.categories);
   const addHabit = useAppStore((s) => s.addHabit);
+  const addCategory = useAppStore((s) => s.addCategory);
 
   const available = useMemo(() => {
     const haveByPreset = new Set(habits.map((h) => h.presetKey).filter(Boolean));
@@ -235,8 +236,23 @@ function PresetPicker() {
   const onPick = (presetKey: string) => {
     const preset = presetHabits.find((p) => p.presetKey === presetKey);
     if (!preset) return;
-    const cat = categories.find((c) => c.key === preset.category && c.isActive)
-      ?? categories.find((c) => c.isActive);
+    let cat = categories.find((c) => c.key === preset.category && c.isActive);
+    if (!cat) {
+      // Auto-create the matching default category for existing users who
+      // didn't have it (e.g. Sport when the user onboarded before it
+      // existed). Falls back to any active category as a last resort.
+      const seed = seedCategories.find((s) => s.key === preset.category);
+      if (seed) {
+        cat = addCategory({
+          name: t(`categories.names.${seed.key}` as any),
+          icon: seed.icon,
+          color: seed.color,
+          key: seed.key,
+        });
+      } else {
+        cat = categories.find((c) => c.isActive);
+      }
+    }
     if (!cat) return;
     addHabit({
       categoryId: cat.id,

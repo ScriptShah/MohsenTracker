@@ -9,6 +9,7 @@ interface SeedCategory {
 export const seedCategories: SeedCategory[] = [
   { key: 'islamic', icon: '☪', color: '#0ea5e9' },
   { key: 'health', icon: '❤', color: '#ef4444' },
+  { key: 'sport', icon: '⚡', color: '#0d9488' },
   { key: 'finance', icon: '$', color: '#16a34a' },
   { key: 'career', icon: '◆', color: '#7c3aed' },
   { key: 'growth', icon: '✦', color: '#f59e0b' },
@@ -38,15 +39,17 @@ export const presetHabits: PresetHabit[] = [
   // Health
   { presetKey: 'sleep', category: 'health', type: 'good', unit: 'hours', target: 7 },
   { presetKey: 'water', category: 'health', type: 'good', unit: 'glasses', target: 8 },
-  { presetKey: 'exercise', category: 'health', type: 'good', unit: 'minutes', target: 30 },
-  { presetKey: 'steps', category: 'health', type: 'good', unit: 'steps', target: 8000 },
-  { presetKey: 'pushups', category: 'health', type: 'good', unit: 'reps', target: 30 },
-  { presetKey: 'squats', category: 'health', type: 'good', unit: 'reps', target: 30 },
-  { presetKey: 'jumpRope', category: 'health', type: 'good', unit: 'minutes', target: 10 },
-  { presetKey: 'walking', category: 'health', type: 'good', unit: 'minutes', target: 30 },
-  { presetKey: 'running', category: 'health', type: 'good', unit: 'minutes', target: 20 },
   { presetKey: 'screenTime', category: 'health', type: 'bad', unit: 'hours', limit: 2 },
   { presetKey: 'junkFood', category: 'health', type: 'bad', unit: 'servings', limit: 0 },
+
+  // Sport
+  { presetKey: 'exercise', category: 'sport', type: 'good', unit: 'minutes', target: 30 },
+  { presetKey: 'steps', category: 'sport', type: 'good', unit: 'steps', target: 8000 },
+  { presetKey: 'pushups', category: 'sport', type: 'good', unit: 'reps', target: 30 },
+  { presetKey: 'squats', category: 'sport', type: 'good', unit: 'reps', target: 30 },
+  { presetKey: 'jumpRope', category: 'sport', type: 'good', unit: 'minutes', target: 10 },
+  { presetKey: 'walking', category: 'sport', type: 'good', unit: 'minutes', target: 30 },
+  { presetKey: 'running', category: 'sport', type: 'good', unit: 'minutes', target: 20 },
 
   // Finance
   { presetKey: 'saving', category: 'finance', type: 'good', unit: 'amount', target: 10 },

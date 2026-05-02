@@ -1,4 +1,11 @@
-export type CategoryKey = 'islamic' | 'health' | 'finance' | 'career' | 'growth' | 'relationships';
+export type CategoryKey =
+  | 'islamic'
+  | 'health'
+  | 'sport'
+  | 'finance'
+  | 'career'
+  | 'growth'
+  | 'relationships';
 
 export type HabitType = 'good' | 'bad';
 
