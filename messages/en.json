@@ -376,8 +376,10 @@
       "reflectionPlaceholder": "What was the trigger? What can you do differently next time?",
       "confirm": "Reset and continue",
       "cancel": "Not now",
-      "quranQuote": "Indeed, Allah loves those who turn to Him in repentance, and He loves those who purify themselves.",
-      "quranSource": "Surah Al-Baqarah 2:222"
+      "quote": "Fall down seven times, stand up eight.",
+      "source": "Japanese proverb",
+      "islamicQuote": "Indeed, Allah loves those who turn to Him in repentance, and He loves those who purify themselves.",
+      "islamicSource": "Surah Al-Baqarah 2:222"
     },
     "relapseHistory": "Relapses",
     "relapseHistoryItem": "{date} — {days} days clean",
