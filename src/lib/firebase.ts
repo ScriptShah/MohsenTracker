@@ -2,7 +2,13 @@
 
 import { initializeApp, type FirebaseApp, getApps, getApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from 'firebase/firestore';
 
 /** Reads NEXT_PUBLIC_FIREBASE_* env vars. Returns null when any required
  *  field is missing — callers gracefully disable Firebase-backed features. */
@@ -27,8 +33,26 @@ export function getFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } |
   if (_app && _db && _auth) return { app: _app, db: _db, auth: _auth };
   const cfg = readConfig();
   if (!cfg) return null;
-  _app = getApps().length ? getApp() : initializeApp(cfg);
-  _db = getFirestore(_app);
+  const isFresh = getApps().length === 0;
+  _app = isFresh ? initializeApp(cfg) : getApp();
+  // On the very first init, opt into the offline-first IndexedDB cache so
+  // habit ticks and live-count reads keep working without internet and
+  // queued writes flush when the tab reconnects (spec §3 constraint #2).
+  // On subsequent calls (same tab, hot-reload), getFirestore is enough —
+  // initializeFirestore would throw if called twice.
+  if (isFresh) {
+    try {
+      _db = initializeFirestore(_app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      });
+    } catch {
+      _db = getFirestore(_app);
+    }
+  } else {
+    _db = getFirestore(_app);
+  }
   _auth = getAuth(_app);
   return { app: _app, db: _db, auth: _auth };
 }

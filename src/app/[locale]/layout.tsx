@@ -22,7 +22,16 @@ export const metadata: Metadata = {
   description: 'Become your next version. Build the habits. See the future.',
   manifest: '/manifest.webmanifest',
   applicationName: 'MohsenTracker',
-  appleWebApp: { capable: true, title: 'MohsenTracker', statusBarStyle: 'default' },
+  appleWebApp: {
+    capable: true,
+    title: 'MohsenTracker',
+    statusBarStyle: 'default',
+    startupImage: ['/icon.svg'],
+  },
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/icon.svg' }],
+  },
 };
 
 export const viewport: Viewport = {

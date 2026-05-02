@@ -8,12 +8,19 @@
   "orientation": "portrait",
   "background_color": "#f8fafc",
   "theme_color": "#059669",
+  "categories": ["lifestyle", "health", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "any",
       "type": "image/svg+xml",
+      "sizes": "any",
       "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ]
 }
