@@ -9,6 +9,7 @@ import { todayKey } from '@/lib/dates';
 import { isLogSuccessful } from '@/lib/streaks';
 import { useLiveCounts } from '@/lib/useLiveCounts';
 import { useNumberFormatter } from '@/lib/format';
+import { useUnitLabel } from '@/lib/units';
 import { ChevronEnd } from './Chevron';
 
 export function HabitChecklist({ habits }: { habits: Habit[] }) {
@@ -19,6 +20,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const streaks = useAppStore((s) => s.streaks);
   const toggleHabit = useAppStore((s) => s.toggleHabit);
   const liveCounts = useLiveCounts();
+  const unitLabel = useUnitLabel();
 
   if (habits.length === 0) {
     return <p className="text-ink-500">{t('home.noHabits')}</p>;
@@ -78,7 +80,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                         >
                           {log.value}
                         </span>{' '}
-                        / <span className="numeral">{habit.target}</span> {habit.unit}
+                        / <span className="numeral">{habit.target}</span> {unitLabel(habit.unit)}
                         {log.value > habit.target && (
                           <span className="ms-1 text-leaf-600" aria-hidden>
                             ✨
@@ -87,7 +89,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                       </>
                     ) : (
                       <>
-                        <span className="numeral">{habit.target}</span> {habit.unit}
+                        <span className="numeral">{habit.target}</span> {unitLabel(habit.unit)}
                       </>
                     )}
                   </span>
@@ -104,11 +106,11 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                         >
                           {log.value}
                         </span>{' '}
-                        / ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                        / ≤ <span className="numeral">{habit.limit}</span> {unitLabel(habit.unit)}
                       </>
                     ) : (
                       <>
-                        ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                        ≤ <span className="numeral">{habit.limit}</span> {unitLabel(habit.unit)}
                       </>
                     )}
                   </span>

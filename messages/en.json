@@ -91,6 +91,18 @@
       "relationships": "Relationships"
     }
   },
+  "units": {
+    "glasses": "glasses",
+    "minutes": "minutes",
+    "pages": "pages",
+    "reps": "reps",
+    "hours": "hours",
+    "steps": "steps",
+    "amount": "amount",
+    "prayers": "prayers",
+    "incidents": "incidents",
+    "servings": "servings"
+  },
   "habit": {
     "newTitle": "New habit",
     "name": "Habit name",

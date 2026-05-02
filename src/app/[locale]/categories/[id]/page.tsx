@@ -8,6 +8,7 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { projectCompound } from '@/lib/compound';
+import { useUnitLabel } from '@/lib/units';
 
 export default function CategoryDetailPage() {
   return (
@@ -19,6 +20,7 @@ export default function CategoryDetailPage() {
 
 function CategoryDetail() {
   const t = useTranslations();
+  const unitLabel = useUnitLabel();
   const { id } = useParams<{ id: string }>();
   const category = useAppStore((s) => s.categories.find((c) => c.id === id));
   const habits = useAppStore((s) => s.habits.filter((h) => h.categoryId === id));
@@ -88,12 +90,12 @@ function CategoryDetail() {
                         <div className="text-xs text-ink-500">
                           {h.type === 'good' && h.target !== undefined && (
                             <>
-                              <span className="numeral">{h.target}</span> {h.unit}
+                              <span className="numeral">{h.target}</span> {unitLabel(h.unit)}
                             </>
                           )}
                           {h.type === 'bad' && h.limit !== undefined && (
                             <>
-                              ≤ <span className="numeral">{h.limit}</span> {h.unit}
+                              ≤ <span className="numeral">{h.limit}</span> {unitLabel(h.unit)}
                             </>
                           )}
                         </div>
@@ -101,7 +103,7 @@ function CategoryDetail() {
                       {h.type === 'good' && h.unit && proj.yearly > 0 && (
                         <div className="mt-1 text-xs text-leaf-700">
                           {t('compound.yearly', {
-                            value: `${Math.round(proj.yearly).toLocaleString()} ${h.unit}`,
+                            value: `${Math.round(proj.yearly).toLocaleString()} ${unitLabel(h.unit)}`,
                           })}
                         </div>
                       )}

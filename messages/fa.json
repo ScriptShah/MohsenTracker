@@ -91,6 +91,18 @@
       "relationships": "روابط"
     }
   },
+  "units": {
+    "glasses": "لیوان",
+    "minutes": "دقیقه",
+    "pages": "صفحه",
+    "reps": "تکرار",
+    "hours": "ساعت",
+    "steps": "قدم",
+    "amount": "مقدار",
+    "prayers": "نماز",
+    "incidents": "بار",
+    "servings": "وعده"
+  },
   "habit": {
     "newTitle": "عادت جدید",
     "name": "نام عادت",

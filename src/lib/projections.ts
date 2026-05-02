@@ -1,5 +1,6 @@
 import type { Habit, HabitLog } from '@/domain/types';
 import { dateKey } from './dates';
+import { localizeUnit } from './units';
 
 export interface Hadith {
   text: string;
@@ -343,18 +344,19 @@ function genericNarrative(ctx: Ctx): Narrative {
     const daily = effective(habit, ctx, habit.target);
     const yearly = daily * occ;
     const decade = yearly * 10;
+    const unit = localizeUnit(habit.unit, t);
     return {
       projectionLines: [
-        t('narratives.generic.yearly', { value: fmt(yearly), unit: habit.unit }),
+        t('narratives.generic.yearly', { value: fmt(yearly), unit }),
         t('narratives.generic.decade', {
           value: fmt(yearly),
-          unit: habit.unit,
+          unit,
           decade: fmt(decade),
         }),
       ],
       consequenceLines: [
-        t('narratives.generic.lostYear', { value: fmt(yearly), unit: habit.unit }),
-        t('narratives.generic.lostDecade', { decade: fmt(decade), unit: habit.unit }),
+        t('narratives.generic.lostYear', { value: fmt(yearly), unit }),
+        t('narratives.generic.lostDecade', { decade: fmt(decade), unit }),
       ],
       reversalLines,
     };

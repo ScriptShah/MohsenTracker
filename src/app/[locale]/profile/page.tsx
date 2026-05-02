@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
+import { useUnitLabel } from '@/lib/units';
 import type {
   CalendarPreference,
   ConsequenceSensitivity,
@@ -49,6 +50,7 @@ export default function ProfilePage() {
 
 function Profile() {
   const t = useTranslations();
+  const unitLabel = useUnitLabel();
   const router = useRouter();
   const profile = useAppStore((s) => s.profile);
   const habits = useAppStore((s) => s.habits);
@@ -347,7 +349,7 @@ function Profile() {
             .map((h) => (
               <option key={h.id} value={h.id}>
                 {h.name}
-                {h.unit ? ` (${h.unit})` : ''}
+                {h.unit ? ` (${unitLabel(h.unit)})` : ''}
               </option>
             ))}
         </select>

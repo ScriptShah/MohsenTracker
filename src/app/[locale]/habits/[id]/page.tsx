@@ -14,6 +14,7 @@ import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { shouldMuteConsequences } from '@/lib/sensitivity';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
+import { useUnitLabel } from '@/lib/units';
 import { todayKey } from '@/lib/dates';
 import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
@@ -56,6 +57,7 @@ function HabitDetail() {
   const allLogs = useAppStore((s) => s.logs);
 
   const fmt = useNumberFormatter();
+  const unitLabel = useUnitLabel();
   const [showStakesRaw, setShowStakes] = useState(false);
   const showStakes = showStakesRaw && stakesAvailable;
 
@@ -104,11 +106,11 @@ function HabitDetail() {
           {habit.unit &&
             (habit.type === 'good' && habit.target !== undefined ? (
               <span className="text-ink-500">
-                <span className="numeral">{fmt(habit.target)}</span> {habit.unit} / day
+                <span className="numeral">{fmt(habit.target)}</span> {unitLabel(habit.unit)} / day
               </span>
             ) : habit.type === 'bad' && habit.limit !== undefined ? (
               <span className="text-ink-500">
-                ≤ <span className="numeral">{fmt(habit.limit)}</span> {habit.unit} / day
+                ≤ <span className="numeral">{fmt(habit.limit)}</span> {unitLabel(habit.unit)} / day
               </span>
             ) : null)}
         </div>
@@ -127,7 +129,7 @@ function HabitDetail() {
                   : 'habitDetail.paceLabelNoUnit',
                 {
                   avg: fmt(Math.round(narrative.recentAvg)),
-                  unit: habit.unit ?? '',
+                  unit: unitLabel(habit.unit),
                 },
               )}
             </p>
