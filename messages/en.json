@@ -105,7 +105,17 @@
     "streaks": "Current streaks",
     "noStreaks": "Complete a habit today to start a streak.",
     "less": "Less",
-    "more": "More"
+    "more": "More",
+    "strengths": {
+      "title": "Strong vs weak",
+      "body": "Average completion across the last 30 days. Strongest categories first.",
+      "tier": {
+        "strong": "strong",
+        "medium": "growing",
+        "weak": "needs work",
+        "empty": "—"
+      }
+    }
   },
   "compound": {
     "yearly": "{value} per year",
