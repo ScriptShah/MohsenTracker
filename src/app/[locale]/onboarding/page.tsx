@@ -1,15 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { SignInForm } from '@/components/SignInForm';
 import { useAppStore } from '@/lib/store';
 import { presetHabits, seedCategories } from '@/domain/seed';
+import { useAuth, emailUsername } from '@/lib/auth';
+import { firebaseEnabled } from '@/lib/firebase';
 import type { CategoryKey, Profile } from '@/domain/types';
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 
 export default function OnboardingPage() {
   const t = useTranslations();
@@ -17,8 +20,20 @@ export default function OnboardingPage() {
   const locale = useLocale() as 'en' | 'fa';
   const initFromOnboarding = useAppStore((s) => s.initFromOnboarding);
 
+  const auth = useAuth();
+  const authActive = firebaseEnabled();
+
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+
+  // Pre-fill the user's name from Google displayName or email local-part
+  // when sign-in completes.
+  useEffect(() => {
+    if (auth.status !== 'signed-in') return;
+    if (name.trim().length > 0) return;
+    const suggested = auth.displayName || emailUsername(auth.email);
+    if (suggested) setName(suggested);
+  }, [auth, name]);
   const [futureSelfName, setFutureSelfName] = useState('');
   const [vision, setVision] = useState('');
   const [why, setWhy] = useState('');
@@ -109,6 +124,36 @@ export default function OnboardingPage() {
       )}
 
       {step === 1 && (
+        <div className="space-y-3">
+          <Card className="space-y-2">
+            <h2 className="text-xl font-semibold">{t('onboarding.signInTitle')}</h2>
+            <p className="text-ink-600">{t('onboarding.signInBody')}</p>
+          </Card>
+          {authActive ? (
+            auth.status === 'signed-in' ? (
+              <Card className="border-leaf-200 bg-leaf-50">
+                <p className="text-xs uppercase tracking-wide text-leaf-700">
+                  {t('onboarding.signedInLead')}
+                </p>
+                <p className="pt-1 font-medium">
+                  {emailUsername(auth.email) || auth.displayName || ''}
+                </p>
+                {auth.email && (
+                  <p className="text-xs text-ink-500">{auth.email}</p>
+                )}
+              </Card>
+            ) : (
+              <SignInForm />
+            )
+          ) : (
+            <Card className="border-sand-200 bg-sand-50 text-sm text-sand-700">
+              {t('onboarding.signInDisabled')}
+            </Card>
+          )}
+        </div>
+      )}
+
+      {step === 2 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.profileTitle')}</h2>
           <input
@@ -121,7 +166,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.futureSelfNameTitle')}</h2>
           <p className="text-ink-600">
@@ -139,7 +184,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.visionTitle')}</h2>
           <p className="text-ink-600">{t('onboarding.visionBody')}</p>
@@ -154,7 +199,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.whyTitle')}</h2>
           <p className="text-ink-600">{t('onboarding.whyBody')}</p>
@@ -169,7 +214,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <Card className="space-y-3">
           <h2 className="text-xl font-semibold">{t('onboarding.categoriesTitle')}</h2>
           <p className="text-ink-600">{t('onboarding.categoriesBody')}</p>
@@ -227,7 +272,7 @@ export default function OnboardingPage() {
         </Card>
       )}
 
-      {step === 6 && (
+      {step === 7 && (
         <HabitsPicker
           selectedKeys={selectedKeys}
           selectedPresets={selectedPresets}

@@ -9,6 +9,9 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useUnitLabel } from '@/lib/units';
+import { useAuth, emailUsername, signOutUser } from '@/lib/auth';
+import { firebaseEnabled } from '@/lib/firebase';
+import { SignInForm } from '@/components/SignInForm';
 import type {
   CalendarPreference,
   ConsequenceSensitivity,
@@ -113,6 +116,8 @@ function Profile() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">{t('settings.title')}</h1>
+
+      <AuthSection />
 
       <ProfileEditCard profile={profile} setProfile={setProfile} />
 
@@ -399,6 +404,52 @@ function Profile() {
           {t('settings.signOut')}
         </Button>
       </Card>
+    </div>
+  );
+}
+
+function AuthSection() {
+  const t = useTranslations();
+  const auth = useAuth();
+  if (!firebaseEnabled()) return null;
+  if (auth.status === 'loading') return null;
+
+  if (auth.status === 'signed-in') {
+    const username = emailUsername(auth.email) || auth.displayName || '';
+    return (
+      <Card className="space-y-2 border-leaf-200 bg-leaf-50">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-leaf-700">
+              {t('auth.username')}
+            </p>
+            <p className="truncate font-medium">{username}</p>
+            {auth.email && (
+              <p className="truncate text-xs text-ink-500">{auth.email}</p>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => signOutUser()}
+            className="shrink-0 text-red-600 hover:bg-red-50"
+          >
+            {t('auth.signOut')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="rounded-xl border border-sand-200 bg-sand-50 p-3 text-sm">
+        <p className="text-xs uppercase tracking-wide text-sand-600">
+          {t('auth.notSignedInTitle')}
+        </p>
+        <p className="pt-1 text-ink-700">{t('auth.notSignedInBody')}</p>
+      </div>
+      <SignInForm />
     </div>
   );
 }

@@ -45,10 +45,20 @@ Open `.env.local` and fill in:
 For the deployed Vercel app, add the same variables under **Project
 Settings → Environment Variables** in the Vercel dashboard.
 
-### 4. Enable Anonymous Authentication
+### 4. Enable sign-in providers
+
+The app uses Google + Email/Password sign-in. Anonymous auth is **not**
+used.
 
 1. Firebase console → **Build → Authentication → Get started**.
-2. Under **Sign-in method**, enable **Anonymous**. Save.
+2. Under **Sign-in method**, click **Google** → toggle **Enable** → pick
+   the support email → **Save**. (One-tap social sign-in.)
+3. Click **Add new provider → Email/Password** → toggle **Enable** →
+   **Save**. (Email + password fallback for users who don't want Google.)
+4. Under the **Settings → Authorized domains** tab, make sure
+   `localhost` is listed (it usually is by default) and **add your Vercel
+   domain** (e.g. `mohsentracker.vercel.app`) so Google sign-in works in
+   production.
 
 ### 5. Create the Firestore database
 
@@ -66,10 +76,16 @@ Settings → Environment Variables** in the Vercel dashboard.
 
 ### 7. Verify
 
-Restart the dev server (`npm run dev`) and open the home screen. After
-you complete a habit, you should see "🌱 1 doing this today" appear next
-to it within a couple of seconds. If multiple devices/users complete the
-same preset on the same day, the count increments live.
+Restart the dev server (`npm run dev`) and open the home screen. Then:
+
+1. Go to `/profile` (top-right user icon). You should see a "Sign in"
+   card. Sign in with Google or create an email/password account.
+2. After sign-in, the profile shows your username (the part of your
+   email before `@`) and a sign-out button.
+3. Go back to home and complete any preset habit. Within ~2 seconds
+   "🌱 1 doing this today" appears next to the habit. If multiple
+   devices/users complete the same preset on the same day, the count
+   increments live.
 
 ## Notes
 
@@ -84,3 +100,7 @@ same preset on the same day, the count increments live.
 - The feature is **best-effort**: when Firebase is offline or rules
   reject the write, the local UI keeps working and counts simply don't
   update.
+- **Sign-in is required** for live counts. Users who never sign in still
+  use the app fully (everything works locally) but their habit ticks
+  don't contribute to the public counter, and they don't see the
+  "🌱 N doing this today" badges.

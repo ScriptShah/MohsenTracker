@@ -1,47 +1,38 @@
 'use client';
 
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   doc,
   onSnapshot,
   runTransaction,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { getFirebase, firebaseEnabled } from './firebase';
+import { firebaseEnabled, getFirebase } from './firebase';
 import { todayKey } from './dates';
 
-/** Best-effort anonymous sign-in. Idempotent. */
-let signInPromise: Promise<string | null> | null = null;
-export function ensureSignedIn(): Promise<string | null> {
+/** Resolve to the current signed-in user's uid, or null when no one is
+ *  signed in. Live counts are gated on a real user — anonymous auth is
+ *  no longer used. */
+export function currentUidPromise(): Promise<string | null> {
   if (!firebaseEnabled()) return Promise.resolve(null);
-  if (signInPromise) return signInPromise;
-  signInPromise = new Promise((resolve) => {
-    const fb = getFirebase();
-    if (!fb) return resolve(null);
+  const fb = getFirebase();
+  if (!fb) return Promise.resolve(null);
+  // Resolve immediately if we already know the state.
+  if (fb.auth.currentUser) return Promise.resolve(fb.auth.currentUser.uid);
+  return new Promise((resolve) => {
     const off = onAuthStateChanged(fb.auth, (user) => {
-      if (user) {
-        off();
-        resolve(user.uid);
-      }
-    });
-    signInAnonymously(fb.auth).catch(() => {
       off();
-      resolve(null);
+      resolve(user?.uid ?? null);
     });
   });
-  return signInPromise;
 }
 
-/** Increment today's public counter for `presetKey` exactly once per user.
- *  Stores a per-user tick at habitTicks/{uid}/days/{date} with map of
- *  ticked preset keys; if the key is already true there, the transaction
- *  is a no-op. Public counters live at habitCounts/{date}.
- *
- *  Best-effort: silently no-ops when Firebase is disabled or offline.
- */
+/** Increment today's public counter for `presetKey` exactly once per
+ *  signed-in user. No-op when Firebase is disabled or the user is signed
+ *  out (anonymous auth has been removed in favour of email / Google). */
 export async function tickHabit(presetKey: string): Promise<void> {
   if (!presetKey) return;
-  const uid = await ensureSignedIn();
+  const uid = await currentUidPromise();
   if (!uid) return;
   const fb = getFirebase();
   if (!fb) return;
@@ -52,39 +43,53 @@ export async function tickHabit(presetKey: string): Promise<void> {
   try {
     await runTransaction(fb.db, async (tx) => {
       const tickSnap = await tx.get(tickRef);
-      const ticked = tickSnap.exists() && (tickSnap.data() as any)[presetKey] === true;
+      const ticked =
+        tickSnap.exists() && (tickSnap.data() as any)[presetKey] === true;
       if (ticked) return;
       tx.set(tickRef, { [presetKey]: true }, { merge: true });
-      // Server-side increment via FieldValue would be cleaner, but we read
-      // the count first and write +1 within the transaction, which is also
-      // atomic for this single-doc field.
       const countSnap = await tx.get(countRef);
-      const cur = countSnap.exists() ? (countSnap.data() as any)[presetKey] ?? 0 : 0;
+      const cur = countSnap.exists()
+        ? (countSnap.data() as any)[presetKey] ?? 0
+        : 0;
       tx.set(countRef, { [presetKey]: cur + 1 }, { merge: true });
     });
   } catch {
-    // Network/permission errors are fine to swallow — counts are best-effort.
+    // Network / permission errors are best-effort.
   }
 }
 
-/** Subscribe to today's counts. Returns the unsubscribe fn (or a no-op
- *  when Firebase is disabled). */
+/** Subscribe to today's counts. Returns an unsubscribe fn. The Firestore
+ *  read is gated on auth — when the user signs in, the listener attaches;
+ *  when they sign out, it detaches and we clear the count map. */
 export function subscribeTodayCounts(
   cb: (counts: Record<string, number>) => void,
 ): Unsubscribe {
   if (!firebaseEnabled()) return () => {};
   const fb = getFirebase();
   if (!fb) return () => {};
-  const date = todayKey();
-  const ref = doc(fb.db, 'habitCounts', date);
-  // Sign in lazily so reads work for anonymous users behind security rules.
-  ensureSignedIn();
-  return onSnapshot(
-    ref,
-    (snap) => {
-      const data = (snap.exists() ? snap.data() : {}) as Record<string, number>;
-      cb(data);
-    },
-    () => cb({}),
-  );
+
+  let firestoreUnsub: Unsubscribe | null = null;
+  const offAuth = onAuthStateChanged(fb.auth, (user) => {
+    if (firestoreUnsub) {
+      firestoreUnsub();
+      firestoreUnsub = null;
+    }
+    if (!user) {
+      cb({});
+      return;
+    }
+    const ref = doc(fb.db, 'habitCounts', todayKey());
+    firestoreUnsub = onSnapshot(
+      ref,
+      (snap) => {
+        cb((snap.exists() ? snap.data() : {}) as Record<string, number>);
+      },
+      () => cb({}),
+    );
+  });
+
+  return () => {
+    offAuth();
+    if (firestoreUnsub) firestoreUnsub();
+  };
 }

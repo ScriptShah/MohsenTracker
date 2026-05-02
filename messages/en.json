@@ -45,6 +45,10 @@
     "whyTitle": "Why does this matter to you?",
     "whyBody": "When motivation fades, your reason is what keeps you going. Write it like you'd say it out loud.",
     "whyPlaceholder": "Because I want my children to see a father who keeps his word, prays on time, and never gives up…",
+    "signInTitle": "Sign in",
+    "signInBody": "Use Google or your email to sign in. Your habit ticks will count toward the live community totals — and you can switch devices without losing data later.",
+    "signInDisabled": "Authentication isn't configured yet (Firebase isn't set up). You can continue without signing in.",
+    "signedInLead": "Signed in as",
     "categoriesTitle": "Pick what you'll track",
     "categoriesBody": "Start with what feels right. You can change this later.",
     "habitsTitle": "Pick your starting habits",
@@ -89,6 +93,33 @@
       "career": "Career & Productivity",
       "growth": "Personal Growth",
       "relationships": "Relationships"
+    }
+  },
+  "auth": {
+    "signinTitle": "Sign in",
+    "signupTitle": "Create account",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "password": "Password",
+    "signinSubmit": "Sign in",
+    "signupSubmit": "Create account",
+    "toggleToSignUp": "Don't have an account? Create one",
+    "toggleToSignIn": "Have an account? Sign in",
+    "signedInAs": "{email}",
+    "username": "Username",
+    "signOut": "Sign out",
+    "notSignedInTitle": "Sign in to enable live counts",
+    "notSignedInBody": "Once signed in, your habit ticks count toward the live community totals shown next to each habit.",
+    "errors": {
+      "userNotFound": "No account found for that email.",
+      "wrongPassword": "Wrong email or password.",
+      "emailInUse": "An account with this email already exists.",
+      "weakPassword": "Password must be at least 6 characters.",
+      "invalidEmail": "That doesn't look like a valid email.",
+      "popupClosed": "Sign-in cancelled.",
+      "disabled": "Authentication isn't configured. Set up Firebase first.",
+      "generic": "Sign-in failed. Try again."
     }
   },
   "units": {
