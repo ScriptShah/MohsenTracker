@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import gsap from 'gsap';
 import { LeafLogo } from './LeafLogo';
 
@@ -15,22 +15,55 @@ const STEP_KEYS = [
 ] as const;
 
 const SESSION_KEY = 'splash_seen_session';
-// Page 0 = logo + tagline. Pages 1..N = one quote each.
-const TOTAL_PAGES = 1 + STEP_KEYS.length;
+const LANG_KEY = 'splash_lang_picked';
+
+// Page 0 = language picker (skipped after first pick).
+// Page 1 = logo + tagline.
+// Pages 2..N = one quote each.
+const PICKER_PAGE = 0;
+const LOGO_PAGE = 1;
+const FIRST_QUOTE_PAGE = 2;
+const TOTAL_PAGES = FIRST_QUOTE_PAGE + STEP_KEYS.length; // 8
 
 export function SplashScreen() {
   const t = useTranslations();
+  const locale = useLocale();
   const [hidden, setHidden] = useState(true);
-  const [pageIndex, setPageIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(PICKER_PAGE);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (sessionStorage.getItem(SESSION_KEY) === '1') return;
-    sessionStorage.setItem(SESSION_KEY, '1');
     setHidden(false);
+    // If the user has already picked a language earlier this session
+    // (then we redirected to the new locale and re-mounted), skip the
+    // picker and start at the logo page.
+    if (sessionStorage.getItem(LANG_KEY) === '1') {
+      setPageIndex(LOGO_PAGE);
+    }
   }, []);
+
+  const pickLanguage = useCallback(
+    (lang: 'en' | 'fa') => {
+      sessionStorage.setItem(LANG_KEY, '1');
+      if (lang !== locale) {
+        // Locale lives in the URL path (/en or /fa). Hard-navigate so
+        // next-intl's middleware re-runs and the layout re-renders with
+        // the new messages. The splash will re-mount and pick up at the
+        // logo page since LANG_KEY is set.
+        const newPath = window.location.pathname.replace(
+          /^\/(en|fa)/,
+          `/${lang}`,
+        );
+        window.location.href = newPath || `/${lang}`;
+        return;
+      }
+      setPageIndex(LOGO_PAGE);
+    },
+    [locale],
+  );
 
   // Run an entrance animation each time the page changes.
   useEffect(() => {
@@ -59,7 +92,7 @@ export function SplashScreen() {
 
   // Ambient float on the logo while it's the active page.
   useEffect(() => {
-    if (hidden || pageIndex !== 0) return;
+    if (hidden || pageIndex !== LOGO_PAGE) return;
     const ctx = gsap.context(() => {
       gsap.to('.splash-icon', {
         y: -8,
@@ -73,6 +106,7 @@ export function SplashScreen() {
   }, [pageIndex, hidden]);
 
   const dismiss = useCallback(() => {
+    sessionStorage.setItem(SESSION_KEY, '1');
     if (!rootRef.current) {
       setHidden(true);
       return;
@@ -86,6 +120,9 @@ export function SplashScreen() {
   }, []);
 
   const onTap = useCallback(() => {
+    // Picker page waits for an explicit button tap; tapping elsewhere
+    // shouldn't accidentally advance past the language choice.
+    if (pageIndex === PICKER_PAGE) return;
     if (pageIndex < TOTAL_PAGES - 1) {
       setPageIndex((p) => p + 1);
     } else {
@@ -95,10 +132,9 @@ export function SplashScreen() {
 
   if (hidden) return null;
 
-  const isLogo = pageIndex === 0;
-  const stepKey = isLogo ? null : STEP_KEYS[pageIndex - 1];
-  const Icon = stepKey ? ICONS[stepKey] : null;
-  const colors = stepKey ? COLORS[stepKey] : null;
+  const isPicker = pageIndex === PICKER_PAGE;
+  const isLogo = pageIndex === LOGO_PAGE;
+  const stepKey = !isPicker && !isLogo ? STEP_KEYS[pageIndex - FIRST_QUOTE_PAGE] : null;
 
   return (
     <div
@@ -116,7 +152,43 @@ export function SplashScreen() {
         key={pageIndex}
         className="flex w-full max-w-md flex-col items-center gap-6 text-center"
       >
-        {isLogo ? (
+        {isPicker ? (
+          <>
+            <span className="splash-icon inline-block">
+              <LeafLogo size={88} />
+            </span>
+            <div className="splash-text space-y-1">
+              <h1 className="text-2xl font-semibold text-ink-900">
+                Choose your language
+              </h1>
+              <p className="text-2xl font-semibold text-ink-900" dir="rtl">
+                زبانت را انتخاب کن
+              </p>
+            </div>
+            <div className="splash-hint flex w-full flex-col gap-3 pt-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  pickLanguage('en');
+                }}
+                className="tap-44 w-full rounded-2xl border border-ink-200 bg-white px-4 py-3 text-base font-semibold text-ink-800 shadow-sm hover:border-leaf-400 hover:text-leaf-700"
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  pickLanguage('fa');
+                }}
+                className="tap-44 w-full rounded-2xl border border-ink-200 bg-white px-4 py-3 text-base font-semibold text-ink-800 shadow-sm hover:border-leaf-400 hover:text-leaf-700"
+              >
+                فارسی
+              </button>
+            </div>
+          </>
+        ) : isLogo ? (
           <>
             <span className="splash-icon inline-block drop-shadow-[0_8px_24px_rgb(16_185_129_/_0.35)]">
               <LeafLogo size={160} />
@@ -135,18 +207,20 @@ export function SplashScreen() {
               {t(`splash.${stepKey}` as any)}
             </p>
             <span className="numeral text-xs text-ink-500">
-              {pageIndex} / {TOTAL_PAGES - 1}
+              {pageIndex - LOGO_PAGE} / {STEP_KEYS.length}
             </span>
           </>
         )}
       </div>
 
       <div className="splash-hint flex flex-col items-center gap-3 pb-4">
-        <p className="text-sm text-ink-500">
-          {pageIndex < TOTAL_PAGES - 1
-            ? t('splash.tapToContinue')
-            : t('splash.tapToBegin')}
-        </p>
+        {!isPicker && (
+          <p className="text-sm text-ink-500">
+            {pageIndex < TOTAL_PAGES - 1
+              ? t('splash.tapToContinue')
+              : t('splash.tapToBegin')}
+          </p>
+        )}
         <button
           type="button"
           onClick={(e) => {
