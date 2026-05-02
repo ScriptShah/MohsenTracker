@@ -10,7 +10,7 @@ import { ArrowBack, ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
-import { getNarrative } from '@/lib/projections';
+import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { shouldMuteConsequences } from '@/lib/sensitivity';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
@@ -53,14 +53,22 @@ function HabitDetail() {
   const muteVerdict = useMemo(() => shouldMuteConsequences(resets), [resets]);
   const stakesAvailable = sensitivity !== 'off' && !muteVerdict.muted;
 
+  const allLogs = useAppStore((s) => s.logs);
+
   const fmt = useNumberFormatter();
   const [showStakesRaw, setShowStakes] = useState(false);
   const showStakes = showStakesRaw && stakesAvailable;
 
   const narrative = useMemo(() => {
     if (!habit) return null;
-    return getNarrative({ habit, t: (k, v) => t(k as any, v), fmt });
-  }, [habit, t, fmt]);
+    const recentAvg = recentAvgValue(habit, allLogs);
+    return getNarrative({
+      habit,
+      t: (k, v) => t(k as any, v),
+      fmt,
+      recentAvg,
+    });
+  }, [habit, t, fmt, allLogs]);
 
   if (!habit) {
     return (
@@ -111,6 +119,19 @@ function HabitDetail() {
           <h2 className="text-sm font-semibold text-ink-800">
             {showStakes ? t('habitDetail.atStake') : t('habitDetail.ifYouKeep')}
           </h2>
+          {!showStakes && narrative.paceDriven && narrative.recentAvg !== undefined && (
+            <p className="numeral text-xs text-leaf-700">
+              {t(
+                habit.unit
+                  ? 'habitDetail.paceLabel'
+                  : 'habitDetail.paceLabelNoUnit',
+                {
+                  avg: fmt(Math.round(narrative.recentAvg)),
+                  unit: habit.unit ?? '',
+                },
+              )}
+            </p>
+          )}
           <ul className="space-y-2 text-ink-700">
             {(showStakes
               ? sliceForSensitivity(narrative.consequenceLines, sensitivity)

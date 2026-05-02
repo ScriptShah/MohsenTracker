@@ -58,14 +58,51 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                 <span className={clsx('block font-medium', done && 'text-leaf-800')}>
                   {habit.name}
                 </span>
-                {habit.unit && habit.target !== undefined && (
+                {habit.type === 'good' && habit.unit && habit.target !== undefined && (
                   <span className="block text-xs text-ink-500">
-                    <span className="numeral">{habit.target}</span> {habit.unit}
+                    {log && log.value > 0 ? (
+                      <>
+                        <span
+                          className={clsx(
+                            'numeral',
+                            log.value > habit.target && 'font-semibold text-leaf-700',
+                          )}
+                        >
+                          {log.value}
+                        </span>{' '}
+                        / <span className="numeral">{habit.target}</span> {habit.unit}
+                        {log.value > habit.target && (
+                          <span className="ms-1 text-leaf-600" aria-hidden>
+                            ✨
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span className="numeral">{habit.target}</span> {habit.unit}
+                      </>
+                    )}
                   </span>
                 )}
                 {habit.type === 'bad' && habit.unit && habit.limit !== undefined && (
                   <span className="block text-xs text-ink-500">
-                    ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                    {log && log.value > 0 ? (
+                      <>
+                        <span
+                          className={clsx(
+                            'numeral',
+                            log.value > habit.limit && 'font-semibold text-red-600',
+                          )}
+                        >
+                          {log.value}
+                        </span>{' '}
+                        / ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                      </>
+                    ) : (
+                      <>
+                        ≤ <span className="numeral">{habit.limit}</span> {habit.unit}
+                      </>
+                    )}
                   </span>
                 )}
               </span>

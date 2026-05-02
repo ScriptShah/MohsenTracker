@@ -1,4 +1,5 @@
-import type { Habit } from '@/domain/types';
+import type { Habit, HabitLog } from '@/domain/types';
+import { dateKey } from './dates';
 
 export interface Hadith {
   text: string;
@@ -15,6 +16,10 @@ export interface Narrative {
    */
   reversalLines: string[];
   hadith?: Hadith;
+  /** Mean daily value across recent days that had any log. 0 when no data. */
+  recentAvg?: number;
+  /** True when we projected from recent pace because it exceeded the target. */
+  paceDriven?: boolean;
 }
 
 export type Translator = (key: string, vars?: Record<string, any>) => string;
@@ -23,6 +28,54 @@ interface Ctx {
   habit: Habit;
   t: Translator;
   fmt: (n: number) => string;
+  /** Pre-computed mean daily value (last N days with any log). When provided
+   *  and greater than the habit's target, builders project from this number
+   *  so the user's actual pace drives the compound math, not the target. */
+  recentAvg?: number;
+}
+
+/** Mean daily value across the last `days` days that had any log entry.
+ *  Returns 0 when there's no data. */
+export function recentAvgValue(
+  habit: Habit,
+  logs: Record<string, Record<string, HabitLog>>,
+  days = 14,
+): number {
+  let sum = 0;
+  let n = 0;
+  const today = new Date();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = dateKey(d);
+    const log = logs[key]?.[habit.id];
+    if (log && log.value > 0) {
+      sum += log.value;
+      n += 1;
+    }
+  }
+  return n === 0 ? 0 : sum / n;
+}
+
+/** For a good habit: max(target, recentAvg). For a bad habit: min(limit, recentAvg).
+ *  Falls back to the static fallback when no target/limit is set. */
+function effective(habit: Habit, ctx: Ctx, fallback: number): number {
+  const avg = ctx.recentAvg ?? 0;
+  if (habit.type === 'good') {
+    const t = habit.target ?? fallback;
+    return avg > t ? avg : t;
+  }
+  // bad habit
+  const lim = habit.limit ?? fallback;
+  return avg > 0 && avg < lim ? avg : lim;
+}
+
+function isPaceDriven(habit: Habit, ctx: Ctx): boolean {
+  const avg = ctx.recentAvg ?? 0;
+  if (avg <= 0) return false;
+  if (habit.type === 'good' && habit.target !== undefined) return avg > habit.target;
+  if (habit.type === 'bad' && habit.limit !== undefined) return avg < habit.limit;
+  return false;
 }
 
 const BOOK_PAGES = 300;
@@ -50,8 +103,9 @@ function hadithFromKey(t: Translator, key: string): Hadith {
 type Builder = (ctx: Ctx) => Narrative;
 
 const builders: Record<string, Builder> = {
-  reading: ({ habit, t, fmt }) => {
-    const pagesPerDay = habit.target ?? 10;
+  reading: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const pagesPerDay = effective(habit, ctx, 10);
     const pagesYearly = pagesPerDay * 365;
     const books = Math.max(1, Math.round(pagesYearly / BOOK_PAGES));
     const decadeBooks = books * 10;
@@ -72,8 +126,9 @@ const builders: Record<string, Builder> = {
     };
   },
 
-  saving: ({ habit, t, fmt }) => {
-    const daily = habit.target ?? 1;
+  saving: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const daily = effective(habit, ctx, 1);
     const yearly = daily * 365;
     const tenYear = annuityFV(yearly, 10, SAVING_RATE);
     const thirtyYear = annuityFV(yearly, 30, SAVING_RATE);
@@ -98,8 +153,9 @@ const builders: Record<string, Builder> = {
     };
   },
 
-  exercise: ({ habit, t, fmt }) => {
-    const minPerDay = habit.target ?? 30;
+  exercise: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const minPerDay = effective(habit, ctx, 30);
     const hoursYearly = Math.round((minPerDay * 365) / 60);
     const km = Math.round(hoursYearly * WALK_KMH);
     const trips = Math.max(1, Math.round(km / LONDON_PARIS_KM));
@@ -121,8 +177,9 @@ const builders: Record<string, Builder> = {
     };
   },
 
-  quranPages: ({ habit, t, fmt }) => {
-    const pagesPerDay = habit.target ?? 1;
+  quranPages: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const pagesPerDay = effective(habit, ctx, 1);
     const pagesYearly = pagesPerDay * 365;
     const yearsPerKhatm = QURAN_PAGES / pagesYearly;
     const monthsPerKhatm = Math.max(1, Math.round(yearsPerKhatm * 12));
@@ -149,8 +206,9 @@ const builders: Record<string, Builder> = {
     };
   },
 
-  screenTime: ({ habit, t, fmt }) => {
-    const limit = habit.limit ?? 2;
+  screenTime: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const limit = effective(habit, ctx, 2);
     const daysReclaimed = Math.round(HOUR_RECLAIM_DAYS);
     const decadeDaysReclaimed = daysReclaimed * 10;
     return {
@@ -215,8 +273,9 @@ const builders: Record<string, Builder> = {
     };
   },
 
-  learning: ({ habit, t, fmt }) => {
-    const minPerDay = habit.target ?? 15;
+  learning: (ctx) => {
+    const { habit, t, fmt } = ctx;
+    const minPerDay = effective(habit, ctx, 15);
     const hoursYearly = Math.round((minPerDay * 365) / 60);
     return {
       projectionLines: [
@@ -273,14 +332,16 @@ const builders: Record<string, Builder> = {
   },
 };
 
-function genericNarrative({ habit, t, fmt }: Ctx): Narrative {
+function genericNarrative(ctx: Ctx): Narrative {
+  const { habit, t, fmt } = ctx;
   const occ = occurrencesPerYear(habit);
   const reversalLines = [
     t('narratives.generic.r1'),
     t('narratives.generic.r2'),
   ];
   if (habit.type === 'good' && habit.target !== undefined && habit.unit) {
-    const yearly = habit.target * occ;
+    const daily = effective(habit, ctx, habit.target);
+    const yearly = daily * occ;
     const decade = yearly * 10;
     return {
       projectionLines: [
@@ -313,6 +374,10 @@ function genericNarrative({ habit, t, fmt }: Ctx): Narrative {
 
 export function getNarrative(ctx: Ctx): Narrative {
   const key = ctx.habit.presetKey;
-  if (key && builders[key]) return builders[key](ctx);
-  return genericNarrative(ctx);
+  const base = key && builders[key] ? builders[key](ctx) : genericNarrative(ctx);
+  return {
+    ...base,
+    recentAvg: ctx.recentAvg,
+    paceDriven: isPaceDriven(ctx.habit, ctx),
+  };
 }

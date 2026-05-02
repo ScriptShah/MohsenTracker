@@ -12,7 +12,7 @@ import { BookCover } from '@/components/BookCover';
 import { useAppStore } from '@/lib/store';
 import { todayKey } from '@/lib/dates';
 import { dailyQuoteIndex } from '@/lib/futureSelf';
-import { getNarrative } from '@/lib/projections';
+import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { currentDay, stageFor } from '@/lib/reset';
@@ -68,13 +68,20 @@ function Home() {
 
   const dailyHabits = useMemo(() => habits.filter((h) => h.frequency === 'daily'), [habits]);
 
+  const allLogs = useAppStore((s) => s.logs);
   const rotating = useMemo(() => {
     if (dailyHabits.length === 0) return null;
     const habit = dailyHabits[dailyQuoteIndex(dailyHabits.length)];
-    const narrative = getNarrative({ habit, t: (k, v) => t(k as any, v), fmt });
+    const recentAvg = recentAvgValue(habit, allLogs);
+    const narrative = getNarrative({
+      habit,
+      t: (k, v) => t(k as any, v),
+      fmt,
+      recentAvg,
+    });
     const line = narrative.projectionLines[0];
     return { habit, line };
-  }, [dailyHabits, t, fmt]);
+  }, [dailyHabits, t, fmt, allLogs]);
 
   if (!profile) return null;
 

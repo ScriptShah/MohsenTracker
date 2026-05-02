@@ -584,6 +584,8 @@
   },
   "habitDetail": {
     "ifYouKeep": "If you keep this up…",
+    "paceLabel": "Projecting from your pace: {avg} {unit}/day",
+    "paceLabelNoUnit": "Projecting from your pace: {avg}/day",
     "atStake": "What's at stake if you stop",
     "showLoss": "Show me the loss",
     "showGain": "Show me the gain",
