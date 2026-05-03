@@ -20,7 +20,6 @@ const REWARD_PRESETS: { presetKey: string; tier: RewardTier }[] = [
   { presetKey: 'halalDessert', tier: 'small' },
   { presetKey: 'callFriend', tier: 'small' },
   { presetKey: 'longShower', tier: 'small' },
-  { presetKey: 'listenMusic', tier: 'small' },
   // Medium — a meaningful evening/afternoon
   { presetKey: 'hobbyHour', tier: 'medium' },
   { presetKey: 'movieNight', tier: 'medium' },
@@ -29,12 +28,11 @@ const REWARD_PRESETS: { presetKey: string; tier: RewardTier }[] = [
   { presetKey: 'cafeAfternoon', tier: 'medium' },
   { presetKey: 'cookingProject', tier: 'medium' },
   { presetKey: 'newOutfit', tier: 'medium' },
+  { presetKey: 'swimming', tier: 'medium' },
   // Big — weekly/monthly milestone
   { presetKey: 'favouriteFood', tier: 'big' },
   { presetKey: 'smallGift', tier: 'big' },
   { presetKey: 'diningOut', tier: 'big' },
-  { presetKey: 'spaDay', tier: 'big' },
-  { presetKey: 'concertEvent', tier: 'big' },
   // Major — earned after a 100-day streak
   { presetKey: 'newBook', tier: 'major' },
   { presetKey: 'weekendTrip', tier: 'major' },
