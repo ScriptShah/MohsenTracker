@@ -92,6 +92,13 @@ body {
 .dark .bg-ink-50\/90 { background-color: rgb(15 23 42 / 0.9); }
 .dark .bg-ink-900\/40 { background-color: rgb(0 0 0 / 0.6); }
 
+/* Buttons that use bg-white sit on Cards that ALSO use bg-white. In light
+   mode the border is enough to separate them; in dark mode both override
+   to ink-800 and the button becomes invisible. Lift button surfaces one
+   step (ink-700) so they read against the card. */
+.dark button.bg-white { background-color: rgb(51 65 85); }
+.dark button.bg-white:hover { background-color: rgb(71 85 105); } /* ink-600 */
+
 /* Tinted wash surfaces — pull deep, keep hue */
 .dark .bg-leaf-50 { background-color: rgb(6 78 59 / 0.35); }   /* leaf-900 wash */
 .dark .bg-sand-50 { background-color: rgb(168 90 32 / 0.18); } /* sand-600 wash */
