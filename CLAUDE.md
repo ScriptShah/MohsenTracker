@@ -454,11 +454,36 @@ MohsenTracker/
   is "Implementation Notes for the New Sections"**, not habit packs.
   There is no habit-pack feature in the codebase regardless.
 
-### "Sukoon Mode" / "2-Minute Rule" / "Huberman Features"
-- The user prompt referenced these as Sections 22 / 23 / 24. **The
-  spec only goes up to §22 (Open Questions / Future Decisions).**
-  None of these features are in the spec or codebase. If you want
-  them, they need to be specced first.
+### Anger Management Protocol (Spec §22)
+- New preset habit `manageAnger` + a one-tap `AngerProtocol.tsx`
+  modal overlay that walks the Prophetic ﷺ protocol (ta'awwudh →
+  posture → wudu → 90-second silent breathing → dua), home-screen
+  trigger button, settings toggle (off by default). **Not in
+  codebase.** Replaces the rejected "Sukoon Mode" module.
+
+### 2-Minute Rule (Spec §23)
+- Every preset habit needs `fullVersion` and `twoMinuteVersion`
+  fields. Habit-creation UI offers both side-by-side and recommends
+  the 2-minute version. After a 30-day streak, prompts the user to
+  level up. Optional habit-stacking phrase field on creation. **Not
+  in codebase**; current `presetHabits` only carry the full version.
+
+### Task Bracketing (Spec §24.1)
+- Optional `startRitual` / `endRitual` text fields on each habit,
+  shown on the detail page. **Not in codebase.**
+
+### Positive Cargo (Spec §24.2)
+- Optional `positiveCargo` field on bad habits — a good deed to do
+  immediately after a slip. When the user logs a bad habit, the UI
+  prompts the cargo. Quranic anchor: "Indeed, good deeds erase bad
+  deeds" (Quran 11:114). **Not in codebase.**
+
+### Notifications-Off-By-Default (Spec §24.3)
+- Default `notifications.enabled = false`, onboarding briefly
+  explains why. Today the default is already `false`, but the UI
+  still promises delivery that doesn't happen — see "Push
+  Notifications" gap above. The §24.3 implementation also requires
+  identity-framed copy if the user opts in.
 
 ### Tests
 - **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
@@ -632,27 +657,37 @@ Reverse chronological — last ~25 commits, condensed:
 
 ## Next Recommended Steps
 
-In priority order:
+The authoritative priority list lives in **spec §25.5** ("Recommended
+Next Three Actions"). Mirroring it here so this file stays a complete
+state snapshot:
 
-1. **Finish the splash arc** the user agreed to in concept
-   (frame → who → where → what → start now) and ship it for both
-   languages. The current splash content is the most visible
-   English-translation-feel moment in the app.
-2. **Wire push notifications** end-to-end (FCM token registration,
-   Service Worker push handler, daily-reminder scheduling). The
-   Settings UI promises this and currently lies.
-3. **Bad-habit auto-replacement (§5.7)**. The data field exists; the
-   UI doesn't. This is called out as a product-level promise in the
-   architectural constraints. Likely the cheapest spec-promise to
-   close.
-4. **Idiomatic Persian rewrite, chunk by chunk**. The user has
-   indicated they want this in waves. Suggested order: home + common
-   UI + nav → future-self + compound lines → books / reset / ramadan
-   → settings / auth → habit-coaching narratives.
-5. **Tests for store mutations and Hijri math**. `store.ts` is
-   ~950 lines of stateful logic with no safety net; `hijri.ts` is
-   custom date math that's easy to break silently. Vitest + a few
-   focused unit tests would prevent regressions.
+1. **Fix the notifications lie** — either wire FCM end-to-end OR
+   remove the toggles from Settings. The UI currently promises
+   delivery that doesn't happen. Per §24.3 the right design is
+   notifications-off-by-default with identity-framed opt-in copy, so
+   a partial "remove the lie + reframe + leave the door open" is
+   often the right answer.
+2. **Wire bad-habit auto-replacement (§5.7)**. `replacementHabitId`
+   already exists on the type; the UI never reads or writes it.
+   Smallest spec-promise to close.
+3. **Deploy to Vercel**. No `vercel.json`, no live URL — the app
+   only runs on the developer's machine. Without a deploy, no one
+   else can use it.
+
+After those three, the app is "genuinely shippable" per the spec.
+Beyond them — in rough order — the meaningful next layer is:
+
+- **Splash text finalization** (4 of 5 quotes are still rejected
+  drafts).
+- **§22-§24 features** — Anger Protocol, 2-Minute Rule, Positive
+  Cargo, Task Bracketing. Spec §25.3 has the recommended build order:
+  start with the 2-Minute Rule field changes since they touch
+  `presetHabits` and unlock the rest.
+- **Idiomatic Persian rewrite, chunk by chunk** — already in motion
+  for splash + onboarding; the rest of the app still reads as
+  literal translation.
+- **Tests for `store.ts` + `hijri.ts`** — both are stateful logic
+  with zero coverage today.
 
 ---
 
@@ -703,6 +738,24 @@ across files. Violating them creates cross-cutting rework.
    excessive phone → reading). Habits store a `replacementHabitId`
    link. This is a product-level promise from §5.7, not optional UX
    polish. **Currently unimplemented in UI — see "Next Steps".**
+   **Related (§24.2 Positive Cargo):** Each bad habit also gets an
+   optional `positiveCargo` good deed prompted immediately after a
+   slip — Hebbian plasticity + Quranic anchor (11:114).
+
+10. **Every preset habit ships in two sizes (§23).** Each entry in
+    `presetHabits` must carry both a `fullVersion` and a
+    `twoMinuteVersion`. The habit-creation UI shows both, recommends
+    the 2-minute starter, and after a 30-day streak prompts the user
+    to level up. *"The most beloved of deeds to Allah are the most
+    consistent, even if they are small."*
+
+11. **Notifications are off by default (§24.3).** Habit-reminder
+    pings train external dependence; the app deliberately doesn't.
+    Don't ship a new feature with notifications enabled. Allowed
+    exceptions: prayer-time alerts, Iftar countdown during Ramadan,
+    a single nightly streak-on-the-line check-in (opt-in). When the
+    user does enable, copy must be identity-framed ("Time to be the
+    reader you are"), not nag-framed ("Don't forget!").
 
 6. **Ramadan Mode auto-activates from the Hijri calendar** and
    reshapes the home dashboard (Iftar countdown most prominent,
@@ -750,9 +803,24 @@ across files. Violating them creates cross-cutting rework.
   speaker with Islamic knowledge (not Google Translate). When
   generating Persian strings from this spec, mark them clearly as
   drafts pending review.
-- §22 lists open product questions that remain undecided — flag if
-  a task touches one of them rather than guessing the resolution.
-- The spec has 22 sections. References to §23, §24, etc. (e.g.
-  "Sukoon mode", "2-Minute Rule", "Huberman features") in
-  outside-the-codebase prompts are **out of spec scope** — ask
-  before implementing.
+- The spec now has **26 sections**. §22-§25 are recent additions:
+  - **§22 Anger Management Protocol** — habit-level (one preset +
+    one-tap protocol overlay), explicitly NOT a module. Replaced
+    the earlier "Sukoon Mode" proposal.
+  - **§23 2-Minute Rule** — design principle: every preset habit
+    has both a full and 2-minute version; creation UI offers both
+    and recommends the 2-minute starter.
+  - **§24 Three Distilled Insights from Habit Neuroscience** —
+    Task Bracketing, Positive Cargo, Notifications-Off-By-Default.
+    The spec deliberately cut limbic-friction tagging, linchpin
+    labels, phase scheduling, 21-day installation, dopamine
+    spotlighting, etc. Don't reintroduce them.
+  - **§25 Build Status (Reality Check)** — honest mirror of what's
+    built vs the gap list. Update this section as work progresses.
+    §25.5 lists the next three actions in priority order.
+- **§26 Open Questions** lives where §22 used to. Flag if a task
+  touches an undecided question rather than guessing the resolution.
+- Earlier draft sections that DID exist and have been pruned —
+  Sukoon Mode as a module, the 10-subsection 2-Minute Rule, the
+  13-subsection Huberman treatment — should not be re-implemented
+  even if older notes reference them. The current spec is canon.
