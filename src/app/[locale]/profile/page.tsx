@@ -9,7 +9,7 @@ import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useUnitLabel } from '@/lib/units';
-import { useAuth, useAuthGated, deleteAccount, emailUsername, signOutUser } from '@/lib/auth';
+import { useAuth, deleteAccount, emailUsername, signOutUser } from '@/lib/auth';
 import { firebaseEnabled } from '@/lib/firebase';
 import { SignInForm } from '@/components/SignInForm';
 import type {
@@ -60,25 +60,12 @@ function Profile() {
   const setProfile = useAppStore((s) => s.setProfile);
   const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const reset = useAppStore((s) => s.reset);
-  const gated = useAuthGated();
   const pendingCount = useAppStore(
     (s) => s.pendingRewards.filter((r) => !r.claimedAt).length,
   );
   const punishmentCount = useAppStore(
     (s) => s.activePunishments.filter((p) => !p.doneAt).length,
   );
-
-  // After a sign-out, the page is the landing spot for re-authentication.
-  // Hide the rest of the settings so the SignInForm is the focus — local
-  // data is untouched and reappears as soon as the user signs back in.
-  if (gated) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-xl font-semibold">{t('settings.title')}</h1>
-        <AuthSection />
-      </div>
-    );
-  }
 
   if (!profile?.onboardingComplete) {
     return (
