@@ -14,15 +14,31 @@ import { validatePunishment, type SafetyReason } from '@/lib/safety';
 const TIERS: RewardTier[] = ['small', 'medium', 'big', 'major'];
 
 const REWARD_PRESETS: { presetKey: string; tier: RewardTier }[] = [
+  // Small — quick, daily-scale wins
   { presetKey: 'favouriteCoffee', tier: 'small' },
   { presetKey: 'freeTime', tier: 'small' },
   { presetKey: 'halalDessert', tier: 'small' },
+  { presetKey: 'callFriend', tier: 'small' },
+  { presetKey: 'longShower', tier: 'small' },
+  { presetKey: 'listenMusic', tier: 'small' },
+  // Medium — a meaningful evening/afternoon
   { presetKey: 'hobbyHour', tier: 'medium' },
   { presetKey: 'movieNight', tier: 'medium' },
   { presetKey: 'walkOutside', tier: 'medium' },
+  { presetKey: 'gameSession', tier: 'medium' },
+  { presetKey: 'cafeAfternoon', tier: 'medium' },
+  { presetKey: 'cookingProject', tier: 'medium' },
+  { presetKey: 'newOutfit', tier: 'medium' },
+  // Big — weekly/monthly milestone
   { presetKey: 'favouriteFood', tier: 'big' },
   { presetKey: 'smallGift', tier: 'big' },
+  { presetKey: 'diningOut', tier: 'big' },
+  { presetKey: 'spaDay', tier: 'big' },
+  { presetKey: 'concertEvent', tier: 'big' },
+  // Major — earned after a 100-day streak
   { presetKey: 'newBook', tier: 'major' },
+  { presetKey: 'weekendTrip', tier: 'major' },
+  { presetKey: 'newHobbyKit', tier: 'major' },
 ];
 
 const PUNISHMENT_PRESETS: string[] = [
@@ -33,6 +49,14 @@ const PUNISHMENT_PRESETS: string[] = [
   'earlyWakeup',
   'coldShower',
   'extraDhikr',
+  'noScreensEvening',
+  'writeApology',
+  'extraQuran',
+  'silenceHour',
+  'handwritePages',
+  'noEntertainment',
+  'extraSadaqah',
+  'chorePile',
 ];
 
 export default function RewardsPage() {
