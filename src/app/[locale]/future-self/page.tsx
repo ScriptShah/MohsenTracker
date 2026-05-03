@@ -134,6 +134,15 @@ function FutureSelf() {
         </Card>
       )}
 
+      <Card className="border-sand-200 bg-gradient-to-br from-sand-50 to-white">
+        <p className="text-xs uppercase tracking-wide text-sand-600">
+          {t('futureSelf.smallestTitle')}
+        </p>
+        <p className="pt-1 text-base leading-relaxed text-ink-800">
+          {t('futureSelf.smallestBody')}
+        </p>
+      </Card>
+
       <Card className="space-y-3">
         <div>
           <h2 className="text-sm font-semibold text-ink-800">

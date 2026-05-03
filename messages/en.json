@@ -891,6 +891,8 @@
     "editTitle": "Edit your future self",
     "save": "Save changes",
     "compoundTitle": "Today's compound truth",
+    "smallestTitle": "Today's leverage",
+    "smallestBody": "What's the smallest thing you can do today that would have the biggest impact on your life?",
     "noVision": "Describe the person you're becoming.",
     "noWhy": "Add the reason that drives you.",
     "noFutureSelfName": "Give your future self a name.",
