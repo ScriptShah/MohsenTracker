@@ -510,6 +510,12 @@
       "detailFooterOne": "Counts toward {name} · 1 day streak",
       "detailFooterZero": "Counts toward {name}"
     },
+    "logSheet": {
+      "title": "Log today's reading",
+      "body": "Pick the book you read and add today's pages.",
+      "noActive": "No book in progress yet — add one to start logging.",
+      "audiobookNote": "Audiobook minutes don't count toward a pages-based streak."
+    },
     "completionCelebration": "✨ Mashallah!"
   },
   "settings": {

@@ -12,6 +12,7 @@ import { useLiveCounts } from '@/lib/useLiveCounts';
 import { useNumberFormatter } from '@/lib/format';
 import { useUnitLabel } from '@/lib/units';
 import { ChevronEnd } from './Chevron';
+import { BookLogSheet } from './BookLogSheet';
 
 export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const t = useTranslations();
@@ -20,10 +21,30 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const logs = useAppStore((s) => s.logs[today] ?? {});
   const streaks = useAppStore((s) => s.streaks);
   const toggleHabit = useAppStore((s) => s.toggleHabit);
+  const readingHabitId = useAppStore((s) => s.profile?.readingHabitId);
+  const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const liveCounts = useLiveCounts();
   const unitLabel = useUnitLabel();
 
   const [showDone, setShowDone] = useState(false);
+  const [bookSheetOpen, setBookSheetOpen] = useState(false);
+
+  const isReadingHabit = (h: Habit) =>
+    readingHabitId === h.id || h.presetKey === 'reading';
+
+  const onCheck = (habit: Habit) => {
+    if (isReadingHabit(habit)) {
+      // Auto-link the books module the first time the user taps the
+      // reading habit's check, so future book-page logs flow into the
+      // habit's daily total + streak (spec §20.11).
+      if (!readingHabitId && habit.presetKey === 'reading') {
+        setReadingHabit(habit.id);
+      }
+      setBookSheetOpen(true);
+      return;
+    }
+    toggleHabit(habit.id);
+  };
 
   if (habits.length === 0) {
     return <p className="text-ink-500">{t('home.noHabits')}</p>;
@@ -70,7 +91,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  toggleHabit(habit.id);
+                  onCheck(habit);
                 }}
                 aria-pressed={done}
                 aria-label={
@@ -160,6 +181,9 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
             ? t('home.hideDone', { n: fmt(done.length) })
             : t('home.showDone', { n: fmt(done.length) })}
         </button>
+      )}
+      {bookSheetOpen && (
+        <BookLogSheet onClose={() => setBookSheetOpen(false)} />
       )}
     </div>
   );
