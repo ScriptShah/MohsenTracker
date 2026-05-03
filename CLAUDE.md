@@ -1,74 +1,758 @@
-# CLAUDE.md
+# Mohsen Tracker — Project State
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is both:
 
-## Repository State
+1. A **state snapshot** of what's actually built (kept honest — features
+   listed as "implemented" mean the code is there and runs).
+2. The **operational guide for Claude Code** in this repo (architectural
+   constraints, design principles, spec usage). The bottom half of this
+   file is durable guidance; the top half rots and should be refreshed.
 
-This repository is currently **spec-only**. There is no source code, no `package.json`, no build system, and no tests yet. The single source of truth is `HABIT_TRACKER_SPEC.md` (~2,200 lines), which fully describes the product to be built. `README.md` is a one-line stub.
+---
 
-When a future task involves writing actual code, the first step is scaffolding the Next.js 14+ App Router project described below. Until then, "build/lint/test" commands do not exist — do not invent them.
+## Project Overview
 
-## Product
+A bilingual (English + Persian/Farsi) habit-tracking PWA grounded in *The
+Compound Effect* and *Atomic Habits*, with first-class Islamic practice
+tracking (prayers, Quran, Sunnah, Ramadan mode). The defining
+differentiator is **compound-effect projection** — every habit surfaces
+a concrete future-self number ("10 pages a day = 120 books a decade").
+Source of truth: `HABIT_TRACKER_SPEC.md` (~2,200 lines).
 
-A bilingual (English + Persian/Farsi) habit-tracking PWA grounded in *The Compound Effect* and *Atomic Habits*, with first-class Islamic practice tracking (prayers, Quran, Sunnah, Ramadan mode). The defining differentiator is **compound-effect projection** — every habit surfaces a concrete future-self number ("10 pages daily = 120 books a decade"). That visualization is the emotional core of the product, not a side feature.
+## Tech Stack (Currently Implemented)
 
-See `HABIT_TRACKER_SPEC.md` for the complete spec. Important sections:
-- §3 Tech Stack
-- §4 Six Core Categories (Islamic, Health, Finance, Career, Personal Growth, Relationships)
-- §5 Key Features (compound projections, GitHub-style heatmap, future-self vision, reward/punishment systems)
-- §6 Ramadan Mode (auto-activates on Hijri calendar)
-- §8 Firestore schema
-- §13 Bilingual / RTL requirements
-- §14–§17 Habit content libraries (Sunnah, Sahaba, Muslim youth, family)
-- §19 Dopamine Reset feature
-- §20 Book Tracker
-- §21 Loss Aversion / Real Consequences Messaging
+Versions are exact ranges from `package.json` (Next.js 14 line, not 15+):
 
-## Intended Stack (from spec)
+- **Framework**: Next.js `^14.2.35` (App Router) + React `^18.3.1`
+- **Language**: TypeScript `^5.6.2`
+- **Styling**: Tailwind CSS `^3.4.13` with `darkMode: 'class'` and custom
+  `ink` / `leaf` / `sand` palettes (`tailwind.config.ts`). Dark-mode
+  overrides live in `src/app/globals.css` (a "global override" pattern,
+  not `dark:` variants). Logical properties (`ms-`/`me-`/`ps-`/`pe-`)
+  are used throughout for RTL.
+- **State**: Zustand `^4.5.5` with `persist` middleware → `localStorage`
+  (`src/lib/store.ts`). Migration version 9.
+- **i18n**: `next-intl` `^3.20.0`, locale routing `/en/...` and `/fa/...`,
+  middleware-based (`src/middleware.ts`).
+- **Animation**: GSAP `^3.15.0` (used in `SplashScreen.tsx` only so far —
+  no app-wide animation system yet despite a request for one).
+- **Audio**: Web Audio API synthesized chimes, no audio files (`src/lib/sounds.ts`).
+- **Date/calendar**: `date-fns` `^3.6.0` + `date-fns-jalali` `^3.6.0-0`.
+  Hijri math is hand-rolled in `src/lib/hijri.ts` (no Hijri library
+  dependency).
+- **Backend**: Firebase `^12.12.1` — Auth (Google, email/password,
+  anonymous-as-guest, delete-account), Firestore (live counts +
+  per-user state snapshot), persistent IndexedDB cache. **Cloud
+  Messaging, Cloud Functions, and Cloud Storage are NOT used.**
+- **PWA**: `@ducanh2912/next-pwa` `^10.2.9` configured in
+  `next.config.mjs`. Service worker (`public/sw.js`) and manifest
+  (`public/manifest.webmanifest`) ship in production builds. PNG icons
+  generated from `public/icon.svg` at prebuild via
+  `scripts/generate-pwa-icons.mjs` (uses `sharp`).
+- **Hosting**: Designed for Vercel. **No `vercel.json` and no live
+  deployment yet.**
+- **Other**: `clsx`, `cross-env`. ESLint with `next/core-web-vitals`.
+- **Not installed**: Framer Motion, Recharts, Chart.js, IndexedDB
+  wrapper. Charts are hand-rolled CSS grids; bar chart on /progress is
+  divs, not a charting library.
 
-- **Next.js 14+ App Router** with TypeScript
-- **Tailwind CSS** with logical properties (`ms-`/`me-`/`ps-`/`pe-`) — required for RTL
-- **Framer Motion**, **Recharts** (or Chart.js)
-- **next-pwa** for PWA, **next-intl** (preferred) for i18n
-- **Zustand** (or React Context) for state
-- **date-fns** + **date-fns-jalali** + Hijri date library
-- **Firebase**: Auth, Firestore, Cloud Storage, Cloud Messaging, Cloud Functions
-- **Vercel** hosting; locale routing `/en/...` and `/fa/...`
+## Project Structure
 
-Keep these aligned when scaffolding — the spec's content libraries, Firestore schema, and feature designs assume them.
+```
+MohsenTracker/
+├── HABIT_TRACKER_SPEC.md          # Source of truth (~2,200 lines)
+├── FIREBASE_SETUP.md              # Live counts setup guide
+├── README.md                      # One-line stub
+├── CLAUDE.md                      # This file
+├── firestore.rules                # Live counts + user snapshot rules
+├── next.config.mjs                # next-intl + next-pwa wiring
+├── tailwind.config.ts             # Custom palette, dark mode = class
+├── tsconfig.json
+├── postcss.config.mjs
+├── .eslintrc.json
+├── .env.local.example             # Firebase env template
+├── messages/
+│   ├── en.json                    # ~948 lines, full coverage
+│   └── fa.json                    # ~948 lines, drafts pending review
+├── public/
+│   ├── manifest.webmanifest
+│   ├── sw.js                      # Generated by next-pwa
+│   ├── workbox-*.js
+│   ├── icon.svg / maskable-icon.svg
+│   ├── icon-192.png / icon-512.png / apple-icon.png
+├── scripts/
+│   └── generate-pwa-icons.mjs     # SVG → PNG at prebuild
+└── src/
+    ├── middleware.ts              # next-intl locale routing
+    ├── i18n/
+    │   ├── config.ts              # locales, localeDirection
+    │   ├── routing.ts             # navigation helpers
+    │   └── request.ts             # server-side message loader
+    ├── domain/
+    │   ├── types.ts               # All TypeScript types (single source)
+    │   └── seed.ts                # Default categories + preset habits
+    ├── lib/
+    │   ├── auth.ts                # Firebase auth + useAuthGated()
+    │   ├── books.ts               # Book math (pages read, pace, ETA)
+    │   ├── compound.ts            # projectCompound() — yearly/decade math
+    │   ├── dates.ts               # Date keys + heatmap grid
+    │   ├── firebase.ts            # Lazy init, persistent cache
+    │   ├── format.ts              # Persian/Western numeral switching
+    │   ├── futureSelf.ts          # Days-since-start, 30-day rates
+    │   ├── hijri.ts               # Custom Hijri date logic + Ramadan phase
+    │   ├── image.ts               # Cover-image resize for books
+    │   ├── livecounts.ts          # "X doing this today" tx + subscribe
+    │   ├── placeholders.ts        # Random placeholder picker for inputs
+    │   ├── projections.ts         # Per-habit compound narratives
+    │   ├── reset.ts               # Dopamine reset stages + replacements
+    │   ├── safety.ts              # Punishment validator (spec §5.5)
+    │   ├── sensitivity.ts         # Consequence-message tone gating
+    │   ├── sounds.ts              # Synthesized chimes
+    │   ├── store.ts               # Zustand store (~950 lines)
+    │   ├── streaks.ts             # Recompute streak from log history
+    │   ├── sync.ts                # Cloud snapshot push/pull
+    │   ├── units.ts               # Unit label translation
+    │   └── useLiveCounts.ts       # Live-count subscription hook
+    ├── components/
+    │   ├── AppShell.tsx           # Auth-state switcher
+    │   ├── AuthLayout.tsx         # Top bar + nav + RouteGuard + page
+    │   ├── PublicLayout.tsx       # Logo + tagline + SignInForm
+    │   ├── BookCover.tsx
+    │   ├── BookLogSheet.tsx       # Book picker on reading-habit tap
+    │   ├── BottomNav.tsx
+    │   ├── Button.tsx
+    │   ├── Card.tsx
+    │   ├── Chevron.tsx
+    │   ├── ClientGate.tsx         # SSR/CSR mount fence
+    │   ├── CloudSync.tsx          # Pull on sign-in, push on changes
+    │   ├── CompletionRing.tsx
+    │   ├── HabitChecklist.tsx
+    │   ├── Heatmap.tsx            # GitHub-style year grid
+    │   ├── IftarCountdown.tsx
+    │   ├── InstallPrompt.tsx      # Android beforeinstallprompt + iOS hint
+    │   ├── LeafLogo.tsx
+    │   ├── RouteGuard.tsx
+    │   ├── SignInForm.tsx
+    │   ├── SoundUnlock.tsx        # iOS gesture-unlock for AudioContext
+    │   ├── SplashScreen.tsx       # Language picker → logo → 5 quotes
+    │   ├── ThemeApplier.tsx       # auto/light/dark → html.dark
+    │   └── TopBar.tsx
+    └── app/
+        ├── globals.css            # Dark-mode overrides + splash anim
+        └── [locale]/
+            ├── layout.tsx         # NextIntl provider + AppShell
+            ├── page.tsx           # Home
+            ├── onboarding/page.tsx
+            ├── profile/page.tsx
+            ├── progress/page.tsx
+            ├── future-self/page.tsx
+            ├── ramadan/page.tsx
+            ├── reset/page.tsx     # Dopamine reset
+            ├── rewards/page.tsx   # Rewards + punishments combined
+            ├── categories/
+            │   ├── page.tsx
+            │   └── [id]/page.tsx
+            ├── habits/
+            │   ├── new/page.tsx
+            │   └── [id]/page.tsx
+            └── books/
+                ├── page.tsx
+                ├── new/page.tsx
+                ├── year/page.tsx
+                └── [id]/page.tsx
+```
+
+## Features Implemented (Working)
+
+### Onboarding
+- Spec §7.1
+- **Status**: Complete
+- 8-step flow: language pick → name → future-self name → vision → why →
+  sign-in → category pick → preset-habit pick → finish. Skippable
+  sign-in when Firebase isn't configured. Pre-fills name from Google
+  display name / email local-part.
+- `src/app/[locale]/onboarding/page.tsx`
+
+### Home Dashboard
+- Spec §7.2
+- **Status**: Complete
+- Greeting (time-of-day aware), Ramadan-day banner, Iftar countdown
+  card during Ramadan, pre-Ramadan and Shawwal banners, rotating
+  compound-of-the-day card, rewards/punishments setup nudge, active
+  dopamine-reset card or start-CTA, current-reading book card,
+  future-self vision reminder, today's habit checklist with completion
+  ring, "+ Add a habit" CTA.
+- `src/app/[locale]/page.tsx`
+
+### Habit Tracking
+- Spec §4, §5.3, §5.7 (partial), §5.6
+- **Status**: Complete (one piece partial — see "Bad-habit replacement"
+  below)
+- Toggle on/off, edit value, delete, mark critical, per-habit
+  detail page with compound projection, hadith pairing, recent values,
+  streak readout. Reading habit's check opens book picker
+  (`BookLogSheet`) and auto-links to a book on first tap.
+- `src/components/HabitChecklist.tsx`,
+  `src/app/[locale]/habits/[id]/page.tsx`,
+  `src/app/[locale]/habits/new/page.tsx`,
+  `src/components/BookLogSheet.tsx`,
+  `src/lib/store.ts` (`toggleHabit`, `setHabitValue`, `setHabitCritical`)
+
+### Streaks
+- Spec §5.6
+- **Status**: Complete
+- Current + longest, recomputed on every log mutation from full history.
+  Loss-aversion banners on the habit detail page.
+- `src/lib/streaks.ts`
+
+### Categories
+- Spec §4, §5.10
+- **Status**: Complete
+- 7 default categories (Islamic, Health, Sport, Finance, Career, Growth,
+  Relationships — Sport split out from Health vs the spec's six),
+  rename / reorder / archive / restore / add-custom. Archive is soft
+  (sets `archivedAt`) so logs survive.
+- `src/app/[locale]/categories/page.tsx`,
+  `src/app/[locale]/categories/[id]/page.tsx`
+
+### GitHub-Style Year Heatmap
+- Spec §5.9, §7.4
+- **Status**: Complete
+- 53 weeks × 7 days CSS grid driven by `summaries[date].completionRate`.
+  Today is the leftmost column for mobile (avoids horizontal scroll).
+- `src/components/Heatmap.tsx`, `src/lib/dates.ts` (`heatmapGrid`)
+
+### Progress Page
+- Spec §7.4
+- **Status**: Complete
+- Heatmap + 14-day bar chart + per-habit streak ranking + per-category
+  consistency. Bar chart is hand-rolled divs (no Recharts).
+- `src/app/[locale]/progress/page.tsx`
+
+### Compound Effect Projections
+- Spec §5.2, §11, §14
+- **Status**: Partial — ~10 of ~30 spec habits have hand-written
+  narratives; the rest fall through to `genericNarrative`.
+- Custom narratives with `projectionLines`, `consequenceLines`,
+  `reversalLines`, and a paired hadith for: reading, saving, steps,
+  exercise, quranPages, screenTime, tahajjud, sadaqah, learning,
+  callFamily, gheebat. Everything else uses generic text and no hadith.
+- `src/lib/projections.ts`, `src/lib/compound.ts`,
+  `messages/en.json` → `narratives.*`
+
+### Future Self Screen
+- Spec §5.1, §7.5
+- **Status**: Complete
+- Vision, why, days-in counter, 30-day per-category consistency bars,
+  rotating daily compound truth, daily "smallest leverage" reflection
+  prompt, edit form.
+- `src/app/[locale]/future-self/page.tsx`, `src/lib/futureSelf.ts`
+
+### Reward + Punishment System
+- Spec §5.4, §5.5
+- **Status**: Complete (with safety guardrails honoured)
+- 21 reward presets across 4 tiers (small/medium/big/major), 15
+  punishment presets. `validatePunishment` blocks meal-skipping,
+  extreme-exercise, sleep-deprivation, self-harm wording. Default
+  charity ("StickK-style") falls back when no punishment is selected.
+  Pending rewards are queued on daily 100% + streak milestones (7/30/100).
+- `src/app/[locale]/rewards/page.tsx`, `src/lib/safety.ts`,
+  `src/lib/store.ts` (`reconcilePunishments`, `addReward`,
+  `addPunishment`, `claimReward`, `resolvePunishment`)
+
+### Real Consequences Messaging
+- Spec §21
+- **Status**: Partial — engine + tone control implemented; library
+  coverage matches the same ~10 habits as projections.
+- `consequenceSensitivity: 'off' | 'mild' | 'honest' | 'full'` setting
+  gates how harsh the consequence/reversal lines render.
+- `src/lib/sensitivity.ts`, `src/lib/projections.ts`
+
+### Ramadan Mode
+- Spec §6.1
+- **Status**: Complete
+- Auto-activates from Hijri date (`isRamadanModeActive`), reshapes
+  Home (Iftar countdown + ramadan-day badge), full hub at `/ramadan`
+  with prayer checklist, fasting count, juz progress, taraweeh nights,
+  sadaqah running total, Laylat al-Qadr odd-night marks, Shawwal six
+  fasts. Pre-Ramadan banner (14-day countdown) and Shawwal banner.
+  Manual override via `profile.ramadanMode = 'auto' | 'on' | 'off'`.
+- `src/app/[locale]/ramadan/page.tsx`, `src/lib/hijri.ts`,
+  `src/components/IftarCountdown.tsx`
+
+### Dopamine Reset / Detox
+- Spec §19
+- **Status**: Complete
+- 4 tiers (24h / 7d / 30d / 90d), stage progression (cravings →
+  adjustment → clarity → restoration → integration → mastery), daily
+  check-in (mood/insteadOf/urges), relapse logging that preserves
+  lifetime clean days, replacement-activity rotation across 4 buckets
+  (body / mind / soul / connection), Islamic-aware messaging when the
+  Islamic category is active.
+- `src/app/[locale]/reset/page.tsx`, `src/lib/reset.ts`
+
+### Book Tracker
+- Spec §20
+- **Status**: Complete
+- Add / edit / log pages / mark complete (with rating + review +
+  favourite quote) / delete. Year-end review at `/books/year` with
+  totals, category breakdown, compound line. Audiobook minutes vs
+  pages handled correctly. `BookLogSheet` modal opens when the user
+  taps the reading habit's check.
+- `src/app/[locale]/books/*`, `src/lib/books.ts`,
+  `src/components/BookCover.tsx`, `src/components/BookLogSheet.tsx`
+
+### Live Habit Counts
+- Not in spec by name — the "X doing this today" community badge.
+- **Status**: Complete (when Firebase is configured)
+- Atomic-increment Firestore transaction on first daily completion.
+  Per-user `habitTicks/{uid}/days/{date}` prevents double-counting.
+  Public `habitCounts/{date}` doc is what every client reads. Falls
+  back silently when Firebase is unconfigured.
+- `src/lib/livecounts.ts`, `src/lib/useLiveCounts.ts`
+
+### Authentication
+- Spec implies it via §8 schema + sign-in screen.
+- **Status**: Complete
+- Google sign-in, email/password, anonymous "guest", account deletion
+  with Firestore wipe of `habitTicks/{uid}`. `useAuthGated()` exposes
+  signed-out state to the AppShell.
+- `src/lib/auth.ts`, `src/components/SignInForm.tsx`
+
+### Auth-Aware App Shell
+- Not in spec — recent architectural change.
+- **Status**: Complete
+- `AppShell` switches between `AuthLayout` (TopBar + nav + page +
+  RouteGuard + InstallPrompt) and `PublicLayout` (logo + tagline +
+  SignInForm) based on `useAuthGated()`. Local data is preserved on
+  sign-out.
+- `src/components/AppShell.tsx`,
+  `src/components/{Auth,Public}Layout.tsx`
+
+### Cloud Sync (per-user snapshot)
+- Spec §8 (alternative to per-collection writes — pragmatic for v1).
+- **Status**: Complete
+- On sign-in: pulls `userSnapshots/{uid}` and replaces local state;
+  if no snapshot, pushes local state. After sign-in, pushes on
+  every store change (debounced).
+- `src/lib/sync.ts`, `src/components/CloudSync.tsx`,
+  `firestore.rules` (`userSnapshots/{uid}` owner-only)
+
+### Bilingual + RTL
+- Spec §13
+- **Status**: Complete in plumbing, **Partial in content quality**
+- `next-intl` middleware, `<html lang dir>` per route, full Persian
+  font (Vazirmatn), logical Tailwind utilities, larger Persian
+  line-height, Persian numeral toggle (`profile.numeralSystem`),
+  `.numeral` LTR-isolation utility for numbers inside RTL text.
+- **Content quality**: en.json is the canonical source. fa.json is
+  ~948 lines and was largely literal English-to-Persian until a
+  partial idiomatic rewrite this session (splash + onboarding only).
+  Most other strings still read as translation, not native Persian.
+  All Persian strings should be considered drafts pending native
+  review (per spec §13 + project working agreement).
+- `src/middleware.ts`, `src/i18n/*`, `messages/{en,fa}.json`
+
+### Theme (Light / Dark / Auto)
+- Spec §10
+- **Status**: Complete
+- `ThemeApplier` toggles `html.dark` based on profile + media query.
+  Dark-mode overrides live as raw CSS in `globals.css` (override
+  pattern, not `dark:` variants). Top-bar sun/moon button cycles
+  light → dark → auto.
+- `src/components/{ThemeApplier,TopBar}.tsx`, `src/app/globals.css`
+
+### PWA
+- Spec §3 PWA Features
+- **Status**: Complete (installable; offline-ready)
+- `next-pwa` workbox config (network-first, skip-waiting, clients-claim),
+  generated SW + workbox runtime, manifest with portrait standalone,
+  green theme, 192/512 PNG icons + apple-touch-icon, maskable SVG.
+  Android `beforeinstallprompt` banner + iOS "Add to Home Screen"
+  hint via `InstallPrompt`. Firestore persistent IndexedDB cache for
+  offline reads/writes (`firebase.ts`).
+- `next.config.mjs`, `public/*`, `scripts/generate-pwa-icons.mjs`,
+  `src/components/InstallPrompt.tsx`, `src/lib/firebase.ts`
+
+### Splash Screen
+- Not in spec by name — added during build.
+- **Status**: Has known content debt
+- Multi-page GSAP-animated intro: language picker → logo + tagline →
+  5 wisdom quotes → app. Once-per-session via `sessionStorage`.
+- **Content debt**: the four non-habit quotes (`words`, `actions`,
+  `character`, `destiny`) are still the original literary drafts the
+  user rejected this session. The user agreed in concept on a
+  future-self visualization arc (frame → who → where → what → start
+  now) but the swap was never finalized in code or translations.
+- `src/components/SplashScreen.tsx`, `messages/{en,fa}.json` →
+  `splash.*`
+
+### Sound Effects
+- Not in spec — recent addition.
+- **Status**: Complete (first pass)
+- Web-Audio synthesized chimes (no audio files), 8 sound types
+  (tick / untick / chime / flourish / reward / lowTone / softUp /
+  pulse), wired into store mutations so every call site triggers
+  them. iOS audio-context unlock on first gesture
+  (`SoundUnlock`). Default ON, toggle in Settings → Theme.
+- `src/lib/sounds.ts`, `src/components/SoundUnlock.tsx`
+
+### Profile / Settings
+- Spec §7.7
+- **Status**: Complete
+- Edit name / future-self name / vision / why. Language switcher
+  (hard-navigates locale). Numeral system. Calendar (Gregorian /
+  Jalali / Hijri). Theme (auto/light/dark). Ramadan mode override
+  (auto/on/off). Sound on/off. Prayer city + method. Daily
+  notification time + per-habit toggles **(UI exists; no notification
+  delivery is wired — see "Not Yet Implemented")**. Consequence
+  sensitivity. Reading-habit linker. Reset progress (wipes local).
+  Delete account (wipes Firebase user + local).
+- `src/app/[locale]/profile/page.tsx`
+
+## Features Not Yet Implemented
+
+### Bad-Habit Auto-Replacement (Spec §5.7)
+- The spec requires that creating a bad habit **auto-suggests** its
+  good-habit opposite, with a `replacementHabitId` link. The
+  `Habit.replacementHabitId` field exists in `domain/types.ts` but is
+  never read or written by any UI. Listed as a "product-level promise"
+  in the architectural constraints.
+
+### Push Notifications (Spec §3 Backend, §7.7)
+- The Settings UI exposes daily-time + per-habit notification toggles
+  and the values are persisted, but **no actual delivery is wired**.
+  No FCM SDK calls, no service-worker push handler, no notification
+  permission prompt. Cloud Messaging is on the spec stack but unused
+  in code.
+
+### Cloud Storage (Spec §3 Backend)
+- Book covers are stored as data-URLs inside the Zustand snapshot
+  (which gets sync'd to Firestore). No Firebase Storage usage. Larger
+  attachments would need Storage; right now they don't exist.
+
+### Cloud Functions (Spec §3 Backend)
+- None deployed. The atomic live-count increment is a client
+  Firestore transaction (`runTransaction`) — works at single-digit
+  user scale; would need a Function trigger to scale.
+
+### Vercel Deployment (Spec §3 Hosting)
+- No `vercel.json`, no documented deploy URL, no preview environment.
+  The app runs locally only.
+
+### Habit Coaching Library — Long Tail (Spec §14, §11)
+- ~10 of ~30 habits have hand-written compound narratives. The rest
+  fall through to `genericNarrative` — workable but generic.
+
+### Sahaba / Muslim Youth / Family Habit Libraries (Spec §15, §16, §17)
+- These spec sections are content libraries (lists of habits with
+  Islamic context). **Nothing from them is loaded into the app.**
+  They are "future content packs" — not even data files exist.
+
+### Habit Packs / Bundles
+- The user prompt referenced "Habit packs (Section 18)". **Spec §18
+  is "Implementation Notes for the New Sections"**, not habit packs.
+  There is no habit-pack feature in the codebase regardless.
+
+### "Sukoon Mode" / "2-Minute Rule" / "Huberman Features"
+- The user prompt referenced these as Sections 22 / 23 / 24. **The
+  spec only goes up to §22 (Open Questions / Future Decisions).**
+  None of these features are in the spec or codebase. If you want
+  them, they need to be specced first.
+
+### Tests
+- **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
+  config in `package.json`, no testing-library deps.
+
+### Encryption of Sensitive Fields
+- Architectural Constraint #9 in this file says encrypt
+  faith/finance/personal-goal data. Not done. Snapshot is sent to
+  Firestore as plain JSON (Firestore-at-rest encryption only).
+
+## Current Database Schema (Firestore)
+
+Three collections, all gated by `firestore.rules`:
+
+```
+habitCounts/{YYYY-MM-DD}              # Public live counters
+  ── { [presetKey]: number }          # Authenticated read/write
+
+habitTicks/{uid}/days/{YYYY-MM-DD}    # Per-user dedupe of live ticks
+  ── { [presetKey]: true }            # Owner-only
+
+userSnapshots/{uid}                   # Full Zustand state mirror
+  ── version: number                  # Owner-only
+  ── state: {
+       profile, categories, habits, logs, summaries, streaks,
+       rewards, punishments, pendingRewards, activePunishments,
+       lastReconciledDate, books, resets, ramadan
+     }
+  ── updatedAt: serverTimestamp
+```
+
+**Note**: This is *not* the per-collection schema described in spec §8
+(`users/{uid}`, `habits/{uid}/{habitId}`, `logs/{uid}/{date}/{habitId}`,
+etc.). The spec schema is for granular per-doc cloud writes; this
+project uses a single per-user snapshot doc — pragmatic for v1, but
+won't scale to multi-device real-time sync without a refactor.
+
+## Internationalization Status
+
+- **Working languages**: English (`en`), Persian (`fa`).
+- **RTL**: Fully wired. `<html dir="rtl">` on `/fa/*`, logical
+  utilities throughout, larger Persian line-height (1.7–1.8 via the
+  `[lang='fa']` selector), Persian numerals via the `.numeral` LTR
+  isolation class, `numeralSystem` profile setting.
+- **Translation files**: `messages/en.json`, `messages/fa.json` (~948
+  lines each).
+- **Untranslated / draft strings**: All Persian strings should be
+  treated as **drafts pending native review**. Splash + onboarding
+  were rewritten this session to be more idiomatic; everything else
+  still reads as English-thinking-in-Persian to varying degrees. No
+  string is missing a Persian value — the issue is quality, not
+  coverage.
+
+## Known Issues and Bugs
+
+1. **Splash text debt**: 4 of the 5 splash quotes (`words`, `actions`,
+   `character`, `destiny`) were rejected by the user this session. A
+   future-self-visualization arc was agreed in concept but never
+   landed in code. The current splash still shows the rejected text
+   in both languages.
+2. **Persian content quality**: most strings outside splash +
+   onboarding read as literal translation. Pending a session-by-
+   session rewrite (the user has indicated they want to chunk this).
+3. **Compound narrative coverage**: `genericNarrative` for habits
+   without hand-written content is fine but bland. The new
+   `negativeSelfTalk` preset has no custom narrative.
+4. **Per-doc Firestore writes not implemented**: snapshot-only sync
+   means concurrent edits from two devices will overwrite each
+   other (last-writer-wins).
+5. **Cloud sync push has no debounce visible in `CloudSync.tsx`** —
+   verify before scaling. Each store mutation can trigger a write.
+6. **`localCache: persistentLocalCache(...)` will throw on hot-reload
+   if not wrapped in try/catch** — currently is wrapped, but the
+   silent fallback to `getFirestore` means lost cache during dev.
+7. **No tests anywhere**, so refactors are unverified.
+8. **Notification UI is a lie**: toggles persist values but no
+   notifications are ever sent.
+9. **`negativeSelfTalk` preset uses unit "incidents"** — same string
+   key as `gheebat`. Both render with the same unit label, fine, but
+   worth flagging.
+10. **`onboardingComplete: false` users with a stale local profile
+    can land on a category-pick step they already saw** — onboarding
+    doesn't deeply validate state on resume.
+
+## Environment Setup
+
+### Prerequisites
+
+- Node 18+ (Next.js 14 requirement).
+- A Firebase project (Spark / free tier is enough) **only if** you
+  want live habit counts, auth, and cloud sync. The app runs fully
+  without Firebase — those features just disable themselves.
+
+### `.env.local`
+
+Copy `.env.local.example` and fill in values from the Firebase console.
+All vars are `NEXT_PUBLIC_` because they're read in client code.
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
+
+When `apiKey`, `projectId`, or `appId` is missing, `firebaseEnabled()`
+returns false and the live-counts / auth / cloud-sync code paths
+short-circuit. `FIREBASE_SETUP.md` has the full guided setup.
+
+### Commands
+
+```
+npm install
+npm run dev          # cross-env NODE_ENV=development next dev → :3000
+npm run build        # prebuild generates PWA icons, then next build
+npm run start        # serve a production build
+npm run lint         # next lint (next/core-web-vitals)
+npm run typecheck    # tsc --noEmit (passes today)
+npm run gen:icons    # regenerate PNG icons from public/icon.svg
+```
+
+There is **no test command** — there are no tests.
+
+## Recent Changes (Last Sessions)
+
+Reverse chronological — last ~25 commits, condensed:
+
+- **Future Self leverage prompt** (`09c3908`): added "What's the
+  smallest thing you can do today that would have the biggest impact"
+  card on `/future-self`, between the why-quote and the consistency
+  bars.
+- **Negative-self-talk bad habit** (`a7262e4`): new preset under
+  Personal Growth, type `bad`, unit `incidents`, limit 0. Falls back
+  to `genericNarrative`.
+- **Reward preset edits** (`c88e6cf`): removed `listenMusic`,
+  `spaDay`, `concertEvent`. Added `swimming` (medium tier).
+- **Reward + punishment library expansion** (`9f51780`): rewards
+  9→21, punishments 7→15.
+- **Persian profile-page fix + dark-mode button visibility**
+  (`33a28ee`): `resetProgress*` and `deleteAccount*` keys had been
+  misplaced under `auth` in fa.json; moved under `settings`. Added
+  `.dark button.bg-white` override so secondary buttons read above
+  cards in dark mode.
+- **AuthLayout / PublicLayout split** (`289a2ed`): replaced inline
+  gating with a layout-level switch. Sign-out now unmounts the
+  entire app shell — only logo + tagline + sign-in form remain.
+- **Sign-out shell-hiding (superseded)** (`1184cdc`): inline `gated`
+  checks in BottomNav, RouteGuard, profile page — superseded by
+  AppShell the next commit.
+- **Sound effects (default on)** (`ecca837`): synthesized Web-Audio
+  chimes wired into store mutations + Settings → Theme toggle +
+  iOS gesture-unlock.
+- **Persian splash + onboarding rewrite** (`db9ac0a`, `4ab1c81`,
+  `ca74090`): idiomatic Persian for splash + onboarding strings.
+  Subsequent splash text changes (`thoughts` deletion, seed metaphor
+  on `habits`) made structurally but the 4 other slides still hold
+  the rejected English-leaning drafts.
+- **Quran verse moved from reset to Islamic category**
+  (`f7ed380`): the Al-Baqarah 2:222 verse no longer shows in the
+  relapse modal; it sits at the top of the Islamic category page
+  with Arabic + translation. The relapse modal now shows a
+  compound-effect future-self line for everyone.
+- **Reading habit ↔ books integration** (`5158425`): tapping the
+  reading habit's check opens `BookLogSheet` (per-book pages-today
+  inputs + Add-a-book CTA); auto-links the habit on first tap.
+- **Splash content + structure** (`8527f23`, `c5f00f7`,
+  `5410533`): language picker as splash page 0, install banner,
+  generated PNG PWA icons.
+
+## Next Recommended Steps
+
+In priority order:
+
+1. **Finish the splash arc** the user agreed to in concept
+   (frame → who → where → what → start now) and ship it for both
+   languages. The current splash content is the most visible
+   English-translation-feel moment in the app.
+2. **Wire push notifications** end-to-end (FCM token registration,
+   Service Worker push handler, daily-reminder scheduling). The
+   Settings UI promises this and currently lies.
+3. **Bad-habit auto-replacement (§5.7)**. The data field exists; the
+   UI doesn't. This is called out as a product-level promise in the
+   architectural constraints. Likely the cheapest spec-promise to
+   close.
+4. **Idiomatic Persian rewrite, chunk by chunk**. The user has
+   indicated they want this in waves. Suggested order: home + common
+   UI + nav → future-self + compound lines → books / reset / ramadan
+   → settings / auth → habit-coaching narratives.
+5. **Tests for store mutations and Hijri math**. `store.ts` is
+   ~950 lines of stateful logic with no safety net; `hijri.ts` is
+   custom date math that's easy to break silently. Vitest + a few
+   focused unit tests would prevent regressions.
+
+---
+
+# Operational Guidance for Claude Code in this Repo
+
+The sections above describe state. The sections below are durable
+guidance that should outlive any specific snapshot.
 
 ## Architectural Constraints (Read Before Coding)
 
-These are non-obvious decisions from the spec that constrain implementation across files. Violating them creates cross-cutting rework.
+Non-obvious decisions from the spec that constrain implementation
+across files. Violating them creates cross-cutting rework.
 
-1. **Bilingual + RTL from day 1, not retrofitted.** Persian is launch-critical, not a future translation. Every component must use Tailwind logical properties (never `ml-`/`pr-`/etc.), every directional icon flips, charts need explicit RTL config (Recharts: reversed X-axis, flipped legend), and `<html dir>` switches per locale. Persian text needs larger line-height (1.7–1.8). Numbers stay LTR even in RTL UI; user toggles between Persian (۰۱۲۳۴۵۶۷۸۹) and Western numerals. See spec §13.
+1. **Bilingual + RTL from day 1, not retrofitted.** Persian is
+   launch-critical, not a future translation. Every component must
+   use Tailwind logical properties (never `ml-`/`pr-`/etc.), every
+   directional icon flips, charts need explicit RTL config (Recharts:
+   reversed X-axis, flipped legend), and `<html dir>` switches per
+   locale. Persian text needs larger line-height (1.7–1.8). Numbers
+   stay LTR even in RTL UI; user toggles between Persian
+   (۰۱۲۳۴۵۶۷۸۹) and Western numerals. See spec §13.
 
-2. **Offline-first habit logging.** Users must check off habits without internet, syncing on reconnect. This shapes the data layer — write through a local store (e.g., IndexedDB) and reconcile to Firestore, not direct Firestore writes. PWA + Firestore offline persistence must be wired in early.
+2. **Offline-first habit logging.** Users must check off habits
+   without internet, syncing on reconnect. This shapes the data
+   layer — write through a local store (Zustand+localStorage today,
+   IndexedDB if scale demands) and reconcile to Firestore, not
+   direct Firestore writes. PWA + Firestore offline persistence is
+   wired in early (`firebase.ts`).
 
-3. **Firestore schema is per-user-rooted** (`users/{uid}`, `categories/{uid}/{catId}`, `habits/{uid}/{habitId}`, `logs/{uid}/{YYYY-MM-DD}/{habitId}`, `streaks/{uid}/{habitId}`, etc.). Daily log documents include a precomputed `summary` field (`totalHabits`, `completedCount`, `completionRate`) so the GitHub-style heatmap can render a year without aggregating client-side. Maintain that summary on every log write. See spec §8.
+3. **Firestore schema is per-user-rooted.** Spec §8 calls for
+   granular per-collection writes (`users/{uid}`,
+   `habits/{uid}/{habitId}`, `logs/{uid}/{YYYY-MM-DD}/{habitId}`,
+   etc.). Daily log documents include a precomputed `summary` field
+   (`totalHabits`, `completedCount`, `completionRate`) so the
+   GitHub-style heatmap can render a year without aggregating
+   client-side. **Today the project uses a single per-user snapshot
+   doc instead** — that's a v1 pragma, not a permanent decision.
 
-4. **Categories are user-customizable.** The six defaults (Islamic, Health, Finance, Career, Personal Growth, Relationships) are seeds — users can rename, reorder, archive, or add their own. Do not hardcode category enums in UI logic; drive everything off the user's `categories/{uid}/*` collection. Removing a category archives data (soft delete with `archivedAt`), it does not destroy logs.
+4. **Categories are user-customizable.** The defaults are seeds —
+   users can rename, reorder, archive, or add their own. Do not
+   hardcode category enums in UI logic; drive everything off the
+   user's `categories/{uid}/*` collection. Removing a category
+   archives data (soft delete with `archivedAt`), it does not
+   destroy logs.
 
-5. **Bad habits auto-suggest a good replacement.** When the user creates a bad habit, the system must propose its opposite (e.g., excessive phone → reading). Habits store a `replacementHabitId` link. This is a product-level promise from §5.7, not optional UX polish.
+5. **Bad habits auto-suggest a good replacement.** When the user
+   creates a bad habit, the system should propose its opposite (e.g.,
+   excessive phone → reading). Habits store a `replacementHabitId`
+   link. This is a product-level promise from §5.7, not optional UX
+   polish. **Currently unimplemented in UI — see "Next Steps".**
 
-6. **Ramadan Mode auto-activates from the Hijri calendar** and reshapes the home dashboard (Iftar countdown most prominent, prayer checklist, Quran progress; non-Islamic categories minimized, push notifications paused). This is a top-level theme switch, not a settings toggle. Last-10-nights and pre/post-Ramadan sub-modes also exist. See §6.1.
+6. **Ramadan Mode auto-activates from the Hijri calendar** and
+   reshapes the home dashboard (Iftar countdown most prominent,
+   prayer checklist, Quran progress; non-Islamic categories
+   minimized, push notifications paused). This is a top-level theme
+   switch, not a settings toggle. Last-10-nights and
+   pre/post-Ramadan sub-modes also exist. See §6.1.
 
-7. **Punishment system has hard safety guardrails.** Default to charity-based (StickK-style) punishments. Never punish in ways that undermine health goals (no skipped meals, no extreme exercise). New users must default to safe options. See §5.5.
+7. **Punishment system has hard safety guardrails.** Default to
+   charity-based (StickK-style) punishments. Never punish in ways
+   that undermine health goals (no skipped meals, no extreme
+   exercise). New users must default to safe options. Enforced by
+   `src/lib/safety.ts`. See §5.5.
 
-8. **Sensitive content stays in original language.** Quranic verses, adhkar, and dua remain in Arabic with translations alongside — never machine-translate them. Sunnah names (Tahajjud, Sadaqah, Zakat) stay as Arabic transliterations with translation as subtitle/tooltip. The Prophet's name uses ﷺ in both languages. See §13.
+8. **Sensitive content stays in original language.** Quranic verses,
+   adhkar, and dua remain in Arabic with translations alongside —
+   never machine-translate them. Sunnah names (Tahajjud, Sadaqah,
+   Zakat) stay as Arabic transliterations with translation as
+   subtitle/tooltip. The Prophet's name uses ﷺ in both languages.
+   See §13.
 
-9. **Privacy: this app holds faith, finance, and personal-goal data.** Encrypt sensitive fields, support full data export and deletion. Don't add analytics or third-party trackers without explicit opt-in.
+9. **Privacy: this app holds faith, finance, and personal-goal
+   data.** Encrypt sensitive fields, support full data export and
+   deletion. Don't add analytics or third-party trackers without
+   explicit opt-in. **Encryption is not yet implemented** — flag
+   when touching the snapshot path.
 
 ## Design Principles (from spec §10)
 
-- Mobile-first, fully responsive
-- Beautiful charts are non-negotiable — they carry the product's emotional weight
-- Minimal friction to log habits (one tap where possible)
-- Calming colors default; sacred theme only during Ramadan
-- No dark patterns
+- Mobile-first, fully responsive.
+- Beautiful charts are non-negotiable — they carry the product's
+  emotional weight.
+- Minimal friction to log habits (one tap where possible).
+- Calming colors default; sacred theme only during Ramadan.
+- No dark patterns.
 
 ## Working With the Spec
 
-- The spec contains large content libraries (§11 compound messages, §14 habit coaching, §15–17 habit lists, §19 dopamine reset, §21 consequences). Treat these as **content data** to be loaded from JSON/translation files, not hardcoded into components. They will be edited frequently.
-- Translation responsibility: Persian translations of habit content and compound messages should be authored by a native Persian speaker with Islamic knowledge (not Google Translate). When generating Persian strings from this spec, mark them clearly as drafts pending review.
-- §22 lists open product questions that remain undecided — flag if a task touches one of them rather than guessing the resolution.
+- The spec contains large content libraries (§11 compound messages,
+  §14 habit coaching, §15–17 habit lists, §19 dopamine reset, §21
+  consequences). Treat these as **content data** to be loaded from
+  JSON/translation files, not hardcoded into components.
+- Translation responsibility: Persian translations of habit content
+  and compound messages should be authored by a native Persian
+  speaker with Islamic knowledge (not Google Translate). When
+  generating Persian strings from this spec, mark them clearly as
+  drafts pending review.
+- §22 lists open product questions that remain undecided — flag if
+  a task touches one of them rather than guessing the resolution.
+- The spec has 22 sections. References to §23, §24, etc. (e.g.
+  "Sukoon mode", "2-Minute Rule", "Huberman features") in
+  outside-the-codebase prompts are **out of spec scope** — ask
+  before implementing.
