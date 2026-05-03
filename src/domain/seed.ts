@@ -62,6 +62,7 @@ export const presetHabits: PresetHabit[] = [
   // Growth
   { presetKey: 'reading', category: 'growth', type: 'good', unit: 'pages', target: 10 },
   { presetKey: 'learning', category: 'growth', type: 'good', unit: 'minutes', target: 15 },
+  { presetKey: 'negativeSelfTalk', category: 'growth', type: 'bad', unit: 'incidents', limit: 0 },
 
   // Relationships
   { presetKey: 'callFamily', category: 'relationships', type: 'good' },
