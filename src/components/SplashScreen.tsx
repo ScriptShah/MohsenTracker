@@ -6,7 +6,6 @@ import gsap from 'gsap';
 import { LeafLogo } from './LeafLogo';
 
 const STEP_KEYS = [
-  'thoughts',
   'words',
   'actions',
   'habits',
@@ -262,7 +261,6 @@ function BigIcon3D({ variant }: { variant: keyof typeof ICONS }) {
 }
 
 const COLORS = {
-  thoughts:  { light: '#a78bfa', dark: '#7c3aed' },
   words:     { light: '#60a5fa', dark: '#2563eb' },
   actions:   { light: '#fb923c', dark: '#ea580c' },
   habits:    { light: '#34d399', dark: '#059669' },
@@ -271,7 +269,6 @@ const COLORS = {
 } as const;
 
 const ICONS = {
-  thoughts: ThoughtsIcon,
   words: WordsIcon,
   actions: ActionsIcon,
   habits: HabitsIcon,
@@ -295,16 +292,6 @@ function svg(props: React.SVGProps<SVGSVGElement>, children: React.ReactNode) {
   );
 }
 
-function ThoughtsIcon(props: React.SVGProps<SVGSVGElement>) {
-  return svg(
-    props,
-    <>
-      <path d="M9 19c-3 0-5-2-5-5 0-2 1.5-4 4-4 0-3 2-5 5-5s5 2 5 5c2 0 4 2 4 4 0 3-2 5-5 5z" />
-      <circle cx="8" cy="22" r="1.2" />
-      <circle cx="6" cy="20" r="0.8" />
-    </>,
-  );
-}
 function WordsIcon(props: React.SVGProps<SVGSVGElement>) {
   return svg(
     props,

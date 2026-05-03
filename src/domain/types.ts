@@ -102,6 +102,8 @@ export interface Profile {
   /** Habit id of the user's reading habit. Book page logs feed this habit's
    *  daily total via the store's sync helper (spec §20.11). */
   readingHabitId?: string;
+  /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
+  soundEnabled: boolean;
   onboardingComplete: boolean;
   createdAt: string;
 }

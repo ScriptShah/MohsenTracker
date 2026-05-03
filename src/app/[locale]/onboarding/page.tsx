@@ -65,6 +65,7 @@ export default function OnboardingPage() {
       calendar: locale === 'fa' ? 'jalali' : 'gregorian',
       consequenceSensitivity: 'honest',
       notifications: { enabled: false, dailyTime: '09:00', perHabit: {} },
+      soundEnabled: true,
       onboardingComplete: true,
       createdAt: new Date().toISOString(),
     };

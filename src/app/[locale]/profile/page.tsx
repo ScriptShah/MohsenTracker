@@ -202,6 +202,13 @@ function Profile() {
             onChange={(v) => setProfile({ ramadanMode: v as 'auto' | 'on' | 'off' })}
           />
         </Field>
+
+        <Field label={t('settings.sound')} hint={t('settings.soundHint')}>
+          <Toggle
+            active={profile.soundEnabled}
+            onChange={(v) => setProfile({ soundEnabled: v })}
+          />
+        </Field>
       </Card>
 
       <Card className="space-y-4">

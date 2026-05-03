@@ -31,6 +31,7 @@ import { dateKey, nextDayKey, previousDayKey, todayKey } from './dates';
 import { isLogSuccessful, recomputeStreak } from './streaks';
 import { validatePunishment, type SafetyResult } from './safety';
 import { tickHabit } from './livecounts';
+import { playSound } from './sounds';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 interface AppState {
@@ -377,6 +378,7 @@ export const useAppStore = create<AppState>()(
         const day = date ?? todayKey();
         const prevRate = get().summaries[day]?.completionRate ?? 0;
         const prevStreak = get().streaks[habitId]?.current ?? 0;
+        const wasComplete = get().logs[day]?.[habitId]?.completed ?? false;
 
         // The linked reading habit is driven exclusively by book page logs.
         // Manual toggles are a no-op so users can't mark "Read a book" done
@@ -412,6 +414,13 @@ export const useAppStore = create<AppState>()(
           summaries: { ...s.summaries, [day]: newSummary },
           streaks: newStreak ? { ...s.streaks, [habitId]: newStreak } : s.streaks,
         }));
+
+        // Per-toggle sound. Daily-complete and streak-milestone sounds
+        // fire below alongside the reward queue, so they replace the
+        // plain tick when both fire on the same toggle.
+        const nowComplete = get().logs[day]?.[habitId]?.completed ?? false;
+        if (nowComplete && !wasComplete) playSound('tick');
+        else if (!nowComplete && wasComplete) playSound('untick');
 
         if (day !== todayKey()) return;
 
@@ -472,6 +481,12 @@ export const useAppStore = create<AppState>()(
 
         if (additions.length > 0) {
           set((s) => ({ pendingRewards: [...s.pendingRewards, ...additions] }));
+          // Pick the most "important" cue rather than stacking sounds.
+          const hasMilestone = additions.some((a) => a.origin !== 'dailyComplete');
+          const hasDaily = additions.some((a) => a.origin === 'dailyComplete');
+          if (hasMilestone) playSound('chime');
+          else if (hasDaily) playSound('flourish');
+          else playSound('reward');
         }
       },
 
@@ -548,19 +563,23 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      claimReward: (id) =>
+      claimReward: (id) => {
         set((s) => ({
           pendingRewards: s.pendingRewards.map((r) =>
             r.id === id && !r.claimedAt ? { ...r, claimedAt: new Date().toISOString() } : r,
           ),
-        })),
+        }));
+        playSound('chime');
+      },
 
-      resolvePunishment: (id) =>
+      resolvePunishment: (id) => {
         set((s) => ({
           activePunishments: s.activePunishments.map((p) =>
             p.id === id && !p.doneAt ? { ...p, doneAt: new Date().toISOString() } : p,
           ),
-        })),
+        }));
+        playSound('softUp');
+      },
 
       reconcilePunishments: () => {
         const state = get();
@@ -602,6 +621,12 @@ export const useAppStore = create<AppState>()(
           activePunishments: [...s.activePunishments, ...newPunishments],
           lastReconciledDate: today,
         }));
+        // Audible nudge when at least one new punishment lands today.
+        // Backfill of older days is silent — too noisy on first reopen
+        // after a streak of missed days.
+        if (newPunishments.some((p) => p.date === yesterday)) {
+          playSound('lowTone');
+        }
       },
 
       addBook: (input) => {
@@ -626,6 +651,7 @@ export const useAppStore = create<AppState>()(
       logBookPages: (id, pages, date) => {
         const day = date ?? todayKey();
         const sanitized = Math.max(0, Math.floor(pages));
+        const prevPages = get().books.find((b) => b.id === id)?.pagesByDate[day] ?? 0;
         set((s) => ({
           books: s.books.map((b) => {
             if (b.id !== id) return b;
@@ -639,9 +665,11 @@ export const useAppStore = create<AppState>()(
         }));
         const synced = syncReadingHabitForDate(get(), day);
         if (synced) set(synced);
+        // Sound when the user actually adds pages (not on zeroing/edit-down).
+        if (sanitized > prevPages) playSound('tick');
       },
 
-      completeBook: (id, fields) =>
+      completeBook: (id, fields) => {
         set((s) => ({
           books: s.books.map((b) =>
             b.id === id
@@ -655,7 +683,9 @@ export const useAppStore = create<AppState>()(
                 }
               : b,
           ),
-        })),
+        }));
+        playSound('flourish');
+      },
 
       deleteBook: (id) => {
         const book = get().books.find((b) => b.id === id);
@@ -723,6 +753,7 @@ export const useAppStore = create<AppState>()(
             r.id === id ? { ...r, checkIns: { ...r.checkIns, [day]: checkIn } } : r,
           ),
         }));
+        playSound('pulse');
       },
 
       logResetRelapse: (id, reflection) => {
@@ -747,6 +778,7 @@ export const useAppStore = create<AppState>()(
             };
           }),
         }));
+        playSound('lowTone');
       },
 
       completeReset: (id) => {
@@ -769,6 +801,7 @@ export const useAppStore = create<AppState>()(
               : r,
           ),
         }));
+        playSound('flourish');
       },
 
       abandonReset: (id) => {
@@ -907,7 +940,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 8,
+      version: 9,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -939,6 +972,8 @@ export const useAppStore = create<AppState>()(
           };
           // v7: optional pointer to a "reading" habit (spec §20.11).
           persisted.profile.readingHabitId = persisted.profile.readingHabitId ?? undefined;
+          // v9: synthesized chimes default ON.
+          persisted.profile.soundEnabled = persisted.profile.soundEnabled ?? true;
         }
         return persisted;
       },
