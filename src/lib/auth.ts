@@ -73,6 +73,16 @@ export function currentUid(): string | null {
   return cache.status === 'signed-in' ? cache.uid : null;
 }
 
+/** True when Firebase auth is configured AND the user is currently
+ *  signed out. Pages and the bottom nav use this to hide protected UI
+ *  after a sign-out, without wiping local data. Returns false while auth
+ *  is still loading so we don't flash the sign-in screen on every load. */
+export function useAuthGated(): boolean {
+  const auth = useAuth();
+  if (!firebaseEnabled()) return false;
+  return auth.status === 'signed-out';
+}
+
 /** Local-part of an email (before the `@`). Falls back to '' for null/empty. */
 export function emailUsername(email: string | null | undefined): string {
   if (!email) return '';

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/routing';
 import { Link } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
+import { useAuthGated } from '@/lib/auth';
 import clsx from 'clsx';
 
 const items = [
@@ -20,12 +21,14 @@ export function BottomNav() {
   const onboardingComplete = useAppStore(
     (s) => s.profile?.onboardingComplete ?? false,
   );
+  const gated = useAuthGated();
 
   // Don't render the nav until the user has completed onboarding (which
   // includes the sign-in step). Visitors who haven't logged in shouldn't
   // see any of these destinations — even via direct URL — and the
-  // RouteGuard already handles the redirect.
-  if (!onboardingComplete) return null;
+  // RouteGuard already handles the redirect. Also hide after a sign-out
+  // so the user lands on a clean sign-in screen, not the full app shell.
+  if (!onboardingComplete || gated) return null;
 
   return (
     <nav
