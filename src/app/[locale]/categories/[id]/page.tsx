@@ -48,6 +48,25 @@ function CategoryDetail() {
         <h1 className="text-xl font-semibold">{category.name}</h1>
       </div>
 
+      {category.key === 'islamic' && (
+        <Card className="space-y-2 border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
+          <p
+            lang="ar"
+            dir="rtl"
+            className="text-end text-lg leading-loose text-ink-900"
+            style={{ fontFamily: '"Amiri","Noto Naskh Arabic",serif' }}
+          >
+            {t('categories.islamicVerse.arabic')}
+          </p>
+          <p className="text-sm leading-relaxed text-ink-700">
+            {t('categories.islamicVerse.translation')}
+          </p>
+          <p className="text-xs text-ink-500">
+            — {t('categories.islamicVerse.source')}
+          </p>
+        </Card>
+      )}
+
       {category.key === 'growth' && (
         <Link href="/books" className="block">
           <Card className="flex items-center gap-3 border-leaf-200 bg-leaf-50 transition hover:border-leaf-400">

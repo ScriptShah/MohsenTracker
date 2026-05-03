@@ -434,15 +434,6 @@ function RelapseModal({
 }) {
   const t = useTranslations();
   const [reflection, setReflection] = useState('');
-  // Spec §13: Islamic content only for users who picked the Islamic
-  // category. Everyone else gets a discipline / motivational line.
-  const islamicActive = useAppStore((s) =>
-    s.categories.some((c) => c.key === 'islamic' && c.isActive),
-  );
-  const quoteKey = islamicActive ? 'reset.relapse.islamicQuote' : 'reset.relapse.quote';
-  const sourceKey = islamicActive
-    ? 'reset.relapse.islamicSource'
-    : 'reset.relapse.source';
 
   return (
     <div
@@ -455,9 +446,9 @@ function RelapseModal({
         <p className="pt-1 text-sm text-ink-500">{t('reset.relapse.body')}</p>
 
         <blockquote className="mt-3 rounded-xl border-s-2 border-sand-400 bg-sand-50 p-3 text-sm leading-relaxed text-ink-800">
-          {t(quoteKey)}
+          {t('reset.relapse.quote')}
           <span className="block pt-1 text-xs text-ink-500">
-            — {t(sourceKey)}
+            — {t('reset.relapse.source')}
           </span>
         </blockquote>
 
