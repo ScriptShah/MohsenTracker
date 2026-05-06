@@ -13,8 +13,13 @@ const STEP_KEYS = [
   'destiny',
 ] as const;
 
-// localStorage so the splash shows exactly once per device, ever.
-// (The old sessionStorage flag re-fired the splash every new tab/session.)
+// Two localStorage flags so the splash never re-shows after first run,
+// even if the user reloads mid-flow before reaching the final page.
+//   LANG_KEY  — set the moment a language is picked. Persists across the
+//               cross-locale hard-navigation and across reloads. Once set,
+//               the picker page is skipped.
+//   SEEN_KEY  — set on full dismiss (tap-through or skip). Once set, the
+//               splash doesn't show at all.
 const SEEN_KEY = 'splash_seen';
 const LANG_KEY = 'splash_lang_picked';
 
@@ -38,17 +43,16 @@ export function SplashScreen() {
     if (typeof window === 'undefined') return;
     if (localStorage.getItem(SEEN_KEY) === '1') return;
     setHidden(false);
-    // If the user has already picked a language earlier this session
-    // (then we redirected to the new locale and re-mounted), skip the
-    // picker and start at the logo page.
-    if (sessionStorage.getItem(LANG_KEY) === '1') {
+    // If the user has already picked a language (same session or earlier),
+    // skip the picker and start at the logo page.
+    if (localStorage.getItem(LANG_KEY) === '1') {
       setPageIndex(LOGO_PAGE);
     }
   }, []);
 
   const pickLanguage = useCallback(
     (lang: 'en' | 'fa') => {
-      sessionStorage.setItem(LANG_KEY, '1');
+      localStorage.setItem(LANG_KEY, '1');
       if (lang !== locale) {
         // Locale lives in the URL path (/en or /fa). Hard-navigate so
         // next-intl's middleware re-runs and the layout re-renders with
@@ -108,8 +112,6 @@ export function SplashScreen() {
 
   const dismiss = useCallback(() => {
     localStorage.setItem(SEEN_KEY, '1');
-    // LANG_KEY only mattered for the in-splash language-switch reload.
-    sessionStorage.removeItem(LANG_KEY);
     if (!rootRef.current) {
       setHidden(true);
       return;
