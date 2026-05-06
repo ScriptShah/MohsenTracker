@@ -13,7 +13,9 @@ const STEP_KEYS = [
   'destiny',
 ] as const;
 
-const SESSION_KEY = 'splash_seen_session';
+// localStorage so the splash shows exactly once per device, ever.
+// (The old sessionStorage flag re-fired the splash every new tab/session.)
+const SEEN_KEY = 'splash_seen';
 const LANG_KEY = 'splash_lang_picked';
 
 // Page 0 = language picker (skipped after first pick).
@@ -34,7 +36,7 @@ export function SplashScreen() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (sessionStorage.getItem(SESSION_KEY) === '1') return;
+    if (localStorage.getItem(SEEN_KEY) === '1') return;
     setHidden(false);
     // If the user has already picked a language earlier this session
     // (then we redirected to the new locale and re-mounted), skip the
@@ -105,7 +107,9 @@ export function SplashScreen() {
   }, [pageIndex, hidden]);
 
   const dismiss = useCallback(() => {
-    sessionStorage.setItem(SESSION_KEY, '1');
+    localStorage.setItem(SEEN_KEY, '1');
+    // LANG_KEY only mattered for the in-splash language-switch reload.
+    sessionStorage.removeItem(LANG_KEY);
     if (!rootRef.current) {
       setHidden(true);
       return;
