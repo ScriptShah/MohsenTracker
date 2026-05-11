@@ -134,6 +134,15 @@ function Profile() {
               { value: 'fa', label: 'فارسی' },
             ]}
             onChange={(v) => {
+              // Switching language also re-aligns the default numeral
+              // system: EN → Western digits, FA → Persian digits. The user
+              // can still override afterwards via the Numerals switch.
+              // Persist via setProfile before the hard-navigation so the
+              // new locale reads the updated value on mount.
+              setProfile({
+                language: v as 'en' | 'fa',
+                numeralSystem: v === 'fa' ? 'persian' : 'western',
+              });
               if (typeof window !== 'undefined') {
                 const path = window.location.pathname.replace(
                   /^\/(en|fa)/,
