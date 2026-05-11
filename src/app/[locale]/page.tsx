@@ -16,6 +16,7 @@ import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { currentDay, stageFor } from '@/lib/reset';
+import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
 
@@ -42,6 +43,16 @@ function Home() {
       .sort((a, b) => a.startedAt.localeCompare(b.startedAt))[0],
   );
   const activeReset = useAppStore((s) => s.resets.find((r) => r.status === 'active'));
+  const allSummaries = useAppStore((s) => s.summaries);
+  const lastRestartAt = useAppStore((s) => s.profile?.lastRestartAt);
+  const restartStrikes = useMemo(
+    () => computeStrikes(allSummaries, today),
+    [allSummaries, today],
+  );
+  const offerRestart = useMemo(
+    () => shouldOfferRestart({ strikes: restartStrikes, lastRestartAt, today }),
+    [restartStrikes, lastRestartAt, today],
+  );
   const fmt = useNumberFormatter();
 
   const phase = useMemo(() => ramadanPhase(), []);
@@ -108,6 +119,25 @@ function Home() {
         </div>
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
+
+      {offerRestart && (
+        <Link href="/restart" className="block">
+          <Card className="border-leaf-300 bg-gradient-to-br from-ink-900 via-leaf-900 to-leaf-700 text-white shadow-lg">
+            <p className="text-xs uppercase tracking-[0.15em] text-leaf-200">
+              {t('restart.homeBannerEyebrow')}
+            </p>
+            <p className="numeral pt-1 text-lg font-semibold leading-snug">
+              {t('restart.homeBannerTitle', { strikes: fmt(restartStrikes) })}
+            </p>
+            <p className="pt-1 text-sm leading-relaxed text-leaf-50/90">
+              {t('restart.homeBannerBody')}
+            </p>
+            <p className="inline-flex items-center gap-1 pt-2 text-sm font-medium text-leaf-100">
+              {t('restart.homeBannerCta')} <ChevronEnd className="h-4 w-4" />
+            </p>
+          </Card>
+        </Link>
+      )}
 
       {ramadanOn && currentRamadan && (
         <Link href="/ramadan" className="block">

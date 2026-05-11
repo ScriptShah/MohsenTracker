@@ -109,6 +109,10 @@ export interface Profile {
   readingHabitId?: string;
   /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
   soundEnabled: boolean;
+  /** Last time the user went through the "restart smaller" flow (ISO). Used
+   *  as a cooldown so the offer doesn't re-pop the day after — the user
+   *  committed to a leaner list; let it breathe for a week. */
+  lastRestartAt?: string;
   onboardingComplete: boolean;
   createdAt: string;
 }

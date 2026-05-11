@@ -132,6 +132,10 @@ interface AppState {
   ) => void;
   deleteSavingEntry: (id: string) => void;
 
+  /** Stamps profile.lastRestartAt so the "restart smaller" offer cools down
+   *  for a week. Called after the user finishes the /restart flow. */
+  markRestartDone: () => void;
+
   /* Dopamine Reset */
   startReset: (tier: ResetTier, target: string) => DopamineReset;
   logResetCheckIn: (
@@ -832,6 +836,15 @@ export const useAppStore = create<AppState>()(
 
       deleteSavingEntry: (id) =>
         set((s) => ({ savings: s.savings.filter((e) => e.id !== id) })),
+
+      markRestartDone: () => {
+        const { profile } = get();
+        if (!profile) return;
+        set({
+          profile: { ...profile, lastRestartAt: new Date().toISOString() },
+        });
+        playSound('flourish');
+      },
 
       startReset: (tier, target) => {
         const targetDays =
