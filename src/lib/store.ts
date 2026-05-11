@@ -149,8 +149,14 @@ interface AppState {
   markRestartDone: () => void;
 
   /** Marks the habit's pending streak-fire tier as celebrated and clears
-   *  the pending pointer. Called when the celebration modal is dismissed. */
+   *  the pending pointer. Called when the celebration modal is dismissed.
+   *  Legacy per-habit path — retained while step 6 removes it. */
   dismissTierCelebration: (habitId: string) => void;
+
+  /** Marks the user's overall pending streak-fire tier as celebrated and
+   *  clears the pending pointer. Single celebration at a time — there's
+   *  one overall streak, no queue. */
+  dismissOverallTierCelebration: () => void;
 
   /* Spiritual fasting */
   setFastingPart: (date: string, part: FastingPart, value: boolean) => void;
@@ -244,6 +250,48 @@ function maybeQueueTierCelebration(
   if (newTier <= pending) return habits;
   const next: Habit[] = [...habits];
   next[idx] = { ...habit, pendingCelebrationTier: newTier };
+  return next;
+}
+
+/** Recomputes the overall streak from current store state and returns a new
+ *  Profile with the updated overallStreak block. If the recompute lifts the
+ *  user into a new tier they haven't celebrated yet (and the tier is > 1 —
+ *  Spark stays silent), `pendingCelebrationTier` is stamped on the returned
+ *  profile. Returns the same profile reference if no changes are needed so
+ *  callers can early-out cheaply. */
+function applyOverallStreakRecompute(state: AppState): Profile | null {
+  const profile = state.profile;
+  if (!profile) return null;
+  const snap = recomputeOverallStreak(
+    state.logs,
+    state.habits,
+    state.summaries,
+    todayKey(),
+  );
+  const prev = profile.overallStreak ?? {
+    current: 0,
+    longest: 0,
+    lastQualifyingDate: null,
+    celebratedTiers: [],
+  };
+  const ceiling = highestCelebratedTier(prev.celebratedTiers);
+  const pendingPrev = prev.pendingCelebrationTier ?? 0;
+  const newTier = getFireTier(snap.current);
+  const nextLongest = Math.max(prev.longest, snap.longest);
+  let nextPending: number | undefined = prev.pendingCelebrationTier;
+  if (newTier > 1 && newTier > ceiling && newTier > pendingPrev) {
+    nextPending = newTier;
+  }
+  const next: Profile = {
+    ...profile,
+    overallStreak: {
+      current: snap.current,
+      longest: nextLongest,
+      lastQualifyingDate: snap.lastQualifyingDate,
+      celebratedTiers: prev.celebratedTiers,
+      pendingCelebrationTier: nextPending,
+    },
+  };
   return next;
 }
 
@@ -532,6 +580,9 @@ export const useAppStore = create<AppState>()(
             ? maybeQueueTierCelebration(s.habits, habitId, newStreak.current)
             : s.habits,
         }));
+        // Overall streak — one fire, one identity (see overallStreak.ts).
+        const nextProfile = applyOverallStreakRecompute(get());
+        if (nextProfile) set({ profile: nextProfile });
 
         // Per-toggle sound. Daily-complete and streak-milestone sounds
         // fire below alongside the reward queue, so they replace the
@@ -634,6 +685,9 @@ export const useAppStore = create<AppState>()(
               : s.habits,
           };
         });
+        // Overall streak (see overallStreak.ts).
+        const nextProfile = applyOverallStreakRecompute(get());
+        if (nextProfile) set({ profile: nextProfile });
       },
 
       addReward: (label, tier, presetKey) => {
@@ -928,6 +982,25 @@ export const useAppStore = create<AppState>()(
             };
           }),
         }));
+      },
+
+      dismissOverallTierCelebration: () => {
+        const profile = get().profile;
+        if (!profile?.overallStreak?.pendingCelebrationTier) return;
+        const tier = profile.overallStreak.pendingCelebrationTier;
+        const already = profile.overallStreak.celebratedTiers;
+        set({
+          profile: {
+            ...profile,
+            overallStreak: {
+              ...profile.overallStreak,
+              celebratedTiers: already.includes(tier)
+                ? already
+                : [...already, tier],
+              pendingCelebrationTier: undefined,
+            },
+          },
+        });
       },
 
       setFastingPart: (date, part, value) => {
