@@ -275,3 +275,22 @@ export interface ActivePunishment {
   punishmentOptionId?: string;
   doneAt?: string;
 }
+
+/* ── Debts (who-owes-who tracker) ──────────────────────────────────────── */
+
+export type DebtDirection = 'theyOwe' | 'youOwe';
+
+export interface Debt {
+  id: string;
+  /** Who the debt is with — free text, e.g. "Hassan", "Mum", "the office". */
+  counterparty: string;
+  /** Currency-agnostic. The number is what's owed, not a signed value —
+   *  direction carries the sign. */
+  amount: number;
+  direction: DebtDirection;
+  notes?: string;
+  createdAt: string;
+  /** Set when the debt is repaid in full. The debt is kept in storage so the
+   *  user has a history; the UI moves settled debts into a collapsed list. */
+  settledAt?: string;
+}
