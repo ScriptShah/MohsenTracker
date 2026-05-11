@@ -45,13 +45,6 @@ export interface Habit {
    *  is the sum of pages logged today across books with matching `Book.habitId`.
    *  Multiple habits can carry this flag — e.g. one per category of reading. */
   linksToBooks?: boolean;
-  /** Streak-fire tiers that have already had their celebration modal shown.
-   *  Optional — older habits default to []. Tier indices are 1-7. */
-  celebratedTiers?: number[];
-  /** When a fresh streak crosses into a new tier the user hasn't celebrated
-   *  yet, the new tier number is stashed here so the next app open / future-
-   *  self visit can show the celebration. Cleared on dismiss. */
-  pendingCelebrationTier?: number;
   createdAt: string;
 }
 
