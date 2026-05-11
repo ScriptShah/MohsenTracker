@@ -8,7 +8,8 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
-import { presetHabits, seedCategories } from '@/domain/seed';
+import { presetHabits, presetReplacements, seedCategories } from '@/domain/seed';
+import type { PresetHabit } from '@/domain/seed';
 
 export default function NewHabitPage() {
   return (
@@ -240,28 +241,28 @@ function PresetPicker() {
 
   if (available.length === 0) return null;
 
-  const onPick = (presetKey: string) => {
-    const preset = presetHabits.find((p) => p.presetKey === presetKey);
-    if (!preset) return;
+  const resolveCategory = (preset: PresetHabit) => {
     let cat = categories.find((c) => c.key === preset.category && c.isActive);
-    if (!cat) {
-      // Auto-create the matching default category for existing users who
-      // didn't have it (e.g. Sport when the user onboarded before it
-      // existed). Falls back to any active category as a last resort.
-      const seed = seedCategories.find((s) => s.key === preset.category);
-      if (seed) {
-        cat = addCategory({
-          name: t(`categories.names.${seed.key}` as any),
-          icon: seed.icon,
-          color: seed.color,
-          key: seed.key,
-        });
-      } else {
-        cat = categories.find((c) => c.isActive);
-      }
+    if (cat) return cat;
+    // Auto-create the matching default category for existing users who
+    // didn't have it (e.g. Sport when the user onboarded before it
+    // existed). Falls back to any active category as a last resort.
+    const seed = seedCategories.find((s) => s.key === preset.category);
+    if (seed) {
+      return addCategory({
+        name: t(`categories.names.${seed.key}` as any),
+        icon: seed.icon,
+        color: seed.color,
+        key: seed.key,
+      });
     }
-    if (!cat) return;
-    addHabit({
+    return categories.find((c) => c.isActive);
+  };
+
+  const addPresetHabit = (preset: PresetHabit, replacementHabitId?: string) => {
+    const cat = resolveCategory(preset);
+    if (!cat) return undefined;
+    return addHabit({
       categoryId: cat.id,
       presetKey: preset.presetKey,
       name: t(`presets.${preset.presetKey}` as any),
@@ -269,9 +270,44 @@ function PresetPicker() {
       unit: preset.unit,
       target: preset.target,
       limit: preset.limit,
+      replacementHabitId,
       frequency: 'daily',
     });
+  };
+
+  const goBackOrHome = () => {
     router.replace(initialCategoryId ? `/categories/${initialCategoryId}` : '/');
+  };
+
+  const onPick = (presetKey: string) => {
+    const preset = presetHabits.find((p) => p.presetKey === presetKey);
+    if (!preset) return;
+
+    // Spec §5.7: bad-habit presets with a known good-habit counterpart get
+    // paired silently. If the counterpart already exists, link to it; if
+    // not, add it alongside the bad habit. No dialog — we don't interrupt
+    // the picker flow.
+    if (preset.type === 'bad') {
+      const replacementKey = presetReplacements[preset.presetKey];
+      if (replacementKey) {
+        const existing = habits.find((h) => h.presetKey === replacementKey);
+        if (existing) {
+          addPresetHabit(preset, existing.id);
+          goBackOrHome();
+          return;
+        }
+        const goodPreset = presetHabits.find((p) => p.presetKey === replacementKey);
+        if (goodPreset) {
+          const good = addPresetHabit(goodPreset);
+          addPresetHabit(preset, good?.id);
+          goBackOrHome();
+          return;
+        }
+      }
+    }
+
+    addPresetHabit(preset);
+    goBackOrHome();
   };
 
   return (

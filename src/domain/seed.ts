@@ -69,6 +69,17 @@ export const presetHabits: PresetHabit[] = [
   { presetKey: 'phoneFreeMeals', category: 'relationships', type: 'good' },
 ];
 
+/** Spec §5.7: every preset bad habit suggests its good-habit counterpart so
+ *  the user is never just removing a behaviour — they're replacing it. Keys
+ *  here are bad-preset keys; values are the suggested good-preset key. Bad
+ *  presets without an entry fall back to free-text in the full form. */
+export const presetReplacements: Record<string, string> = {
+  screenTime: 'reading',
+  gheebat: 'morningAdhkar',
+  junkFood: 'water',
+  negativeSelfTalk: 'morningAdhkar',
+};
+
 export function buildSeedCategories(translate: (key: CategoryKey) => string): Category[] {
   const now = new Date().toISOString();
   return seedCategories.map((c, idx) => ({
