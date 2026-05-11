@@ -276,6 +276,20 @@ export interface ActivePunishment {
   doneAt?: string;
 }
 
+/* ── Savings (ledger) ──────────────────────────────────────────────────── */
+
+export interface SavingEntry {
+  id: string;
+  /** Positive = deposit, negative = withdrawal. The UI splits the two but
+   *  storage uses a single signed amount so a running total is one reduce. */
+  amount: number;
+  /** YYYY-MM-DD — the date the user assigns to this entry. */
+  date: string;
+  /** Free-text — what the deposit/withdrawal was for. */
+  note?: string;
+  createdAt: string;
+}
+
 /* ── Debts (who-owes-who tracker) ──────────────────────────────────────── */
 
 export type DebtDirection = 'theyOwe' | 'youOwe';
