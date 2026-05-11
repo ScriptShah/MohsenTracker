@@ -87,6 +87,45 @@ function CategoryDetail() {
         </Link>
       )}
 
+      {category.key === 'health' && (
+        <div className="space-y-2">
+          <Link href="/fasting" className="block">
+            <Card className="flex items-center gap-3 border-leaf-200 bg-leaf-50 transition hover:border-leaf-400">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-leaf-600 text-white"
+                aria-hidden
+              >
+                🌙
+              </span>
+              <div className="flex-1">
+                <div className="font-medium">{t('fasting.categoryCardTitle')}</div>
+                <div className="text-xs text-ink-600">
+                  {t('fasting.categoryCardBody')}
+                </div>
+              </div>
+              <ChevronEnd className="h-4 w-4 text-leaf-700" />
+            </Card>
+          </Link>
+          <Link href="/autophagy" className="block">
+            <Card className="flex items-center gap-3 border-leaf-200 bg-leaf-50 transition hover:border-leaf-400">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-leaf-600 text-white"
+                aria-hidden
+              >
+                ⏱
+              </span>
+              <div className="flex-1">
+                <div className="font-medium">{t('autophagy.categoryCardTitle')}</div>
+                <div className="text-xs text-ink-600">
+                  {t('autophagy.categoryCardBody')}
+                </div>
+              </div>
+              <ChevronEnd className="h-4 w-4 text-leaf-700" />
+            </Card>
+          </Link>
+        </div>
+      )}
+
       {category.key === 'finance' && (
         <div className="space-y-2">
           <Link href="/savings" className="block">

@@ -41,6 +41,8 @@ const REWARD_PRESETS: { presetKey: string; tier: RewardTier }[] = [
 
 const PUNISHMENT_PRESETS: string[] = [
   'charityDonation',
+  'spiritualFastDay',
+  'autophagyFast',
   'deepCleanKitchen',
   'cleanBathroom',
   'noSocialMediaDay',

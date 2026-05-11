@@ -280,6 +280,35 @@ export interface ActivePunishment {
   doneAt?: string;
 }
 
+/* ── Spiritual fasting (multi-part daily log) ──────────────────────────── */
+
+/** The five parts of fasting in the Islamic tradition — food/drink is the
+ *  obvious one, but the senses are equally meant to fast from sin: eyes
+ *  from haram looks, ears from gossip, hands from harm, tongue from lies. */
+export type FastingPart = 'eyes' | 'ears' | 'hands' | 'tongue' | 'food';
+
+export interface FastingDayLog {
+  /** YYYY-MM-DD. */
+  date: string;
+  /** Which parts the user kept fasted that day. Absent keys default to false. */
+  parts: Partial<Record<FastingPart, boolean>>;
+  /** Optional free-text reflection — what they slipped on, what helped. */
+  notes?: string;
+}
+
+/* ── Autophagy fasting (intermittent-fasting timer) ────────────────────── */
+
+export interface AutophagyFast {
+  id: string;
+  /** ISO timestamp the user started the fast. */
+  startedAt: string;
+  /** ISO timestamp the user ended the fast. Absent → fast is in progress. */
+  endedAt?: string;
+  /** Optional target window in hours (e.g. 16 for 16:8, 18 for 18:6). */
+  targetHours?: number;
+  notes?: string;
+}
+
 /* ── Savings (ledger) ──────────────────────────────────────────────────── */
 
 export interface SavingEntry {
