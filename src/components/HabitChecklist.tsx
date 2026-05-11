@@ -21,26 +21,25 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const logs = useAppStore((s) => s.logs[today] ?? {});
   const streaks = useAppStore((s) => s.streaks);
   const toggleHabit = useAppStore((s) => s.toggleHabit);
-  const readingHabitId = useAppStore((s) => s.profile?.readingHabitId);
   const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const liveCounts = useLiveCounts();
   const unitLabel = useUnitLabel();
 
   const [showDone, setShowDone] = useState(false);
-  const [bookSheetOpen, setBookSheetOpen] = useState(false);
+  const [bookSheetHabitId, setBookSheetHabitId] = useState<string | null>(null);
 
   const isReadingHabit = (h: Habit) =>
-    readingHabitId === h.id || h.presetKey === 'reading';
+    h.linksToBooks === true || h.presetKey === 'reading';
 
   const onCheck = (habit: Habit) => {
     if (isReadingHabit(habit)) {
-      // Auto-link the books module the first time the user taps the
-      // reading habit's check, so future book-page logs flow into the
-      // habit's daily total + streak (spec §20.11).
-      if (!readingHabitId && habit.presetKey === 'reading') {
+      // Auto-link the books module the first time the user taps a reading
+      // preset's check, so future book-page logs flow into this habit's
+      // daily total + streak (spec §20.11).
+      if (!habit.linksToBooks && habit.presetKey === 'reading') {
         setReadingHabit(habit.id);
       }
-      setBookSheetOpen(true);
+      setBookSheetHabitId(habit.id);
       return;
     }
     toggleHabit(habit.id);
@@ -182,8 +181,11 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
             : t('home.showDone', { n: fmt(done.length) })}
         </button>
       )}
-      {bookSheetOpen && (
-        <BookLogSheet onClose={() => setBookSheetOpen(false)} />
+      {bookSheetHabitId && (
+        <BookLogSheet
+          habitId={bookSheetHabitId}
+          onClose={() => setBookSheetHabitId(null)}
+        />
       )}
     </div>
   );

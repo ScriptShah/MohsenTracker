@@ -40,6 +40,11 @@ export interface Habit {
   replacementHabitId?: string;
   /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
   isCritical?: boolean;
+  /** When true, this habit is driven by book-page logs (spec §20.11). Tapping
+   *  its check opens the book picker scoped to this habit, and its daily value
+   *  is the sum of pages logged today across books with matching `Book.habitId`.
+   *  Multiple habits can carry this flag — e.g. one per category of reading. */
+  linksToBooks?: boolean;
   createdAt: string;
 }
 
@@ -246,6 +251,10 @@ export interface Book {
   targetCompletionDate?: string;
   /** Resized JPEG data URL (~240px wide). Optional. */
   coverImage?: string;
+  /** The reading-type habit that owns this book's daily page totals. Multiple
+   *  reading habits can exist; each book belongs to one. Unassigned books
+   *  appear in every reading habit's picker as "unattached". */
+  habitId?: string;
   status: BookStatus;
   startedAt: string;
   completedAt?: string;

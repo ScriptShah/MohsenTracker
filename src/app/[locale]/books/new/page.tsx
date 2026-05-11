@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -27,7 +28,9 @@ const FORMATS: BookFormat[] = ['physical', 'ebook', 'audiobook'];
 export default function NewBookPage() {
   return (
     <ClientGate>
-      <NewBook />
+      <Suspense>
+        <NewBook />
+      </Suspense>
     </ClientGate>
   );
 }
@@ -35,7 +38,15 @@ export default function NewBookPage() {
 function NewBook() {
   const t = useTranslations();
   const router = useRouter();
+  const search = useSearchParams();
   const addBook = useAppStore((s) => s.addBook);
+  // When the new-book flow is opened from a specific reading habit (via the
+  // book-log sheet or the habit's books section), the new book inherits that
+  // habit so its daily pages count toward that habit's total.
+  const initialHabitId = search.get('habitId') ?? undefined;
+  const initialHabit = useAppStore((s) =>
+    initialHabitId ? s.habits.find((h) => h.id === initialHabitId) : undefined,
+  );
 
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -76,6 +87,7 @@ function NewBook() {
       whyReading: whyReading.trim() || undefined,
       targetCompletionDate: targetDate || undefined,
       coverImage,
+      habitId: initialHabit?.id,
     });
     router.replace(`/books/${book.id}`);
   };
