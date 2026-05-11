@@ -105,17 +105,20 @@ function Home() {
       className={`space-y-6${ramadanOn ? ' bg-gradient-to-b from-sand-50 via-transparent to-transparent' : ''}`}
     >
       <header className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex-1 space-y-1">
           <h1 className="text-xl font-semibold">
             {t(greeting as any, { name: profile.name })}
           </h1>
-          {ramadanOn ? (
-            <p className="numeral text-sm text-leaf-700">
-              ☪ {t('ramadan.dayOf', { n: fmt(phase.dayOfRamadan ?? 1) })}
-            </p>
-          ) : (
-            <p className="text-sm text-ink-500">{t('common.today')}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {ramadanOn ? (
+              <p className="numeral text-sm text-leaf-700">
+                ☪ {t('ramadan.dayOf', { n: fmt(phase.dayOfRamadan ?? 1) })}
+              </p>
+            ) : (
+              <p className="text-sm text-ink-500">{t('common.today')}</p>
+            )}
+            <Lives strikes={restartStrikes} />
+          </div>
         </div>
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
@@ -304,5 +307,47 @@ function Home() {
         </Link>
       </section>
     </div>
+  );
+}
+
+/** Three-heart "lives" indicator. The user starts each fortnight with three
+ *  lives; every day under 50% completion in the last 14 burns one. When all
+ *  three are gone, the restart-smaller banner appears below the header. */
+function Lives({ strikes }: { strikes: number }) {
+  const t = useTranslations();
+  const remaining = Math.max(0, 3 - strikes);
+  const tone = remaining === 3
+    ? 'text-leaf-600'
+    : remaining === 2
+    ? 'text-sand-600'
+    : remaining === 1
+    ? 'text-orange-500'
+    : 'text-red-500';
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 ${tone}`}
+      role="img"
+      aria-label={t('home.livesAria', { remaining, total: 3 })}
+      title={t('home.livesAria', { remaining, total: 3 })}
+    >
+      {[0, 1, 2].map((i) => (
+        <Heart key={i} filled={i < remaining} />
+      ))}
+    </span>
+  );
+}
+
+function Heart({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 2}
+      aria-hidden
+    >
+      <path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z" strokeLinejoin="round" />
+    </svg>
   );
 }

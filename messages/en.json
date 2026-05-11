@@ -73,7 +73,8 @@
     "liveCount": "{n} doing this today",
     "allDone": "All habits done for today. Beautiful work.",
     "showDone": "Show done ({n})",
-    "hideDone": "Hide done ({n})"
+    "hideDone": "Hide done ({n})",
+    "livesAria": "{remaining} of {total} lives remaining"
   },
   "categories": {
     "title": "Categories",
