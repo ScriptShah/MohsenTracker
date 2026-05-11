@@ -45,6 +45,18 @@ function HabitDetail() {
   const category = useAppStore((s) =>
     habit ? s.categories.find((c) => c.id === habit.categoryId) : undefined,
   );
+  const habits = useAppStore((s) => s.habits);
+  const replacementOut = useMemo(
+    () =>
+      habit?.replacementHabitId
+        ? habits.find((h) => h.id === habit.replacementHabitId)
+        : undefined,
+    [habit?.replacementHabitId, habits],
+  );
+  const replacementIn = useMemo(
+    () => (habit ? habits.find((h) => h.replacementHabitId === habit.id) : undefined),
+    [habit, habits],
+  );
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
   const sensitivity = useAppStore(
@@ -121,6 +133,36 @@ function HabitDetail() {
             ) : null)}
         </div>
       </header>
+
+      {(replacementOut || replacementIn) && (
+        <Card className={
+          habit.type === 'bad'
+            ? 'border-leaf-200 bg-leaf-50'
+            : 'border-sand-200 bg-sand-50'
+        }>
+          <p className={`text-xs uppercase tracking-wide ${
+            habit.type === 'bad' ? 'text-leaf-700' : 'text-sand-700'
+          }`}>
+            {replacementOut
+              ? t('habitDetail.replacement.replaceWith')
+              : t('habitDetail.replacement.replacementFor')}
+          </p>
+          <Link
+            href={`/habits/${(replacementOut ?? replacementIn)!.id}`}
+            className="mt-1 flex items-center justify-between gap-3 rounded-lg hover:opacity-80"
+          >
+            <span className="text-base font-medium text-ink-800">
+              {(replacementOut ?? replacementIn)!.name}
+            </span>
+            <ChevronEnd className="h-4 w-4 text-ink-500" />
+          </Link>
+          {replacementOut && (
+            <p className="pt-2 text-xs text-ink-600">
+              {t('habitDetail.replacement.body')}
+            </p>
+          )}
+        </Card>
+      )}
 
       {narrative && (
         <Card className="space-y-3">

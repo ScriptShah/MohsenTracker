@@ -738,6 +738,12 @@
     "deleteHabit": "Delete habit",
     "criticalToggle": "Critical habit",
     "criticalHint": "Missing this triggers your punishment.",
+    "replacement": {
+      "replaceWith": "Replace it with",
+      "replacementFor": "Replacement for",
+      "body": "When the urge hits, do this instead.",
+      "openLink": "Open"
+    },
     "muted": {
       "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
       "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
