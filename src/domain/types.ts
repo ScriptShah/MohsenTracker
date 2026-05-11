@@ -45,6 +45,13 @@ export interface Habit {
    *  is the sum of pages logged today across books with matching `Book.habitId`.
    *  Multiple habits can carry this flag — e.g. one per category of reading. */
   linksToBooks?: boolean;
+  /** Streak-fire tiers that have already had their celebration modal shown.
+   *  Optional — older habits default to []. Tier indices are 1-7. */
+  celebratedTiers?: number[];
+  /** When a fresh streak crosses into a new tier the user hasn't celebrated
+   *  yet, the new tier number is stashed here so the next app open / future-
+   *  self visit can show the celebration. Cleared on dismiss. */
+  pendingCelebrationTier?: number;
   createdAt: string;
 }
 
@@ -109,6 +116,10 @@ export interface Profile {
   readingHabitId?: string;
   /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
   soundEnabled: boolean;
+  /** Which sentence track the streak-fire celebrations use. 'smart' picks
+   *  Islamic for habits in the Islamic Practices category and Universal
+   *  for everything else. Default 'smart'. Optional for back-compat. */
+  fireSentenceStyle?: 'smart' | 'islamic' | 'universal';
   /** Last time the user went through the "restart smaller" flow (ISO). Used
    *  as a cooldown so the offer doesn't re-pop the day after — the user
    *  committed to a leaner list; let it breathe for a week. */
