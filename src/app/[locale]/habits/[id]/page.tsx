@@ -300,18 +300,23 @@ function HabitDetail() {
   );
 }
 
-/** Spec §20.11: when a habit is the user's reading habit, expose their
- *  books inline so they can pick which one to log pages on without leaving
- *  the habit screen. Eligibility is presetKey === 'reading' or unit === 'pages'.
+/** Spec §20.11: a habit flagged linksToBooks pulls its daily total from
+ *  book-page logs. Multiple reading habits can co-exist — each one shows the
+ *  subset of books with `book.habitId === habit.id` (and unassigned books).
+ *  Eligibility for the connect CTA: presetKey === 'reading'.
  */
 function BooksSection({ habit }: { habit: Habit }) {
   const t = useTranslations();
-  const readingHabitId = useAppStore((s) => s.profile?.readingHabitId);
   const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const books = useAppStore((s) => s.books);
 
-  const isLinked = readingHabitId === habit.id;
-  const isCandidate = habit.presetKey === 'reading';
+  const isLinked = habit.linksToBooks === true;
+  // Any pages-based good habit can become a reading habit. This is what lets
+  // the user keep a second "Read Quran" habit in Islamic alongside the main
+  // "Read 10 pages" preset in Growth, each with its own book list.
+  const isCandidate =
+    habit.presetKey === 'reading' ||
+    (habit.type === 'good' && habit.unit === 'pages');
 
   if (!isLinked && !isCandidate) return null;
 
@@ -333,7 +338,11 @@ function BooksSection({ habit }: { habit: Habit }) {
     );
   }
 
-  const reading = books.filter((b) => b.status === 'reading');
+  const reading = books.filter(
+    (b) =>
+      b.status === 'reading' &&
+      (b.habitId === habit.id || b.habitId === undefined),
+  );
 
   return (
     <Card className="space-y-3">
@@ -357,7 +366,7 @@ function BooksSection({ habit }: { habit: Habit }) {
       )}
 
       <Link
-        href="/books/new"
+        href={`/books/new?habitId=${habit.id}`}
         className="tap-44 flex items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-4 py-3 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
       >
         + {t('habitDetail.books.addBook')}

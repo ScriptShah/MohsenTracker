@@ -170,40 +170,57 @@ function recomputeStreakFor(state: AppState, habitId: string): Streak | null {
   return recomputeStreak(habit, byDate, prevLongest);
 }
 
-/** Spec §20.11: book pages drive the linked reading habit's daily total. */
-function syncReadingHabitForDate(
+/** Spec §20.11: book pages drive the linked reading habits' daily totals.
+ *  A user can have multiple reading habits — one per category, say — and
+ *  each habit sums only the pages from books with matching `habitId`. */
+function syncBookHabitsForDate(
   state: AppState,
   date: string,
 ): Pick<AppState, 'logs' | 'summaries' | 'streaks'> | null {
-  const habitId = state.profile?.readingHabitId;
-  if (!habitId) return null;
-  const habit = state.habits.find((h) => h.id === habitId);
-  if (!habit) return null;
+  const readingHabits = state.habits.filter((h) => h.linksToBooks);
+  if (readingHabits.length === 0) return null;
+  let live: AppState = state;
+  let last: Pick<AppState, 'logs' | 'summaries' | 'streaks'> | null = null;
+  for (const habit of readingHabits) {
+    last = syncOneBookHabitForDate(live, state, habit, date);
+    live = { ...live, ...last };
+  }
+  return last;
+}
 
-  // Sum only pages-based books. Audiobooks are minutes — different unit,
-  // mustn't pollute a pages-based reading habit's daily total.
+function syncOneBookHabitForDate(
+  liveState: AppState,
+  baseState: AppState,
+  habit: Habit,
+  date: string,
+): Pick<AppState, 'logs' | 'summaries' | 'streaks'> {
+  // Sum only pages-based books linked to THIS habit. Audiobooks are minutes —
+  // different unit, mustn't pollute a pages-based reading habit's daily total.
   let sum = 0;
-  for (const b of state.books) {
+  for (const b of baseState.books) {
     if (b.format === 'audiobook') continue;
+    if (b.habitId !== habit.id) continue;
     sum += b.pagesByDate[date] ?? 0;
   }
 
-  const dayLogs = { ...(state.logs[date] ?? {}) };
+  const dayLogs = { ...(liveState.logs[date] ?? {}) };
   const completed =
     habit.type === 'good'
       ? habit.target === undefined
         ? sum > 0
         : sum >= habit.target
       : sum <= (habit.limit ?? 0);
-  dayLogs[habitId] = { habitId, date, value: sum, completed };
-  const nextLogs = { ...state.logs, [date]: dayLogs };
-  const probe: AppState = { ...state, logs: nextLogs };
+  dayLogs[habit.id] = { habitId: habit.id, date, value: sum, completed };
+  const nextLogs = { ...liveState.logs, [date]: dayLogs };
+  const probe: AppState = { ...liveState, logs: nextLogs };
   const summary = recomputeSummary(probe, date);
-  const streak = recomputeStreakFor(probe, habitId);
+  const streak = recomputeStreakFor(probe, habit.id);
   return {
     logs: nextLogs,
-    summaries: { ...state.summaries, [date]: summary },
-    streaks: streak ? { ...state.streaks, [habitId]: streak } : state.streaks,
+    summaries: { ...liveState.summaries, [date]: summary },
+    streaks: streak
+      ? { ...liveState.streaks, [habit.id]: streak }
+      : liveState.streaks,
   };
 }
 
@@ -362,7 +379,12 @@ export const useAppStore = create<AppState>()(
             s.profile && s.profile.readingHabitId === habitId
               ? { ...s.profile, readingHabitId: undefined }
               : s.profile;
-          return { habits, logs, streaks, pendingRewards, activePunishments, profile };
+          // Orphan any books that pointed to the deleted habit — keep the
+          // book record, but unlink it so it can be reassigned later.
+          const books = s.books.map((b) =>
+            b.habitId === habitId ? { ...b, habitId: undefined } : b,
+          );
+          return { habits, logs, streaks, pendingRewards, activePunishments, profile, books };
         });
         const today = todayKey();
         set((s) => ({ summaries: { ...s.summaries, [today]: recomputeSummary(get(), today) } }));
@@ -380,12 +402,12 @@ export const useAppStore = create<AppState>()(
         const prevStreak = get().streaks[habitId]?.current ?? 0;
         const wasComplete = get().logs[day]?.[habitId]?.completed ?? false;
 
-        // The linked reading habit is driven exclusively by book page logs.
-        // Manual toggles are a no-op so users can't mark "Read a book" done
-        // without actually reading. We still re-run the sync so the log
-        // reflects today's book totals (in case a stale entry exists).
-        if (get().profile?.readingHabitId === habitId) {
-          const synced = syncReadingHabitForDate(get(), day);
+        // Reading habits (linksToBooks=true) are driven exclusively by book
+        // page logs. Manual toggles are a no-op so users can't mark "Read a
+        // book" done without actually reading. We still re-run the sync so
+        // the log reflects today's book totals (in case a stale entry exists).
+        if (get().habits.find((h) => h.id === habitId)?.linksToBooks) {
+          const synced = syncBookHabitsForDate(get(), day);
           if (synced) set(synced);
           return;
         }
@@ -663,7 +685,7 @@ export const useAppStore = create<AppState>()(
             return { ...b, pagesByDate: next };
           }),
         }));
-        const synced = syncReadingHabitForDate(get(), day);
+        const synced = syncBookHabitsForDate(get(), day);
         if (synced) set(synced);
         // Sound when the user actually adds pages (not on zeroing/edit-down).
         if (sanitized > prevPages) playSound('tick');
@@ -692,22 +714,41 @@ export const useAppStore = create<AppState>()(
         const datesAffected = book ? Object.keys(book.pagesByDate) : [];
         set((s) => ({ books: s.books.filter((b) => b.id !== id) }));
         for (const d of datesAffected) {
-          const synced = syncReadingHabitForDate(get(), d);
+          const synced = syncBookHabitsForDate(get(), d);
           if (synced) set(synced);
         }
       },
 
       setReadingHabit: (habitId) => {
+        // Flip the linksToBooks flag on the targeted habit (or clear it, when
+        // habitId is undefined → undo the link on the previous reading habit).
+        // Also keep profile.readingHabitId in sync as the legacy "primary"
+        // pointer used by older clients; new behaviour reads from the flag.
         const { profile } = get();
         if (!profile) return;
-        set({ profile: { ...profile, readingHabitId: habitId } });
-        if (!habitId) return;
+        const previousId = profile.readingHabitId;
+        set((s) => ({
+          profile: profile ? { ...profile, readingHabitId: habitId } : profile,
+          habits: s.habits.map((h) => {
+            if (h.id === habitId) return { ...h, linksToBooks: true };
+            if (!habitId && h.id === previousId) {
+              return { ...h, linksToBooks: false };
+            }
+            return h;
+          }),
+          // Books that had no owner adopt the new habit so existing logs keep
+          // flowing somewhere — preserves prior behaviour where a single
+          // reading habit aggregated everything.
+          books: habitId
+            ? s.books.map((b) => (b.habitId ? b : { ...b, habitId }))
+            : s.books,
+        }));
         const dateSet = new Set<string>();
         for (const b of get().books) {
           for (const d of Object.keys(b.pagesByDate)) dateSet.add(d);
         }
         for (const d of dateSet) {
-          const synced = syncReadingHabitForDate(get(), d);
+          const synced = syncBookHabitsForDate(get(), d);
           if (synced) set(synced);
         }
       },
@@ -940,7 +981,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 9,
+      version: 10,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -974,6 +1015,25 @@ export const useAppStore = create<AppState>()(
           persisted.profile.readingHabitId = persisted.profile.readingHabitId ?? undefined;
           // v9: synthesized chimes default ON.
           persisted.profile.soundEnabled = persisted.profile.soundEnabled ?? true;
+        }
+        // v10: multi-instance reading habits. Carry forward any prior single
+        // reading habit (either pointed to by profile.readingHabitId or
+        // detected via presetKey === 'reading') by flipping its linksToBooks
+        // flag, and assign existing books to it so totals don't reset.
+        const readingHabitId: string | undefined = persisted.profile?.readingHabitId;
+        if (Array.isArray(persisted.habits)) {
+          persisted.habits = persisted.habits.map((h: any) => {
+            if (h.linksToBooks) return h;
+            if (h.id === readingHabitId || h.presetKey === 'reading') {
+              return { ...h, linksToBooks: true };
+            }
+            return h;
+          });
+        }
+        if (Array.isArray(persisted.books) && readingHabitId) {
+          persisted.books = persisted.books.map((b: any) =>
+            b.habitId ? b : { ...b, habitId: readingHabitId },
+          );
         }
         return persisted;
       },

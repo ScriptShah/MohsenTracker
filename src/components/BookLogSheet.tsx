@@ -11,12 +11,25 @@ import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { useNumberFormatter } from '@/lib/format';
 import type { Book } from '@/domain/types';
 
-export function BookLogSheet({ onClose }: { onClose: () => void }) {
+export function BookLogSheet({
+  onClose,
+  habitId,
+}: {
+  onClose: () => void;
+  /** When set, the sheet shows only books linked to this habit (plus any
+   *  unattached books — they're fair game until the user assigns them). */
+  habitId?: string;
+}) {
   const t = useTranslations();
   const fmt = useNumberFormatter();
   const reading = useAppStore((s) =>
-    s.books.filter((b) => b.status === 'reading'),
+    s.books.filter((b) => {
+      if (b.status !== 'reading') return false;
+      if (!habitId) return true;
+      return b.habitId === habitId || b.habitId === undefined;
+    }),
   );
+  const addBookHref = habitId ? `/books/new?habitId=${habitId}` : '/books/new';
 
   return (
     <div
@@ -50,7 +63,7 @@ export function BookLogSheet({ onClose }: { onClose: () => void }) {
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <Link
-            href="/books/new"
+            href={addBookHref}
             onClick={onClose}
             className="tap-44 inline-flex items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-3 py-2 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
           >
