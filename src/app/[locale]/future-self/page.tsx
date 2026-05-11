@@ -410,11 +410,13 @@ function FireDetailSheet({
 }) {
   const t = useTranslations();
   const profile = useAppStore((s) => s.profile);
+  const habits = useAppStore((s) => s.habits);
+  const islamicCategoryId = allCategories.find((c) => c.key === 'islamic')?.id;
   const tier = getFireTier(streak);
   const tierName = getTierName(tier);
   const diamond = isDiamond(tier);
   const next = getDaysToNextTier(streak);
-  const track = getFireTrack(habit, profile, allCategories as any);
+  const track = getFireTrack(profile, habits, islamicCategoryId);
   const sentence = t(`streakFire.tiers.${tierName}.${track}` as any);
 
   return (

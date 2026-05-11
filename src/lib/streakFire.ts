@@ -1,4 +1,4 @@
-import type { Category, Habit, Profile } from '@/domain/types';
+import type { Habit, Profile } from '@/domain/types';
 
 /** Day thresholds at which each tier begins. Index 0 is unused (tier 1 starts
  *  at day 1, so streakDays < TIER_THRESHOLDS[1] (=7) is tier 1). */
@@ -57,20 +57,25 @@ export function getDaysToNextTier(streakDays: number): {
   };
 }
 
-/** Decide which sentence track applies to a given habit.
+/** Decide which sentence track applies to the user's overall fire.
  *  - explicit 'islamic' / 'universal' override the smart routing.
- *  - 'smart' (default) routes habits in the Islamic Practices category to
- *    the Islamic track and everything else to Universal. */
+ *  - 'smart' (default) routes to Islamic if the user has at least one
+ *    non-archived habit in the Islamic Practices category, else Universal.
+ *
+ *  Per-habit context is gone — there is only one fire — so the heuristic
+ *  is "does this user's life include Islamic practice tracking?" rather
+ *  than "which category is this specific habit in?". */
 export function getFireTrack(
-  habit: Pick<Habit, 'categoryId'>,
   profile: Pick<Profile, 'fireSentenceStyle'> | null | undefined,
-  categories: Pick<Category, 'id' | 'key'>[],
+  habits: Pick<Habit, 'categoryId'>[],
+  islamicCategoryId: string | undefined,
 ): FireTrack {
   const style = profile?.fireSentenceStyle ?? 'smart';
   if (style === 'islamic') return 'islamic';
   if (style === 'universal') return 'universal';
-  const cat = categories.find((c) => c.id === habit.categoryId);
-  return cat?.key === 'islamic' ? 'islamic' : 'universal';
+  if (!islamicCategoryId) return 'universal';
+  const hasIslamicHabit = habits.some((h) => h.categoryId === islamicCategoryId);
+  return hasIslamicHabit ? 'islamic' : 'universal';
 }
 
 /** The highest tier in `celebratedTiers` (or 0 if none). Used to detect when

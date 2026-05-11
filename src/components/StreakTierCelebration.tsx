@@ -58,7 +58,8 @@ export function StreakTierCelebration() {
   const tier = current.pendingCelebrationTier!;
   const tierName = getTierName(tier);
   const diamond = isDiamond(tier);
-  const track = getFireTrack(current, profile, allCategories);
+  const islamicCategoryId = allCategories.find((c) => c.key === 'islamic')?.id;
+  const track = getFireTrack(profile, habits, islamicCategoryId);
   const sentence = t(`streakFire.tiers.${tierName}.${track}` as any);
   const diamondExtra = diamond
     ? t(`streakFire.diamondExtra.${track}` as any)
