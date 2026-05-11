@@ -28,12 +28,13 @@ function Restart() {
   const router = useRouter();
   const habits = useAppStore((s) => s.habits.filter((h) => h.frequency === 'daily'));
   const summaries = useAppStore((s) => s.summaries);
+  const lastRestartAt = useAppStore((s) => s.profile?.lastRestartAt);
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const markRestartDone = useAppStore((s) => s.markRestartDone);
 
   const strikes = useMemo(
-    () => computeStrikes(summaries, todayKey()),
-    [summaries],
+    () => computeStrikes(summaries, todayKey(), lastRestartAt),
+    [summaries, lastRestartAt],
   );
 
   // Selected habits are the ones the user wants to KEEP. Default: keep all,

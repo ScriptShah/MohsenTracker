@@ -74,7 +74,8 @@
     "allDone": "All habits done for today. Beautiful work.",
     "showDone": "Show done ({n})",
     "hideDone": "Hide done ({n})",
-    "livesAria": "{remaining} of {total} lives remaining"
+    "livesAria": "{remaining} of {total} lives remaining",
+    "livesCaption": "Below 50% loses a heart · 3 days above 50% earns one back"
   },
   "categories": {
     "title": "Categories",

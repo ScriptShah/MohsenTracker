@@ -46,8 +46,8 @@ function Home() {
   const allSummaries = useAppStore((s) => s.summaries);
   const lastRestartAt = useAppStore((s) => s.profile?.lastRestartAt);
   const restartStrikes = useMemo(
-    () => computeStrikes(allSummaries, today),
-    [allSummaries, today],
+    () => computeStrikes(allSummaries, today, lastRestartAt),
+    [allSummaries, today, lastRestartAt],
   );
   const offerRestart = useMemo(
     () => shouldOfferRestart({ strikes: restartStrikes, lastRestartAt, today }),
@@ -119,6 +119,7 @@ function Home() {
             )}
             <Lives strikes={restartStrikes} />
           </div>
+          <p className="text-xs text-ink-500">{t('home.livesCaption')}</p>
         </div>
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
