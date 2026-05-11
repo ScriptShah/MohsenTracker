@@ -4,12 +4,15 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   ActivePunishment,
+  AutophagyFast,
   Book,
   Category,
   CategoryKey,
   DailySummary,
   Debt,
   DopamineReset,
+  FastingDayLog,
+  FastingPart,
   Habit,
   HabitLog,
   PendingReward,
@@ -67,6 +70,13 @@ interface AppState {
 
   /* Savings ledger — deposits and withdrawals, currency-agnostic. */
   savings: SavingEntry[];
+
+  /* Spiritual fasting — multi-part daily log, keyed by date. */
+  spiritualFasting: Record<string, FastingDayLog>;
+
+  /* Autophagy fasting — intermittent fasts. The active one (if any) is the
+   *  entry whose endedAt is undefined; everything else is history. */
+  autophagyFasts: AutophagyFast[];
 
   /* mutations */
   initFromOnboarding: (args: {
@@ -135,6 +145,16 @@ interface AppState {
   /** Stamps profile.lastRestartAt so the "restart smaller" offer cools down
    *  for a week. Called after the user finishes the /restart flow. */
   markRestartDone: () => void;
+
+  /* Spiritual fasting */
+  setFastingPart: (date: string, part: FastingPart, value: boolean) => void;
+  setFastingNotes: (date: string, notes: string) => void;
+
+  /* Autophagy fasting */
+  startAutophagyFast: (targetHours?: number) => AutophagyFast;
+  endAutophagyFast: (id: string, notes?: string) => void;
+  cancelAutophagyFast: (id: string) => void;
+  deleteAutophagyFast: (id: string) => void;
 
   /* Dopamine Reset */
   startReset: (tier: ResetTier, target: string) => DopamineReset;
@@ -280,6 +300,8 @@ export const useAppStore = create<AppState>()(
       ramadan: [],
       debts: [],
       savings: [],
+      spiritualFasting: {},
+      autophagyFasts: [],
 
       initFromOnboarding: ({
         profile,
@@ -316,6 +338,8 @@ export const useAppStore = create<AppState>()(
           ramadan: [],
           debts: [],
           savings: [],
+      spiritualFasting: {},
+      autophagyFasts: [],
         });
       },
 
@@ -846,6 +870,75 @@ export const useAppStore = create<AppState>()(
         playSound('flourish');
       },
 
+      setFastingPart: (date, part, value) => {
+        const prevDay = get().spiritualFasting[date];
+        const prevValue = prevDay?.parts?.[part] === true;
+        set((s) => {
+          const day: FastingDayLog = prevDay
+            ? { ...prevDay, parts: { ...prevDay.parts, [part]: value } }
+            : { date, parts: { [part]: value } };
+          return { spiritualFasting: { ...s.spiritualFasting, [date]: day } };
+        });
+        if (value && !prevValue) playSound('tick');
+        else if (!value && prevValue) playSound('untick');
+      },
+
+      setFastingNotes: (date, notes) =>
+        set((s) => {
+          const prev = s.spiritualFasting[date];
+          const day: FastingDayLog = prev
+            ? { ...prev, notes: notes || undefined }
+            : { date, parts: {}, notes: notes || undefined };
+          return { spiritualFasting: { ...s.spiritualFasting, [date]: day } };
+        }),
+
+      startAutophagyFast: (targetHours) => {
+        // End any in-progress fast first — only one active fast at a time.
+        const inProgress = get().autophagyFasts.find((f) => !f.endedAt);
+        if (inProgress) {
+          set((s) => ({
+            autophagyFasts: s.autophagyFasts.map((f) =>
+              f.id === inProgress.id
+                ? { ...f, endedAt: new Date().toISOString() }
+                : f,
+            ),
+          }));
+        }
+        const fast: AutophagyFast = {
+          id: newId('fast'),
+          startedAt: new Date().toISOString(),
+          targetHours,
+        };
+        set((s) => ({ autophagyFasts: [fast, ...s.autophagyFasts] }));
+        playSound('softUp');
+        return fast;
+      },
+
+      endAutophagyFast: (id, notes) => {
+        set((s) => ({
+          autophagyFasts: s.autophagyFasts.map((f) =>
+            f.id === id
+              ? {
+                  ...f,
+                  endedAt: f.endedAt ?? new Date().toISOString(),
+                  notes: notes ?? f.notes,
+                }
+              : f,
+          ),
+        }));
+        playSound('flourish');
+      },
+
+      cancelAutophagyFast: (id) =>
+        set((s) => ({
+          autophagyFasts: s.autophagyFasts.filter((f) => f.id !== id),
+        })),
+
+      deleteAutophagyFast: (id) =>
+        set((s) => ({
+          autophagyFasts: s.autophagyFasts.filter((f) => f.id !== id),
+        })),
+
       startReset: (tier, target) => {
         const targetDays =
           tier === 'weekly24h'
@@ -1074,7 +1167,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 12,
+      version: 13,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -1085,6 +1178,8 @@ export const useAppStore = create<AppState>()(
         persisted.resets = persisted.resets ?? [];
         persisted.debts = persisted.debts ?? [];
         persisted.savings = persisted.savings ?? [];
+        persisted.spiritualFasting = persisted.spiritualFasting ?? {};
+        persisted.autophagyFasts = persisted.autophagyFasts ?? [];
         persisted.ramadan = (persisted.ramadan ?? []).map((r: any) => ({
           ...r,
           prayersByDate: r.prayersByDate ?? {},
