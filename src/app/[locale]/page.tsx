@@ -46,8 +46,8 @@ function Home() {
   const allSummaries = useAppStore((s) => s.summaries);
   const lastRestartAt = useAppStore((s) => s.profile?.lastRestartAt);
   const restartStrikes = useMemo(
-    () => computeStrikes(allSummaries, today),
-    [allSummaries, today],
+    () => computeStrikes(allSummaries, today, lastRestartAt),
+    [allSummaries, today, lastRestartAt],
   );
   const offerRestart = useMemo(
     () => shouldOfferRestart({ strikes: restartStrikes, lastRestartAt, today }),
@@ -119,6 +119,7 @@ function Home() {
             )}
             <Lives strikes={restartStrikes} />
           </div>
+          <p className="text-xs text-ink-500">{t('home.livesCaption')}</p>
         </div>
         <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
       </header>
@@ -316,16 +317,9 @@ function Home() {
 function Lives({ strikes }: { strikes: number }) {
   const t = useTranslations();
   const remaining = Math.max(0, 3 - strikes);
-  const tone = remaining === 3
-    ? 'text-leaf-600'
-    : remaining === 2
-    ? 'text-sand-600'
-    : remaining === 1
-    ? 'text-orange-500'
-    : 'text-red-500';
   return (
     <span
-      className={`inline-flex items-center gap-0.5 ${tone}`}
+      className="inline-flex items-center gap-1 text-red-500"
       role="img"
       aria-label={t('home.livesAria', { remaining, total: 3 })}
       title={t('home.livesAria', { remaining, total: 3 })}
@@ -341,7 +335,7 @@ function Heart({ filled }: { filled: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-3.5 w-3.5"
+      className="h-6 w-6"
       fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={filled ? 0 : 2}
