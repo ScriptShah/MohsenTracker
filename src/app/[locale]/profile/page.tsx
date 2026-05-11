@@ -134,15 +134,7 @@ function Profile() {
               { value: 'fa', label: 'فارسی' },
             ]}
             onChange={(v) => {
-              // Switching language also re-aligns the default numeral
-              // system: EN → Western digits, FA → Persian digits. The user
-              // can still override afterwards via the Numerals switch.
-              // Persist via setProfile before the hard-navigation so the
-              // new locale reads the updated value on mount.
-              setProfile({
-                language: v as 'en' | 'fa',
-                numeralSystem: v === 'fa' ? 'persian' : 'western',
-              });
+              setProfile({ language: v as 'en' | 'fa' });
               if (typeof window !== 'undefined') {
                 const path = window.location.pathname.replace(
                   /^\/(en|fa)/,
@@ -151,17 +143,6 @@ function Profile() {
                 window.location.href = path;
               }
             }}
-          />
-        </Field>
-
-        <Field label={t('settings.numerals')}>
-          <SegmentedTwo
-            value={profile.numeralSystem}
-            options={[
-              { value: 'western', label: t('settings.numeralSystemWestern') },
-              { value: 'persian', label: t('settings.numeralSystemPersian') },
-            ]}
-            onChange={(v) => setProfile({ numeralSystem: v as 'western' | 'persian' })}
           />
         </Field>
 
