@@ -180,6 +180,22 @@ body {
 .splash-line-grow { animation: splash-line-grow 500ms ease-out forwards; transform-origin: top; transform: scaleY(0); }
 .splash-logo-float { animation: splash-logo-float 3.5s ease-in-out infinite; }
 
+/* ── Streak-fire icon animations ───────────────────────────────────── */
+@keyframes streak-fire-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@keyframes streak-diamond-shimmer {
+  0%, 100% { transform: rotate(-2deg); }
+  50%      { transform: rotate(2deg); }
+}
+.streak-fire-pulse     { animation: streak-fire-pulse 2s ease-in-out infinite; transform-origin: center bottom; }
+.streak-diamond-shimmer { animation: streak-diamond-shimmer 3s ease-in-out infinite; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) {
+  .streak-fire-pulse,
+  .streak-diamond-shimmer { animation: none; }
+}
+
 /* Numbers stay LTR even inside RTL UI (spec §13). */
 .numeral {
   direction: ltr;
