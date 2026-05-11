@@ -8,6 +8,7 @@ import type {
   Category,
   CategoryKey,
   DailySummary,
+  Debt,
   DopamineReset,
   Habit,
   HabitLog,
@@ -20,6 +21,7 @@ import type {
   RewardOption,
   RewardOrigin,
   RewardTier,
+  SavingEntry,
   Streak,
 } from '@/domain/types';
 import {
@@ -59,6 +61,12 @@ interface AppState {
 
   /* Ramadan (spec §6.1) — one record per Hijri year. */
   ramadan: RamadanProgress[];
+
+  /* Debts — who owes whom and how much. Currency-agnostic. */
+  debts: Debt[];
+
+  /* Savings ledger — deposits and withdrawals, currency-agnostic. */
+  savings: SavingEntry[];
 
   /* mutations */
   initFromOnboarding: (args: {
@@ -108,6 +116,21 @@ interface AppState {
   /** Link the books module to a habit (spec §20.11). Pass undefined to unlink.
    *  When linking, backfills the habit's daily logs from existing book pages. */
   setReadingHabit: (habitId: string | undefined) => void;
+
+  /* Debts */
+  addDebt: (input: Omit<Debt, 'id' | 'createdAt' | 'settledAt'>) => Debt;
+  updateDebt: (id: string, patch: Partial<Omit<Debt, 'id' | 'createdAt'>>) => void;
+  settleDebt: (id: string) => void;
+  unsettleDebt: (id: string) => void;
+  deleteDebt: (id: string) => void;
+
+  /* Savings */
+  addSavingEntry: (input: Omit<SavingEntry, 'id' | 'createdAt'>) => SavingEntry;
+  updateSavingEntry: (
+    id: string,
+    patch: Partial<Omit<SavingEntry, 'id' | 'createdAt'>>,
+  ) => void;
+  deleteSavingEntry: (id: string) => void;
 
   /* Dopamine Reset */
   startReset: (tier: ResetTier, target: string) => DopamineReset;
@@ -251,6 +274,8 @@ export const useAppStore = create<AppState>()(
       books: [],
       resets: [],
       ramadan: [],
+      debts: [],
+      savings: [],
 
       initFromOnboarding: ({
         profile,
@@ -285,6 +310,8 @@ export const useAppStore = create<AppState>()(
           books: [],
           resets: [],
           ramadan: [],
+          debts: [],
+          savings: [],
         });
       },
 
@@ -753,6 +780,59 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      addDebt: (input) => {
+        const debt: Debt = {
+          ...input,
+          id: newId('debt'),
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ debts: [debt, ...s.debts] }));
+        return debt;
+      },
+
+      updateDebt: (id, patch) =>
+        set((s) => ({
+          debts: s.debts.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+        })),
+
+      settleDebt: (id) => {
+        set((s) => ({
+          debts: s.debts.map((d) =>
+            d.id === id ? { ...d, settledAt: new Date().toISOString() } : d,
+          ),
+        }));
+        playSound('flourish');
+      },
+
+      unsettleDebt: (id) =>
+        set((s) => ({
+          debts: s.debts.map((d) =>
+            d.id === id ? { ...d, settledAt: undefined } : d,
+          ),
+        })),
+
+      deleteDebt: (id) =>
+        set((s) => ({ debts: s.debts.filter((d) => d.id !== id) })),
+
+      addSavingEntry: (input) => {
+        const entry: SavingEntry = {
+          ...input,
+          id: newId('save'),
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ savings: [entry, ...s.savings] }));
+        if (input.amount > 0) playSound('softUp');
+        return entry;
+      },
+
+      updateSavingEntry: (id, patch) =>
+        set((s) => ({
+          savings: s.savings.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+        })),
+
+      deleteSavingEntry: (id) =>
+        set((s) => ({ savings: s.savings.filter((e) => e.id !== id) })),
+
       startReset: (tier, target) => {
         const targetDays =
           tier === 'weekly24h'
@@ -981,7 +1061,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 10,
+      version: 12,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -990,6 +1070,8 @@ export const useAppStore = create<AppState>()(
         persisted.activePunishments = persisted.activePunishments ?? [];
         persisted.books = persisted.books ?? [];
         persisted.resets = persisted.resets ?? [];
+        persisted.debts = persisted.debts ?? [];
+        persisted.savings = persisted.savings ?? [];
         persisted.ramadan = (persisted.ramadan ?? []).map((r: any) => ({
           ...r,
           prayersByDate: r.prayersByDate ?? {},
