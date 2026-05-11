@@ -37,6 +37,7 @@ import { isLogSuccessful, recomputeStreak } from './streaks';
 import { validatePunishment, type SafetyResult } from './safety';
 import { tickHabit } from './livecounts';
 import { playSound } from './sounds';
+import { getFireTier, highestCelebratedTier } from './streakFire';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 interface AppState {
@@ -146,6 +147,10 @@ interface AppState {
    *  for a week. Called after the user finishes the /restart flow. */
   markRestartDone: () => void;
 
+  /** Marks the habit's pending streak-fire tier as celebrated and clears
+   *  the pending pointer. Called when the celebration modal is dismissed. */
+  dismissTierCelebration: (habitId: string) => void;
+
   /* Spiritual fasting */
   setFastingPart: (date: string, part: FastingPart, value: boolean) => void;
   setFastingNotes: (date: string, notes: string) => void;
@@ -215,6 +220,30 @@ function recomputeStreakFor(state: AppState, habitId: string): Streak | null {
   }
   const prevLongest = state.streaks[habitId]?.longest ?? 0;
   return recomputeStreak(habit, byDate, prevLongest);
+}
+
+/** Returns the new habits array with `pendingCelebrationTier` set on the
+ *  target habit IF the freshly-recomputed streak has just crossed into a
+ *  tier the user hasn't celebrated yet. Tier 1 (Spark, day 1-6) is skipped
+ *  — we celebrate from day 7 (Flame) onward to avoid pestering on day one.
+ *  Otherwise returns the array unchanged (reference-equal). */
+function maybeQueueTierCelebration(
+  habits: Habit[],
+  habitId: string,
+  newStreak: number,
+): Habit[] {
+  const newTier = getFireTier(newStreak);
+  if (newTier < 2) return habits; // Spark is silent
+  const idx = habits.findIndex((h) => h.id === habitId);
+  if (idx === -1) return habits;
+  const habit = habits[idx];
+  const ceiling = highestCelebratedTier(habit.celebratedTiers);
+  const pending = habit.pendingCelebrationTier ?? 0;
+  if (newTier <= ceiling) return habits;
+  if (newTier <= pending) return habits;
+  const next: Habit[] = [...habits];
+  next[idx] = { ...habit, pendingCelebrationTier: newTier };
+  return next;
 }
 
 /** Spec §20.11: book pages drive the linked reading habits' daily totals.
@@ -490,6 +519,9 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           summaries: { ...s.summaries, [day]: newSummary },
           streaks: newStreak ? { ...s.streaks, [habitId]: newStreak } : s.streaks,
+          habits: newStreak
+            ? maybeQueueTierCelebration(s.habits, habitId, newStreak.current)
+            : s.habits,
         }));
 
         // Per-toggle sound. Daily-complete and streak-milestone sounds
@@ -588,6 +620,9 @@ export const useAppStore = create<AppState>()(
           return {
             summaries: { ...s.summaries, [day]: summary },
             streaks: streak ? { ...s.streaks, [habitId]: streak } : s.streaks,
+            habits: streak
+              ? maybeQueueTierCelebration(s.habits, habitId, streak.current)
+              : s.habits,
           };
         });
       },
@@ -868,6 +903,22 @@ export const useAppStore = create<AppState>()(
           profile: { ...profile, lastRestartAt: new Date().toISOString() },
         });
         playSound('flourish');
+      },
+
+      dismissTierCelebration: (habitId) => {
+        set((s) => ({
+          habits: s.habits.map((h) => {
+            if (h.id !== habitId) return h;
+            const tier = h.pendingCelebrationTier;
+            if (!tier) return h;
+            const already = h.celebratedTiers ?? [];
+            return {
+              ...h,
+              celebratedTiers: already.includes(tier) ? already : [...already, tier],
+              pendingCelebrationTier: undefined,
+            };
+          }),
+        }));
       },
 
       setFastingPart: (date, part, value) => {

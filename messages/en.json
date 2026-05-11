@@ -648,6 +648,10 @@
   },
   "settings": {
     "title": "Profile & Settings",
+    "motivationVoice": "Motivation voice",
+    "motivationVoiceSmart": "Smart (matches habit category)",
+    "motivationVoiceIslamic": "Islamic (Quran & Sunnah)",
+    "motivationVoiceUniversal": "Universal (motivational)",
     "profileSection": "About you",
     "profileEditSave": "Save",
     "profileEditCancel": "Cancel",
@@ -1017,7 +1021,58 @@
       "hadithSource": "Sahih al-Bukhari 6138"
     }
   },
+  "streakFire": {
+    "tierNames": {
+      "spark": "Spark",
+      "flame": "Flame",
+      "burn": "Burn",
+      "blaze": "Blaze",
+      "inferno": "Inferno",
+      "sacred": "Sacred",
+      "diamond": "Diamond"
+    },
+    "daysUntilNext": "{days} days until {tierName}",
+    "forgedForever": "Forged forever",
+    "diamondExtra": {
+      "islamic": "One year of consistency. May this be the beginning, not the peak.",
+      "universal": "One year of consistency. The first year is the hardest. Carry on."
+    },
+    "tiers": {
+      "spark": {
+        "islamic": "Every journey to Allah begins with a single step.",
+        "universal": "Every great fire began as a single spark."
+      },
+      "flame": {
+        "islamic": "Seven days. The Prophet ﷺ said the most beloved deeds to Allah are the consistent ones — and you just proved it.",
+        "universal": "Seven days. You showed up when most people quit by day three. This is who you really are."
+      },
+      "burn": {
+        "islamic": "Twenty-one days. Allah opens the door for those who knock with consistency. The habit is now wired into you.",
+        "universal": "Twenty-one days. Your brain has wired the habit. It's no longer something you do — it's becoming who you are."
+      },
+      "blaze": {
+        "islamic": "Two months. You no longer choose this each day — you ARE someone who does this. Alhamdulillah.",
+        "universal": "Two months. You stopped trying and started being. The identity is real now."
+      },
+      "inferno": {
+        "islamic": "Four months. Allah loves the consistent, even if small. You are now of those He loves.",
+        "universal": "Four months. While others started and quit a dozen times, you became unstoppable. This is rare."
+      },
+      "sacred": {
+        "islamic": "By Allah's mercy, you are no longer building a habit — you are living an identity. The year-mark is near.",
+        "universal": "Most people never reach this. You are no longer building a habit — you ARE this habit. The year-mark is near."
+      },
+      "diamond": {
+        "islamic": "One full year. The fire of effort has cooled into something eternal. By Allah's mercy, you have become this habit — and it has become you.",
+        "universal": "One full year. The fire is gone. What remains is permanent. You did not just build a habit — you forged who you are."
+      }
+    }
+  },
   "futureSelf": {
+    "yourBecoming": "Your becoming",
+    "emptyState": "Start any habit today. By tomorrow, your first spark will light here.",
+    "continue": "Continue",
+    "oneYearBadge": "1 year",
     "daysIn": "Day {n} of your transformation",
     "thirtyDayTitle": "Last 30 days",
     "thirtyDayHint": "How consistent you've been per category.",

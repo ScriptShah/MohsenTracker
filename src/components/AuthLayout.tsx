@@ -4,6 +4,7 @@ import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 import { RouteGuard } from './RouteGuard';
 import { InstallPrompt } from './InstallPrompt';
+import { StreakTierCelebration } from './StreakTierCelebration';
 
 /** Everything a signed-in (or pre-onboarding) user sees: top bar,
  *  routed content, bottom nav, install prompt, and the redirect logic
@@ -18,6 +19,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       </main>
       <BottomNav />
       <InstallPrompt />
+      <StreakTierCelebration />
     </>
   );
 }

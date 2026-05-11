@@ -6,12 +6,22 @@ import { useRouter } from '@/i18n/routing';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ClientGate } from '@/components/ClientGate';
+import { StreakFire } from '@/components/StreakFire';
 import { useAppStore } from '@/lib/store';
 import {
   categoryConsistency30Day,
   dailyCompoundQuoteIdx,
   daysSinceStart,
 } from '@/lib/futureSelf';
+import {
+  getDaysToNextTier,
+  getFireTier,
+  getFireTrack,
+  getTierName,
+  isDiamond,
+} from '@/lib/streakFire';
+import { useNumberFormatter } from '@/lib/format';
+import type { Habit } from '@/domain/types';
 
 export default function FutureSelfPage() {
   return (
@@ -26,9 +36,32 @@ function FutureSelf() {
   const router = useRouter();
   const profile = useAppStore((s) => s.profile);
   const categories = useAppStore((s) => s.categories.filter((c) => c.isActive));
+  const allCategories = useAppStore((s) => s.categories);
   const habits = useAppStore((s) => s.habits);
   const logs = useAppStore((s) => s.logs);
+  const streaks = useAppStore((s) => s.streaks);
   const setProfile = useAppStore((s) => s.setProfile);
+  const fmt = useNumberFormatter();
+  const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+
+  /** All daily habits the user is actively tracking, sorted by streak length
+   *  descending. Spark-tier habits (0 days) still appear so the user sees
+   *  the system from day one — empty state only triggers when there are
+   *  truly zero habits in the list. */
+  const fireCards = useMemo(() => {
+    return habits
+      .filter((h) => h.frequency === 'daily')
+      .map((h) => ({
+        habit: h,
+        streak: streaks[h.id]?.current ?? 0,
+      }))
+      .sort((a, b) => b.streak - a.streak);
+  }, [habits, streaks]);
+
+  const selectedHabit = useMemo(
+    () => habits.find((h) => h.id === selectedHabitId),
+    [habits, selectedHabitId],
+  );
 
   const [editing, setEditing] = useState(false);
 
@@ -132,6 +165,40 @@ function FutureSelf() {
             {t('futureSelf.noWhy')}
           </button>
         </Card>
+      )}
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('futureSelf.yourBecoming')}
+        </h2>
+        {fireCards.length === 0 ? (
+          <Card className="text-center text-sm text-ink-500">
+            {t('futureSelf.emptyState')}
+          </Card>
+        ) : (
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {fireCards.map(({ habit, streak }) => (
+              <li key={habit.id}>
+                <FireGridCard
+                  habit={habit}
+                  streak={streak}
+                  fmt={fmt}
+                  onOpen={() => setSelectedHabitId(habit.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {selectedHabit && (
+        <FireDetailSheet
+          habit={selectedHabit}
+          streak={streaks[selectedHabit.id]?.current ?? 0}
+          allCategories={allCategories}
+          fmt={fmt}
+          onClose={() => setSelectedHabitId(null)}
+        />
       )}
 
       <Card className="border-sand-200 bg-gradient-to-br from-sand-50 to-white">
@@ -282,5 +349,119 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="block text-sm font-medium text-ink-700">{label}</span>
       {children}
     </label>
+  );
+}
+
+/* ── Streak-fire "Your becoming" grid ──────────────────────────────── */
+
+function FireGridCard({
+  habit,
+  streak,
+  fmt,
+  onOpen,
+}: {
+  habit: Habit;
+  streak: number;
+  fmt: (n: number) => string;
+  onOpen: () => void;
+}) {
+  const t = useTranslations();
+  const tier = getFireTier(streak);
+  const tierName = getTierName(tier);
+  const diamond = isDiamond(tier);
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`tap-44 relative flex w-full flex-col items-center gap-2 rounded-2xl border p-4 text-center transition ${
+        diamond
+          ? 'border-leaf-300 bg-leaf-50 shadow-sm hover:border-leaf-400'
+          : 'border-ink-200 bg-white hover:border-ink-300'
+      }`}
+    >
+      {diamond && (
+        <span className="absolute end-2 top-2 inline-flex items-center gap-1 rounded-full bg-leaf-600 px-2 py-0.5 text-[10px] font-medium text-white">
+          ✦ {t('futureSelf.oneYearBadge')}
+        </span>
+      )}
+      <StreakFire tier={tier} size="lg" />
+      <span className="line-clamp-1 text-sm font-medium text-ink-800">
+        {habit.name}
+      </span>
+      <span className="numeral text-xs text-ink-500">
+        {fmt(streak)} · {t(`streakFire.tierNames.${tierName}` as any)}
+      </span>
+    </button>
+  );
+}
+
+function FireDetailSheet({
+  habit,
+  streak,
+  allCategories,
+  fmt,
+  onClose,
+}: {
+  habit: Habit;
+  streak: number;
+  allCategories: { id: string; key?: string }[];
+  fmt: (n: number) => string;
+  onClose: () => void;
+}) {
+  const t = useTranslations();
+  const profile = useAppStore((s) => s.profile);
+  const tier = getFireTier(streak);
+  const tierName = getTierName(tier);
+  const diamond = isDiamond(tier);
+  const next = getDaysToNextTier(streak);
+  const track = getFireTrack(habit, profile, allCategories as any);
+  const sentence = t(`streakFire.tiers.${tierName}.${track}` as any);
+
+  return (
+    <div
+      className="fixed inset-0 z-30 flex items-end justify-center bg-ink-900/40 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-screen-sm space-y-4 overflow-y-auto rounded-t-2xl bg-white p-6 text-center shadow-xl sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <StreakFire tier={tier} size="xl" animated />
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wide text-ink-500">
+            {habit.name}
+          </p>
+          <h2 className="text-2xl font-semibold text-ink-900">
+            {t(`streakFire.tierNames.${tierName}` as any)}
+          </h2>
+          <p className="numeral text-sm text-ink-500">
+            {fmt(streak)}
+          </p>
+        </div>
+        <p className="text-base leading-relaxed text-ink-800">{sentence}</p>
+        {diamond ? (
+          <p className="text-xs font-medium uppercase tracking-wide text-leaf-700">
+            {t('streakFire.forgedForever')}
+          </p>
+        ) : next.nextTierName ? (
+          <p className="numeral text-xs text-ink-500">
+            {t('streakFire.daysUntilNext', {
+              days: fmt(next.days),
+              tierName: t(`streakFire.tierNames.${next.nextTierName}` as any),
+            })}
+          </p>
+        ) : null}
+        <div className="flex justify-center pt-2">
+          <Button type="button" onClick={onClose}>
+            {t('futureSelf.continue')}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
