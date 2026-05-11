@@ -10,56 +10,57 @@ import {
   getTierName,
   isDiamond,
 } from '@/lib/streakFire';
-import type { Habit } from '@/domain/types';
 
-/** Listens for habits with `pendingCelebrationTier` set and shows a focused
- *  modal one habit at a time. On dismiss, the tier is folded into
- *  `celebratedTiers` and the next pending habit (if any) takes the stage. */
+/** Surfaces the overall-streak tier celebration when the user crosses into a
+ *  tier they haven't seen yet. One streak, one modal — no queue. Reads from
+ *  `profile.overallStreak.pendingCelebrationTier`; dismissal folds it into
+ *  `celebratedTiers` via `dismissOverallTierCelebration`. */
 export function StreakTierCelebration() {
   const t = useTranslations();
   const habits = useAppStore((s) => s.habits);
   const profile = useAppStore((s) => s.profile);
   const allCategories = useAppStore((s) => s.categories);
-  const dismissTierCelebration = useAppStore((s) => s.dismissTierCelebration);
-
-  // We surface the first habit with a pending tier. Once that habit is
-  // dismissed the next pending habit (if any) appears on the next render.
-  const queue = useMemo(
-    () => habits.filter((h) => !!h.pendingCelebrationTier),
-    [habits],
+  const dismissOverallTierCelebration = useAppStore(
+    (s) => s.dismissOverallTierCelebration,
   );
-  const current: Habit | undefined = queue[0];
-  const currentId = current?.id;
 
-  // Local mount flag so the modal can do an entrance transition without
-  // flashing. Resets whenever the current habit changes.
+  const pendingTier = profile?.overallStreak?.pendingCelebrationTier;
+
+  // Local mount flag for the entrance transition. Resets whenever a new
+  // tier is queued (rare — once per tier crossing per user lifetime).
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (!currentId) {
+    if (!pendingTier) {
       setMounted(false);
       return;
     }
     const id = window.requestAnimationFrame(() => setMounted(true));
     return () => window.cancelAnimationFrame(id);
-  }, [currentId]);
+  }, [pendingTier]);
 
   // Escape to dismiss.
   useEffect(() => {
-    if (!currentId) return;
+    if (!pendingTier) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismissTierCelebration(currentId);
+      if (e.key === 'Escape') dismissOverallTierCelebration();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [currentId, dismissTierCelebration]);
+  }, [pendingTier, dismissOverallTierCelebration]);
 
-  if (!current) return null;
+  const islamicCategoryId = useMemo(
+    () => allCategories.find((c) => c.key === 'islamic')?.id,
+    [allCategories],
+  );
+  const track = useMemo(
+    () => getFireTrack(profile, habits, islamicCategoryId),
+    [profile, habits, islamicCategoryId],
+  );
 
-  const tier = current.pendingCelebrationTier!;
-  const tierName = getTierName(tier);
-  const diamond = isDiamond(tier);
-  const islamicCategoryId = allCategories.find((c) => c.key === 'islamic')?.id;
-  const track = getFireTrack(profile, habits, islamicCategoryId);
+  if (!pendingTier) return null;
+
+  const tierName = getTierName(pendingTier);
+  const diamond = isDiamond(pendingTier);
   const sentence = t(`streakFire.tiers.${tierName}.${track}` as any);
   const diamondExtra = diamond
     ? t(`streakFire.diamondExtra.${track}` as any)
@@ -72,7 +73,7 @@ export function StreakTierCelebration() {
       }`}
       role="dialog"
       aria-modal="true"
-      onClick={() => dismissTierCelebration(current.id)}
+      onClick={() => dismissOverallTierCelebration()}
     >
       <div
         className={`w-full max-w-md space-y-5 rounded-t-3xl bg-white p-7 text-center shadow-2xl transition-transform duration-300 sm:rounded-3xl ${
@@ -81,12 +82,9 @@ export function StreakTierCelebration() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center">
-          <StreakFire tier={tier} size="xl" animated />
+          <StreakFire tier={pendingTier} size="xl" animated />
         </div>
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.15em] text-ink-500">
-            {current.name}
-          </p>
           <h2 className="text-3xl font-semibold text-ink-900">
             {t(`streakFire.tierNames.${tierName}` as any)}
           </h2>
@@ -98,7 +96,7 @@ export function StreakTierCelebration() {
         <div className="flex justify-center pt-1">
           <Button
             type="button"
-            onClick={() => dismissTierCelebration(current.id)}
+            onClick={() => dismissOverallTierCelebration()}
           >
             {t('futureSelf.continue')}
           </Button>
