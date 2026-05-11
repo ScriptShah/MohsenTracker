@@ -124,6 +124,19 @@ export interface Profile {
    *  as a cooldown so the offer doesn't re-pop the day after — the user
    *  committed to a leaner list; let it breathe for a week. */
   lastRestartAt?: string;
+  /** ONE fire for the user's overall journey. A day qualifies if all
+   *  critical habits done OR (no critical habits AND any habit done).
+   *  Replaces the old per-habit fire grid on Future Self. Optional for
+   *  back-compat; migration v14 seeds it from the user's full log history. */
+  overallStreak?: {
+    current: number;
+    longest: number;
+    lastQualifyingDate: string | null;
+    /** Tiers (1-7) already shown in the celebration modal. */
+    celebratedTiers: number[];
+    /** Tier number stashed by a fresh tier-cross, awaiting celebration. */
+    pendingCelebrationTier?: number;
+  };
   onboardingComplete: boolean;
   createdAt: string;
 }

@@ -38,6 +38,7 @@ import { validatePunishment, type SafetyResult } from './safety';
 import { tickHabit } from './livecounts';
 import { playSound } from './sounds';
 import { getFireTier, highestCelebratedTier } from './streakFire';
+import { recomputeOverallStreak } from './overallStreak';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 interface AppState {
@@ -351,7 +352,15 @@ export const useAppStore = create<AppState>()(
           .map((p) => p.presetKey);
         const habits = buildSeedHabits(presetKeys, presetTranslate);
         set({
-          profile,
+          profile: {
+            ...profile,
+            overallStreak: profile.overallStreak ?? {
+              current: 0,
+              longest: 0,
+              lastQualifyingDate: null,
+              celebratedTiers: [],
+            },
+          },
           categories,
           habits,
           logs: {},
@@ -1218,7 +1227,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 13,
+      version: 14,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];
@@ -1275,6 +1284,25 @@ export const useAppStore = create<AppState>()(
           persisted.books = persisted.books.map((b: any) =>
             b.habitId ? b : { ...b, habitId: readingHabitId },
           );
+        }
+        // v14: seed the new overall-streak field with a fresh compute over
+        // the user's full log history. celebratedTiers stays empty so the
+        // next toggle queues one celebration for the user's current tier
+        // — we don't replay the whole history at upgrade time.
+        if (persisted.profile && !persisted.profile.overallStreak) {
+          const todayISO = todayKey();
+          const snap = recomputeOverallStreak(
+            persisted.logs ?? {},
+            persisted.habits ?? [],
+            persisted.summaries ?? {},
+            todayISO,
+          );
+          persisted.profile.overallStreak = {
+            current: snap.current,
+            longest: snap.longest,
+            lastQualifyingDate: snap.lastQualifyingDate,
+            celebratedTiers: [],
+          };
         }
         return persisted;
       },
