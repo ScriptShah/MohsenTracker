@@ -161,6 +161,25 @@ function Profile() {
             ))}
           </select>
         </Field>
+
+        <Field label={t('settings.motivationVoice')}>
+          <select
+            value={profile.fireSentenceStyle ?? 'smart'}
+            onChange={(e) =>
+              setProfile({
+                fireSentenceStyle: e.target.value as
+                  | 'smart'
+                  | 'islamic'
+                  | 'universal',
+              })
+            }
+            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 outline-none focus:border-leaf-500"
+          >
+            <option value="smart">{t('settings.motivationVoiceSmart')}</option>
+            <option value="islamic">{t('settings.motivationVoiceIslamic')}</option>
+            <option value="universal">{t('settings.motivationVoiceUniversal')}</option>
+          </select>
+        </Field>
       </Card>
 
       <Card className="space-y-4">

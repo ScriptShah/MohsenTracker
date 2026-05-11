@@ -647,6 +647,10 @@
     "deleteConfirm": "این بدهی حذف شود؟"
   },
   "settings": {
+    "motivationVoice": "زبانِ انگیزه",
+    "motivationVoiceSmart": "هوشمند (بر اساس دسته‌بندی عادت)",
+    "motivationVoiceIslamic": "اسلامی (قرآن و سنت)",
+    "motivationVoiceUniversal": "عمومی (انگیزشی)",
     "title": "پروفایل و تنظیمات",
     "profileSection": "دربارهٔ تو",
     "profileEditSave": "ذخیره",

@@ -648,6 +648,10 @@
   },
   "settings": {
     "title": "Profile & Settings",
+    "motivationVoice": "Motivation voice",
+    "motivationVoiceSmart": "Smart (matches habit category)",
+    "motivationVoiceIslamic": "Islamic (Quran & Sunnah)",
+    "motivationVoiceUniversal": "Universal (motivational)",
     "profileSection": "About you",
     "profileEditSave": "Save",
     "profileEditCancel": "Cancel",

@@ -29,28 +29,29 @@ export function StreakTierCelebration() {
     [habits],
   );
   const current: Habit | undefined = queue[0];
+  const currentId = current?.id;
 
   // Local mount flag so the modal can do an entrance transition without
   // flashing. Resets whenever the current habit changes.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    if (!current) {
+    if (!currentId) {
       setMounted(false);
       return;
     }
     const id = window.requestAnimationFrame(() => setMounted(true));
     return () => window.cancelAnimationFrame(id);
-  }, [current?.id]);
+  }, [currentId]);
 
   // Escape to dismiss.
   useEffect(() => {
-    if (!current) return;
+    if (!currentId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') dismissTierCelebration(current.id);
+      if (e.key === 'Escape') dismissTierCelebration(currentId);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [current?.id, dismissTierCelebration]);
+  }, [currentId, dismissTierCelebration]);
 
   if (!current) return null;
 
