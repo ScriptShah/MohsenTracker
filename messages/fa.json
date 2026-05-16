@@ -188,7 +188,16 @@
     "cargoPlaceholder": "دو دلار صدقه بده، دو رکعت نماز بخوان…",
     "create": "ساخت عادت",
     "presetsTitle": "از پیش‌فرض‌ها انتخاب کن",
-    "presetsBody": "افزودنِ یک‌ضربه‌ای برای عادت‌هایی که هنوز نداری."
+    "presetsBody": "افزودنِ یک‌ضربه‌ای برای عادت‌هایی که هنوز نداری.",
+    "twoMinuteStarter": {
+      "eyebrow": "می‌خواهی با چه اندازه‌ای شروع کنی؟",
+      "title": "{name}",
+      "body": "کوچک شروع کن. اول عادت را بساز — بعد از ۳۰ روز می‌توانی بزرگ‌ترش کنی.",
+      "twoMinuteLabel": "شروع دو‌دقیقه‌ای",
+      "fullLabel": "نسخه کامل",
+      "recommended": "پیشنهاد ما",
+      "targetLine": "روزی {value} {unit}"
+    }
   },
   "progress": {
     "title": "پیشرفت",
@@ -1206,6 +1215,29 @@
     "screenTime": "زمان نمایشگر (ساعت)",
     "junkFood": "غذای ناسالم (وعده)",
     "gheebat": "موارد غیبت",
-    "manageAnger": "کنترلِ خشم (پروتکلِ نبوی ﷺ)"
+    "manageAnger": "کنترلِ خشم (پروتکلِ نبوی ﷺ)",
+    "fivePrayersTwoMinute": "امروز یک نماز را به‌وقت بخوان",
+    "quranPagesTwoMinute": "یک صفحه قرآن بخوان",
+    "waterTwoMinute": "هنگام بیداری یک لیوان آب بنوش",
+    "exerciseTwoMinute": "پنج دقیقه حرکت کن",
+    "stepsTwoMinute": "هزار قدم راه برو",
+    "pushupsTwoMinute": "پنج شنا",
+    "squatsTwoMinute": "پنج اسکات",
+    "jumpRopeTwoMinute": "دو دقیقه طناب بزن",
+    "walkingTwoMinute": "پنج دقیقه پیاده‌روی",
+    "runningTwoMinute": "پنج دقیقه بدو",
+    "savingTwoMinute": "امروز یک واحد کنار بگذار",
+    "deepWorkTwoMinute": "پانزده دقیقه کار عمیق",
+    "readingTwoMinute": "یک صفحه بخوان",
+    "learningTwoMinute": "دو دقیقه یاد بگیر"
+  },
+  "levelUp": {
+    "eyebrow": "آماده‌ای یک پله بالا بروی؟",
+    "title": "{days} روز پشت‌سرهم {habit}. عادت جا افتاده.",
+    "body": "از اول کوچک شروع کردی، با حساب و کتاب. حالا که سی روز ایستاده‌ای، می‌توانی بزرگ‌ترش کنی — یا همین‌جا بمانی. آن‌چه مهم است، خودِ عادت است.",
+    "scaleUpTo": "بزرگ‌ترش کن به",
+    "targetLine": "روزی {value} {unit}",
+    "cta": "یک پله بالاتر",
+    "stay": "همین اندازه خوبه"
   }
 }

@@ -34,7 +34,7 @@ Versions are exact ranges from `package.json` (Next.js 14 line, not 15+):
   not `dark:` variants). Logical properties (`ms-`/`me-`/`ps-`/`pe-`)
   are used throughout for RTL.
 - **State**: Zustand `^4.5.5` with `persist` middleware → `localStorage`
-  under `mohsen-tracker:v1`. Schema version 14 (additive migrations —
+  under `mohsen-tracker:v1`. Schema version 15 (additive migrations —
   every release has only added optional fields, defaulted new arrays to
   empty, never broken older snapshots).
 - **i18n**: `next-intl` `^3.20.0`, locale routing `/en/...` and `/fa/...`,
@@ -122,6 +122,7 @@ MohsenTracker/
     │   ├── streakFire.ts          # 7-tier fire metadata + sentence track
     │   ├── streaks.ts             # Per-habit streak from log history
     │   ├── sync.ts                # Cloud snapshot push/pull
+    │   ├── twoMinute.ts           # §23 level-up eligibility (30-day threshold)
     │   ├── units.ts               # Unit label translation
     │   └── useLiveCounts.ts       # Live-count subscription hook
     ├── components/
@@ -142,6 +143,7 @@ MohsenTracker/
     │   ├── IftarCountdown.tsx
     │   ├── InstallPrompt.tsx      # Android beforeinstallprompt + iOS hint
     │   ├── LeafLogo.tsx
+    │   ├── LevelUpCard.tsx        # §23 "ready to level up?" prompt
     │   ├── RouteGuard.tsx
     │   ├── SignInForm.tsx
     │   ├── SoundUnlock.tsx        # iOS gesture-unlock for AudioContext
@@ -243,6 +245,27 @@ MohsenTracker/
   both `habits/new` and `habits/detail`.
 - `src/domain/seed.ts` (`presetReplacements`),
   `src/app/[locale]/habits/{new,detail}/page.tsx`
+
+### 2-Minute Rule
+- Spec §23
+- **Status**: Complete (habit-stacking phrasing §23.6 still pending)
+- Every target-based preset carries a `twoMinuteVersion` (`PresetHabit`
+  field) with a smaller `target` and a distinct `nameKey`. The habit
+  creation picker pauses on a size-choice card when the user taps a
+  preset with a 2-minute alternative, recommending the smaller starter.
+  Onboarding seeds habits at their 2-minute size by default. Habits
+  created at the smaller size carry `Habit.isTwoMinuteVersion = true`;
+  after 30 consecutive days of streak (via `eligibleLevelUps`), a
+  "ready to level up?" card surfaces on Home (highest-streak candidate)
+  and on the habit detail page. "Stay at this size" stamps
+  `levelUpPromptDismissedAt` for a 30-day cooldown. "Level up" rewrites
+  the habit's name/target/unit to the preset's full version.
+- `src/domain/seed.ts` (`twoMinuteVersion`, `buildSeedHabits`),
+  `src/lib/twoMinute.ts`, `src/components/LevelUpCard.tsx`,
+  `src/app/[locale]/habits/new/page.tsx` (size-choice card),
+  `src/app/[locale]/habits/detail/page.tsx`,
+  `src/app/[locale]/page.tsx`,
+  `src/lib/store.ts` (`levelUpHabit`, `dismissLevelUpPrompt`)
 
 ### Per-Habit Streaks
 - Spec §5.6
@@ -576,12 +599,10 @@ MohsenTracker/
   trigger button, settings toggle (off by default). **Not in
   codebase.** Replaces the rejected "Sukoon Mode" module.
 
-### 2-Minute Rule (Spec §23)
-- Every preset habit needs `fullVersion` and `twoMinuteVersion`
-  fields. Habit-creation UI offers both side-by-side and recommends
-  the 2-minute version. After a 30-day streak, prompts the user to
-  level up. Optional habit-stacking phrase field on creation. **Not
-  in codebase**; current `presetHabits` only carry the full version.
+### 2-Minute Rule (Spec §23) — *moved to Implemented; see "2-Minute Rule"*
+- Habit-stacking phrasing (§23.6) is **still not wired** — the optional
+  free-text field "After I [routine], I will [this habit]" is the only
+  outstanding piece from §23.
 
 ### Task Bracketing (Spec §24.1)
 - Optional `startRitual` / `endRitual` text fields on each habit,
@@ -660,36 +681,34 @@ recompute deterministically).
 
 ## Known Issues and Bugs
 
-1. **Notification UI is a lie**: toggles persist values but no
-   notifications are ever sent. Top of the gap list.
-2. **Splash text debt**: 4 of 5 wisdom-quote slides are rejected
+1. **Splash text debt**: 4 of 5 wisdom-quote slides are rejected
    literary drafts.
-3. **Persian content quality**: most strings outside splash +
+2. **Persian content quality**: most strings outside splash +
    onboarding read as literal translation.
-4. **Compound narrative coverage**: 20 of 31 preset habits use
+3. **Compound narrative coverage**: 20 of 31 preset habits use
    `genericNarrative` — workable but bland.
-5. **Cloud sync is last-writer-wins**. Two devices editing
+4. **Cloud sync is last-writer-wins**. Two devices editing
    concurrently → whichever writes last clobbers the other. The new
    `overallStreak` block is also subject to this; self-heals on next
    mutation since both clients recompute deterministically.
-6. **`profile.numeralSystem` is legacy dead code** — still written
+5. **`profile.numeralSystem` is legacy dead code** — still written
    by onboarding for back-compat, but no consumer reads it after the
    locale-driven numeral fix.
-7. **`profile.readingHabitId` is legacy** — multi-instance reading
+6. **`profile.readingHabitId` is legacy** — multi-instance reading
    habits via `Habit.linksToBooks` superseded it; carry-forward only.
-8. **`onboardingComplete: false` users with a stale local profile
+7. **`onboardingComplete: false` users with a stale local profile
    can land on a category-pick step they already saw** — onboarding
    doesn't deeply validate state on resume.
-9. **No tests anywhere.** `overallStreak.ts`'s qualifying-day rule
+8. **No tests anywhere.** `overallStreak.ts`'s qualifying-day rule
    and recompute walk are the highest-risk untested code.
-10. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
-    in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
-    dep in `books/[id]/page.tsx` (legacy redirect shim).
-11. **Hot-reload swallows persistent IndexedDB cache** (dev only) —
+9. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
+   in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
+   dep in `books/[id]/page.tsx` (legacy redirect shim).
+10. **Hot-reload swallows persistent IndexedDB cache** (dev only) —
     `firebase.ts` falls back to in-memory; data still works.
-12. **Force-quit before sync push = data-loss window**. Includes
+11. **Force-quit before sync push = data-loss window**. Includes
     `overallStreak` mutations.
-13. **`negativeSelfTalk` preset uses unit "incidents"** — same string
+12. **`negativeSelfTalk` preset uses unit "incidents"** — same string
     key as `gheebat`. Both render with the same unit label; fine, but
     worth flagging when touching unit translations.
 
@@ -768,25 +787,20 @@ Reverse chronological — last ~20 commits, condensed:
 
 ## Next Recommended Steps
 
-With bad-habit auto-replacement and Vercel deployment both done since
-the original spec §25.5 list was written, the remaining shippable
-priority list is:
+The original spec §25.5 list (auto-replacement, Vercel deploy) is
+done; so are the notifications-honest-copy reframe (PR #17), Anger
+Protocol (PR #19), Positive Cargo (PR #18), and the 2-Minute Rule
+(this PR). Remaining shippable priorities:
 
-1. **Fix the notifications lie** — either wire FCM end-to-end OR
-   remove the toggles from Settings and add identity-framed opt-in
-   copy per §24.3. The "remove + reframe + leave the door open"
-   variant is the smallest correct fix; full FCM is the bigger one.
-2. **2-Minute Rule (§23)** — add `fullVersion` + `twoMinuteVersion`
-   to `PresetHabit` and `Habit`, update the creation UI to offer both
-   and recommend the 2-minute starter. Touches the preset list and
-   unlocks subsequent §22-§24 features per spec §25.3.
-3. **Anger Management Protocol (§22)** — `manageAnger` preset +
-   one-tap modal overlay. Self-contained, medium-sized.
+1. **Task Bracketing (§24.1)** — optional `startRitual` / `endRitual`
+   text fields on `Habit`, shown on the detail page. No new
+   infrastructure; small field additions plus a single UI card.
+2. **Habit Stacking phrasing (§23.6)** — single optional free-text
+   field "After I [routine], I will [this habit]" on the creation
+   form, displayed on the detail page. Trivial.
 
 Beyond those, in rough order:
 
-- **Positive Cargo (§24.2)** + **Task Bracketing (§24.1)** — small
-  field additions on `Habit` with paired UI bits.
 - **Compound-narrative coverage for the remaining 20 presets.**
 - **Idiomatic Persian rewrite, chunk by chunk** — splash + onboarding
   are done; the rest still reads as literal translation.
