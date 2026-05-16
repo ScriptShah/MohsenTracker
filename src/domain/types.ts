@@ -51,6 +51,15 @@ export interface Habit {
    *  is the sum of pages logged today across books with matching `Book.habitId`.
    *  Multiple habits can carry this flag — e.g. one per category of reading. */
   linksToBooks?: boolean;
+  /** Spec §23: true when the habit was created at its 2-minute starter size
+   *  rather than the full preset target. After a 30-day streak the home and
+   *  detail screens surface a one-time "ready to level up?" prompt. Cleared
+   *  when the user accepts the level-up. Only set for preset habits whose
+   *  preset has a `twoMinuteVersion` defined. */
+  isTwoMinuteVersion?: boolean;
+  /** Spec §23: ISO timestamp set when the user chooses "stay at this size".
+   *  Suppresses the level-up prompt for ~30 days so we don't nag. */
+  levelUpPromptDismissedAt?: string;
   createdAt: string;
 }
 

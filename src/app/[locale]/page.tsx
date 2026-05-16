@@ -20,6 +20,8 @@ import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
 import { AngerProtocol } from '@/components/AngerProtocol';
+import { LevelUpCard } from '@/components/LevelUpCard';
+import { eligibleLevelUps } from '@/lib/twoMinute';
 
 export default function HomePage() {
   return (
@@ -83,6 +85,14 @@ function Home() {
   const dailyHabits = useMemo(() => habits.filter((h) => h.frequency === 'daily'), [habits]);
 
   const allLogs = useAppStore((s) => s.logs);
+  const streaksMap = useAppStore((s) => s.streaks);
+  const levelUpCandidate = useMemo(() => {
+    const eligible = eligibleLevelUps(habits, streaksMap, new Date().toISOString());
+    return eligible[0];
+  }, [habits, streaksMap]);
+  const levelUpStreak = levelUpCandidate
+    ? streaksMap[levelUpCandidate.id]?.current ?? 0
+    : 0;
   const rotating = useMemo(() => {
     if (dailyHabits.length === 0) return null;
     const habit = dailyHabits[dailyQuoteIndex(dailyHabits.length)];
@@ -202,6 +212,10 @@ function Home() {
             {t('angerProtocol.homeButtonLabel')}
           </p>
         </button>
+      )}
+
+      {levelUpCandidate && (
+        <LevelUpCard habit={levelUpCandidate} streak={levelUpStreak} />
       )}
 
       {rotating && (

@@ -188,7 +188,16 @@
     "cargoPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
     "create": "Create habit",
     "presetsTitle": "Pick from presets",
-    "presetsBody": "One-tap add for the habits you don't have yet."
+    "presetsBody": "One-tap add for the habits you don't have yet.",
+    "twoMinuteStarter": {
+      "eyebrow": "How big do you want to start?",
+      "title": "{name}",
+      "body": "Start tiny. Build the habit first — you can scale up after 30 days.",
+      "twoMinuteLabel": "2-minute starter",
+      "fullLabel": "Full version",
+      "recommended": "Recommended",
+      "targetLine": "{value} {unit} a day"
+    }
   },
   "progress": {
     "title": "Progress",
@@ -1208,6 +1217,29 @@
     "screenTime": "Screen time (hours)",
     "junkFood": "Junk food (servings)",
     "gheebat": "Backbiting incidents",
-    "manageAnger": "Manage anger (Prophetic protocol)"
+    "manageAnger": "Manage anger (Prophetic protocol)",
+    "fivePrayersTwoMinute": "Pray one prayer on time today",
+    "quranPagesTwoMinute": "Read one page of Quran",
+    "waterTwoMinute": "Drink one glass at wake-up",
+    "exerciseTwoMinute": "Move for five minutes",
+    "stepsTwoMinute": "Walk one thousand steps",
+    "pushupsTwoMinute": "Five push-ups",
+    "squatsTwoMinute": "Five squats",
+    "jumpRopeTwoMinute": "Jump rope for two minutes",
+    "walkingTwoMinute": "Walk for five minutes",
+    "runningTwoMinute": "Run for five minutes",
+    "savingTwoMinute": "Set aside one unit today",
+    "deepWorkTwoMinute": "Deep work for fifteen minutes",
+    "readingTwoMinute": "Read one page",
+    "learningTwoMinute": "Learn for two minutes"
+  },
+  "levelUp": {
+    "eyebrow": "Ready to level up?",
+    "title": "{days}-day streak on {habit}. The habit is wired in.",
+    "body": "You started small on purpose. Thirty days in, you can scale up — or stay where you are. The habit is what matters.",
+    "scaleUpTo": "Scale up to",
+    "targetLine": "{value} {unit} a day",
+    "cta": "Level up",
+    "stay": "Stay at this size"
   }
 }
