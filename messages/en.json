@@ -183,6 +183,9 @@
     "replacement": "Replacement habit",
     "replacementHint": "What good habit will you do instead?",
     "replacementPlaceholder": "Read instead of scrolling",
+    "cargoLabel": "Cargo after a slip",
+    "cargoHint": "If you slip on this, do this good deed right after — don't wait.",
+    "cargoPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
     "create": "Create habit",
     "presetsTitle": "Pick from presets",
     "presetsBody": "One-tap add for the habits you don't have yet."
@@ -876,6 +879,22 @@
       "body": "When the urge hits, do this instead.",
       "openLink": "Open"
     },
+    "cargo": {
+      "title": "Your cargo",
+      "body": "If you slip, do this good deed right after.",
+      "verseArabic": "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+      "verseTranslation": "Indeed, good deeds erase bad deeds.",
+      "verseSource": "Qur'an 11:114",
+      "emptyTitle": "Pair this with a good deed",
+      "emptyBody": "Set a small good deed to do right after a slip. The Prophet ﷺ said: \"Follow a bad deed with a good one and it will wipe it out.\"",
+      "editLabel": "Cargo",
+      "editPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
+      "edit": "Edit",
+      "set": "Set cargo",
+      "save": "Save",
+      "cancel": "Cancel",
+      "clear": "Clear"
+    },
     "muted": {
       "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
       "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
@@ -893,6 +912,15 @@
       "connectBody": "Pages you log on any book will count toward this habit's daily total.",
       "connect": "Connect to books"
     }
+  },
+  "cargoSlip": {
+    "title": "You slipped — carry the cargo.",
+    "body": "Don't wait. Pair the slip with a good deed now, while the moment is fresh.",
+    "verseArabic": "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+    "verseTranslation": "Indeed, good deeds erase bad deeds.",
+    "verseSource": "Qur'an 11:114",
+    "done": "Done — cargo delivered",
+    "dismiss": "Dismiss"
   },
   "narratives": {
     "generic": {

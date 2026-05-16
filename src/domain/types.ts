@@ -38,6 +38,12 @@ export interface Habit {
   limit?: number;
   frequency: Frequency;
   replacementHabitId?: string;
+  /** Spec §24.2: bad habits can carry a "positive cargo" — a small good deed
+   *  the user commits to doing immediately after a slip. When set, the
+   *  checklist surfaces it as a prompt the moment a slip is logged, paired
+   *  with the Quranic anchor (11:114): "Indeed, good deeds erase bad deeds."
+   *  Free text; meaningful only on bad habits. */
+  positiveCargo?: string;
   /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
   isCritical?: boolean;
   /** When true, this habit is driven by book-page logs (spec §20.11). Tapping
