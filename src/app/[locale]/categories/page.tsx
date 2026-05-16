@@ -48,7 +48,7 @@ function Categories() {
           const count = habits.filter((h) => h.categoryId === c.id).length;
           return (
             <li key={c.id}>
-              <Link href={`/categories/${c.id}`} className="block">
+              <Link href={`/categories/detail?id=${c.id}`} className="block">
                 <Card className="flex items-center gap-3">
                   <span
                     className="flex h-10 w-10 items-center justify-center rounded-full text-white"

@@ -158,7 +158,7 @@ function YearReview() {
           <ul className="grid grid-cols-4 gap-3 sm:grid-cols-5">
             {completed.map((b) => (
               <li key={b.id}>
-                <Link href={`/books/${b.id}`} className="flex flex-col items-center gap-1">
+                <Link href={`/books/detail?id=${b.id}`} className="flex flex-col items-center gap-1">
                   <BookCover book={b} size="md" />
                   <span className="line-clamp-2 text-center text-[11px] text-ink-700">
                     {b.title}

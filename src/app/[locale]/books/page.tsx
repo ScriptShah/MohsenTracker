@@ -89,7 +89,7 @@ function BooksShelf() {
             {completed.map((b) => (
               <li key={b.id}>
                 <Link
-                  href={`/books/${b.id}`}
+                  href={`/books/detail?id=${b.id}`}
                   className="flex flex-col items-center gap-1"
                 >
                   <BookCover book={b} size="md" />
@@ -139,7 +139,7 @@ function HabitLinkBanner({ hasBooks }: { hasBooks: boolean }) {
           </p>
         </div>
         <Link
-          href={`/habits/${readingHabit.id}`}
+          href={`/habits/detail?id=${readingHabit.id}`}
           className="inline-flex items-center gap-1 text-xs text-leaf-700 underline-offset-4 hover:underline"
         >
           {t('books.habitLink.viewHabit')} <ChevronEnd className="h-3 w-3" />
@@ -214,7 +214,7 @@ function ReadingRow({
     ? 'books.progressShortMinutes'
     : 'books.progressShort';
   return (
-    <Link href={`/books/${book.id}`} className="block">
+    <Link href={`/books/detail?id=${book.id}`} className="block">
       <Card className="flex items-center gap-3 transition hover:border-ink-300">
         <BookCover book={book} size="sm" />
         <div className="min-w-0 flex-1 space-y-1">

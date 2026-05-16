@@ -77,7 +77,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
         return (
           <li key={habit.id}>
             <Link
-              href={`/habits/${habit.id}`}
+              href={`/habits/detail?id=${habit.id}`}
               className={clsx(
                 'tap-44 flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-start transition',
                 done

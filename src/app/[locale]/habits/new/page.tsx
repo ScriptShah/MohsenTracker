@@ -65,7 +65,7 @@ function NewHabit() {
       frequency: 'daily',
     });
 
-    router.replace(initialCategoryId ? `/categories/${initialCategoryId}` : '/');
+    router.replace(initialCategoryId ? `/categories/detail?id=${initialCategoryId}` : '/');
   };
 
   return (
@@ -276,7 +276,7 @@ function PresetPicker() {
   };
 
   const goBackOrHome = () => {
-    router.replace(initialCategoryId ? `/categories/${initialCategoryId}` : '/');
+    router.replace(initialCategoryId ? `/categories/detail?id=${initialCategoryId}` : '/');
   };
 
   const onPick = (presetKey: string) => {

@@ -187,7 +187,7 @@ function Home() {
       )}
 
       {rotating && (
-        <Link href={`/habits/${rotating.habit.id}`} className="block">
+        <Link href={`/habits/detail?id=${rotating.habit.id}`} className="block">
           <Card className="border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
             <p className="text-xs uppercase tracking-wide text-leaf-700">
               {t('home.compoundOfDay')}
@@ -250,7 +250,7 @@ function Home() {
       )}
 
       {currentBook && (
-        <Link href={`/books/${currentBook.id}`} className="block">
+        <Link href={`/books/detail?id=${currentBook.id}`} className="block">
           <Card className="flex items-center gap-3 transition hover:border-ink-300">
             <BookCover book={currentBook} size="sm" />
             <div className="min-w-0 flex-1 space-y-1">

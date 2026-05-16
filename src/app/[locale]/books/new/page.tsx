@@ -89,7 +89,7 @@ function NewBook() {
       coverImage,
       habitId: initialHabit?.id,
     });
-    router.replace(`/books/${book.id}`);
+    router.replace(`/books/detail?id=${book.id}`);
   };
 
   return (
