@@ -325,7 +325,7 @@ function CompletionForm({
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-ink-900/40 sm:items-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-ink-900/40 sm:items-center"
       role="dialog"
       aria-modal="true"
     >
@@ -413,7 +413,7 @@ function EditBookForm({
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-end justify-center bg-ink-900/40 sm:items-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-ink-900/40 sm:items-center"
       role="dialog"
       aria-modal="true"
     >
