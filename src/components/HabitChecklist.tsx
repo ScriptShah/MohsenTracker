@@ -13,6 +13,7 @@ import { useNumberFormatter } from '@/lib/format';
 import { useUnitLabel } from '@/lib/units';
 import { ChevronEnd } from './Chevron';
 import { BookLogSheet } from './BookLogSheet';
+import { CargoSlipSheet } from './CargoSlipSheet';
 
 export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const t = useTranslations();
@@ -27,6 +28,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
 
   const [showDone, setShowDone] = useState(false);
   const [bookSheetHabitId, setBookSheetHabitId] = useState<string | null>(null);
+  const [cargoSlip, setCargoSlip] = useState<{ habitId: string; cargo: string } | null>(null);
 
   const isReadingHabit = (h: Habit) =>
     h.linksToBooks === true || h.presetKey === 'reading';
@@ -42,7 +44,19 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
       setBookSheetHabitId(habit.id);
       return;
     }
+
+    // Spec §24.2: bad-habit slips pair with the "positive cargo." Capture
+    // the pre-toggle success state, then read post-toggle from the store
+    // (the selector won't have re-rendered yet inside this handler).
+    const wasSuccessful = isLogSuccessful(habit, logs[habit.id]);
     toggleHabit(habit.id);
+    if (habit.type === 'bad' && habit.positiveCargo?.trim()) {
+      const after = useAppStore.getState().logs[today]?.[habit.id];
+      const isNowSuccessful = isLogSuccessful(habit, after);
+      if (wasSuccessful && !isNowSuccessful) {
+        setCargoSlip({ habitId: habit.id, cargo: habit.positiveCargo.trim() });
+      }
+    }
   };
 
   if (habits.length === 0) {
@@ -185,6 +199,12 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
         <BookLogSheet
           habitId={bookSheetHabitId}
           onClose={() => setBookSheetHabitId(null)}
+        />
+      )}
+      {cargoSlip && (
+        <CargoSlipSheet
+          cargo={cargoSlip.cargo}
+          onClose={() => setCargoSlip(null)}
         />
       )}
     </div>

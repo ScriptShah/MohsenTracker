@@ -104,6 +104,7 @@ interface AppState {
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
+  setHabitPositiveCargo: (habitId: string, cargo: string | undefined) => void;
   toggleHabit: (habitId: string, date?: string) => void;
   setHabitValue: (habitId: string, value: number, date?: string) => void;
 
@@ -505,6 +506,17 @@ export const useAppStore = create<AppState>()(
       setHabitCritical: (habitId, isCritical) => {
         set((s) => ({
           habits: s.habits.map((h) => (h.id === habitId ? { ...h, isCritical } : h)),
+        }));
+      },
+
+      setHabitPositiveCargo: (habitId, cargo) => {
+        const trimmed = cargo?.trim();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? { ...h, positiveCargo: trimmed && trimmed.length > 0 ? trimmed : undefined }
+              : h,
+          ),
         }));
       },
 

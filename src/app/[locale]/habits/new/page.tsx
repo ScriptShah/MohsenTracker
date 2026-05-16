@@ -36,6 +36,7 @@ function NewHabit() {
   const [target, setTarget] = useState('');
   const [limit, setLimit] = useState('');
   const [replacementName, setReplacementName] = useState('');
+  const [positiveCargo, setPositiveCargo] = useState('');
 
   const canSubmit = name.trim().length > 0 && categoryId.length > 0;
 
@@ -62,6 +63,7 @@ function NewHabit() {
       target: type === 'good' && target ? Number(target) : undefined,
       limit: type === 'bad' && limit ? Number(limit) : undefined,
       replacementHabitId,
+      positiveCargo: type === 'bad' && positiveCargo.trim() ? positiveCargo.trim() : undefined,
       frequency: 'daily',
     });
 
@@ -155,15 +157,26 @@ function NewHabit() {
         </div>
 
         {type === 'bad' && (
-          <Field label={t('habit.replacement')} hint={t('habit.replacementHint')}>
-            <input
-              value={replacementName}
-              onChange={(e) => setReplacementName(e.target.value)}
-              placeholder={t('habit.replacementPlaceholder')}
-              maxLength={60}
-              className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
-            />
-          </Field>
+          <>
+            <Field label={t('habit.replacement')} hint={t('habit.replacementHint')}>
+              <input
+                value={replacementName}
+                onChange={(e) => setReplacementName(e.target.value)}
+                placeholder={t('habit.replacementPlaceholder')}
+                maxLength={60}
+                className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+              />
+            </Field>
+            <Field label={t('habit.cargoLabel')} hint={t('habit.cargoHint')}>
+              <input
+                value={positiveCargo}
+                onChange={(e) => setPositiveCargo(e.target.value)}
+                placeholder={t('habit.cargoPlaceholder')}
+                maxLength={140}
+                className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+              />
+            </Field>
+          </>
         )}
       </Card>
 
