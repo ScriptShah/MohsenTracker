@@ -88,7 +88,10 @@ interface AppState {
      *  When omitted, every preset in `selectedCategoryKeys` is used (legacy
      *  back-compat). */
     selectedPresetKeys?: string[];
-    presetTranslate: (presetKey: string) => string;
+    /** Resolves a full translation path — called both with `presets.<key>` for
+     *  the full-version preset name and with a 2-minute version's `nameKey`
+     *  for the smaller starter label. */
+    presetTranslate: (key: string) => string;
     categoryTranslate: (key: CategoryKey) => string;
   }) => void;
   setLanguage: (lang: 'en' | 'fa') => void;
@@ -104,6 +107,17 @@ interface AppState {
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
+  setHabitPositiveCargo: (habitId: string, cargo: string | undefined) => void;
+  /** Spec §23: scale a 2-minute habit up to its full version. The caller
+   *  resolves the translated full name and target/unit from the preset and
+   *  passes them in; the store just persists. Clears `isTwoMinuteVersion`. */
+  levelUpHabit: (
+    habitId: string,
+    full: { name: string; target?: number; unit?: string },
+  ) => void;
+  /** Spec §23: user chose "stay at this size" — stamp dismissedAt so we
+   *  don't re-pop the prompt for another ~30 days. */
+  dismissLevelUpPrompt: (habitId: string) => void;
   toggleHabit: (habitId: string, date?: string) => void;
   setHabitValue: (habitId: string, value: number, date?: string) => void;
 
@@ -369,7 +383,12 @@ export const useAppStore = create<AppState>()(
         const presetKeys = selectedPresetKeys ?? presetHabits
           .filter((p) => selectedCategoryKeys.includes(p.category))
           .map((p) => p.presetKey);
-        const habits = buildSeedHabits(presetKeys, presetTranslate);
+        // Spec §23: onboarding habits default to their 2-minute starter
+        // size where one exists. Users can level up via the home/detail
+        // prompt after a 30-day streak.
+        const habits = buildSeedHabits(presetKeys, presetTranslate, {
+          useTwoMinuteVersion: true,
+        });
         set({
           profile: {
             ...profile,
@@ -505,6 +524,43 @@ export const useAppStore = create<AppState>()(
       setHabitCritical: (habitId, isCritical) => {
         set((s) => ({
           habits: s.habits.map((h) => (h.id === habitId ? { ...h, isCritical } : h)),
+        }));
+      },
+
+      setHabitPositiveCargo: (habitId, cargo) => {
+        const trimmed = cargo?.trim();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? { ...h, positiveCargo: trimmed && trimmed.length > 0 ? trimmed : undefined }
+              : h,
+          ),
+        }));
+      },
+
+      levelUpHabit: (habitId, full) => {
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? {
+                  ...h,
+                  name: full.name,
+                  target: full.target,
+                  unit: full.unit,
+                  isTwoMinuteVersion: undefined,
+                  levelUpPromptDismissedAt: undefined,
+                }
+              : h,
+          ),
+        }));
+      },
+
+      dismissLevelUpPrompt: (habitId) => {
+        const now = new Date().toISOString();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId ? { ...h, levelUpPromptDismissedAt: now } : h,
+          ),
         }));
       },
 
@@ -1249,7 +1305,7 @@ export const useAppStore = create<AppState>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 14,
+      version: 15,
       migrate: (persisted: any) => {
         if (!persisted) return persisted;
         persisted.rewards = persisted.rewards ?? [];

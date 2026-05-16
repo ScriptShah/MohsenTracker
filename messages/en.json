@@ -183,9 +183,21 @@
     "replacement": "Replacement habit",
     "replacementHint": "What good habit will you do instead?",
     "replacementPlaceholder": "Read instead of scrolling",
+    "cargoLabel": "Cargo after a slip",
+    "cargoHint": "If you slip on this, do this good deed right after — don't wait.",
+    "cargoPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
     "create": "Create habit",
     "presetsTitle": "Pick from presets",
-    "presetsBody": "One-tap add for the habits you don't have yet."
+    "presetsBody": "One-tap add for the habits you don't have yet.",
+    "twoMinuteStarter": {
+      "eyebrow": "How big do you want to start?",
+      "title": "{name}",
+      "body": "Start tiny. Build the habit first — you can scale up after 30 days.",
+      "twoMinuteLabel": "2-minute starter",
+      "fullLabel": "Full version",
+      "recommended": "Recommended",
+      "targetLine": "{value} {unit} a day"
+    }
   },
   "progress": {
     "title": "Progress",
@@ -776,10 +788,9 @@
     },
     "prayerNote": "Times will populate once the prayer-times API is wired up. Your selection is saved.",
     "notifSection": "Notifications",
-    "notifEnabled": "Daily reminders",
-    "notifTime": "Reminder time",
-    "notifPerHabit": "Per-habit reminders",
-    "notifNote": "Push notifications go live when Firebase Cloud Messaging is connected. Until then your preferences are stored locally.",
+    "notifStatusBadge": "Not active yet",
+    "notifBody1": "Mohsen Tracker stays quiet on purpose. Reminders train you to wait for the buzz instead of being the person who shows up — and that's the opposite of what habits are for.",
+    "notifBody2": "When reminders do ship they'll be off by default, and limited to prayer times, the Iftar countdown during Ramadan, and an opt-in nightly check-in when your streak is on the line.",
     "consequenceSection": "Consequence messaging",
     "consequenceBody": "How blunt should the \"what's at stake\" panel be on each habit?",
     "readingHabitSection": "Reading habit",
@@ -956,6 +967,22 @@
       "body": "When the urge hits, do this instead.",
       "openLink": "Open"
     },
+    "cargo": {
+      "title": "Your cargo",
+      "body": "If you slip, do this good deed right after.",
+      "verseArabic": "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+      "verseTranslation": "Indeed, good deeds erase bad deeds.",
+      "verseSource": "Qur'an 11:114",
+      "emptyTitle": "Pair this with a good deed",
+      "emptyBody": "Set a small good deed to do right after a slip. The Prophet ﷺ said: \"Follow a bad deed with a good one and it will wipe it out.\"",
+      "editLabel": "Cargo",
+      "editPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
+      "edit": "Edit",
+      "set": "Set cargo",
+      "save": "Save",
+      "cancel": "Cancel",
+      "clear": "Clear"
+    },
     "muted": {
       "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
       "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
@@ -973,6 +1000,15 @@
       "connectBody": "Pages you log on any book will count toward this habit's daily total.",
       "connect": "Connect to books"
     }
+  },
+  "cargoSlip": {
+    "title": "You slipped — carry the cargo.",
+    "body": "Don't wait. Pair the slip with a good deed now, while the moment is fresh.",
+    "verseArabic": "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+    "verseTranslation": "Indeed, good deeds erase bad deeds.",
+    "verseSource": "Qur'an 11:114",
+    "done": "Done — cargo delivered",
+    "dismiss": "Dismiss"
   },
   "narratives": {
     "generic": {
@@ -1217,6 +1253,29 @@
     "screenTime": "Screen time (hours)",
     "junkFood": "Junk food (servings)",
     "gheebat": "Backbiting incidents",
-    "manageAnger": "Manage anger (Prophetic protocol)"
+    "manageAnger": "Manage anger (Prophetic protocol)",
+    "fivePrayersTwoMinute": "Pray one prayer on time today",
+    "quranPagesTwoMinute": "Read one page of Quran",
+    "waterTwoMinute": "Drink one glass at wake-up",
+    "exerciseTwoMinute": "Move for five minutes",
+    "stepsTwoMinute": "Walk one thousand steps",
+    "pushupsTwoMinute": "Five push-ups",
+    "squatsTwoMinute": "Five squats",
+    "jumpRopeTwoMinute": "Jump rope for two minutes",
+    "walkingTwoMinute": "Walk for five minutes",
+    "runningTwoMinute": "Run for five minutes",
+    "savingTwoMinute": "Set aside one unit today",
+    "deepWorkTwoMinute": "Deep work for fifteen minutes",
+    "readingTwoMinute": "Read one page",
+    "learningTwoMinute": "Learn for two minutes"
+  },
+  "levelUp": {
+    "eyebrow": "Ready to level up?",
+    "title": "{days}-day streak on {habit}. The habit is wired in.",
+    "body": "You started small on purpose. Thirty days in, you can scale up — or stay where you are. The habit is what matters.",
+    "scaleUpTo": "Scale up to",
+    "targetLine": "{value} {unit} a day",
+    "cta": "Level up",
+    "stay": "Stay at this size"
   }
 }

@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { ArrowBack, ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
+import { LevelUpCard } from '@/components/LevelUpCard';
 import { useAppStore } from '@/lib/store';
 import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
@@ -16,6 +17,7 @@ import { shouldMuteConsequences } from '@/lib/sensitivity';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { useUnitLabel } from '@/lib/units';
 import { todayKey } from '@/lib/dates';
+import { isLevelUpEligible } from '@/lib/twoMinute';
 import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
 function sliceForSensitivity(
@@ -59,6 +61,7 @@ function HabitDetail() {
   );
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
+  const setHabitPositiveCargo = useAppStore((s) => s.setHabitPositiveCargo);
   const sensitivity = useAppStore(
     (s) => s.profile?.consequenceSensitivity ?? 'honest',
   );
@@ -134,6 +137,10 @@ function HabitDetail() {
         </div>
       </header>
 
+      {habit.isTwoMinuteVersion && isLevelUpEligible(habit, streak, new Date().toISOString()) && (
+        <LevelUpCard habit={habit} streak={streak} />
+      )}
+
       {(replacementOut || replacementIn) && (
         <Card className={
           habit.type === 'bad'
@@ -162,6 +169,13 @@ function HabitDetail() {
             </p>
           )}
         </Card>
+      )}
+
+      {habit.type === 'bad' && (
+        <CargoCard
+          cargo={habit.positiveCargo}
+          onSave={(v) => setHabitPositiveCargo(habit.id, v)}
+        />
       )}
 
       {narrative && (
@@ -297,6 +311,137 @@ function HabitDetail() {
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Spec §24.2: the "positive cargo" — a small good deed the user commits to
+ *  do right after a slip on a bad habit. Hebbian-plasticity-pair: pair the bad
+ *  cue with a good response so the brain learns the linkage. The Quranic
+ *  anchor 11:114 makes the pairing concrete.
+ */
+function CargoCard({
+  cargo,
+  onSave,
+}: {
+  cargo?: string;
+  onSave: (v: string | undefined) => void;
+}) {
+  const t = useTranslations();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(cargo ?? '');
+
+  // Keep the draft in sync if the underlying cargo changes (e.g. cleared
+  // elsewhere) and we're not mid-edit.
+  useEffect(() => {
+    if (!editing) setDraft(cargo ?? '');
+  }, [cargo, editing]);
+
+  const startEdit = () => {
+    setDraft(cargo ?? '');
+    setEditing(true);
+  };
+
+  const save = () => {
+    const trimmed = draft.trim();
+    onSave(trimmed.length > 0 ? trimmed : undefined);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraft(cargo ?? '');
+    setEditing(false);
+  };
+
+  const clear = () => {
+    onSave(undefined);
+    setDraft('');
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <Card className="space-y-3 border-leaf-200 bg-leaf-50">
+        <p className="text-xs uppercase tracking-wide text-leaf-700">
+          {t('habitDetail.cargo.editLabel')}
+        </p>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={t('habitDetail.cargo.editPlaceholder')}
+          maxLength={140}
+          rows={3}
+          autoFocus
+          className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+        />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {cargo && (
+            <Button type="button" variant="ghost" onClick={clear} className="text-red-600 hover:bg-red-50">
+              {t('habitDetail.cargo.clear')}
+            </Button>
+          )}
+          <Button type="button" variant="ghost" onClick={cancel}>
+            {t('habitDetail.cargo.cancel')}
+          </Button>
+          <Button type="button" onClick={save}>
+            {t('habitDetail.cargo.save')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!cargo) {
+    return (
+      <Card className="space-y-2 border-sand-200 bg-sand-50">
+        <p className="text-xs uppercase tracking-wide text-sand-700">
+          {t('habitDetail.cargo.emptyTitle')}
+        </p>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {t('habitDetail.cargo.emptyBody')}
+        </p>
+        <div className="pt-1">
+          <Button type="button" onClick={startEdit}>
+            {t('habitDetail.cargo.set')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-3 border-leaf-200 bg-leaf-50">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-1">
+          <p className="text-xs uppercase tracking-wide text-leaf-700">
+            {t('habitDetail.cargo.title')}
+          </p>
+          <p className="text-base font-medium leading-relaxed text-ink-800">
+            {cargo}
+          </p>
+          <p className="text-xs text-ink-600">
+            {t('habitDetail.cargo.body')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={startEdit}
+          className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
+        >
+          {t('habitDetail.cargo.edit')}
+        </button>
+      </div>
+      <div className="rounded-xl border-s-2 border-leaf-400 bg-white px-3 py-2">
+        <p dir="rtl" lang="ar" className="text-base leading-relaxed text-ink-800">
+          {t('habitDetail.cargo.verseArabic')}
+        </p>
+        <p className="pt-1 text-sm text-ink-600">
+          {t('habitDetail.cargo.verseTranslation')}
+        </p>
+        <p className="pt-1 text-[11px] uppercase tracking-wide text-ink-400">
+          {t('habitDetail.cargo.verseSource')}
+        </p>
+      </div>
+    </Card>
   );
 }
 
