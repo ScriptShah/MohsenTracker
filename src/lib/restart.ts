@@ -1,37 +1,49 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import type { DailySummary } from '@/domain/types';
+import { nextDayKey, previousDayKey } from '@/lib/dates';
 
 /** Three-strike lives system, Mario-style:
  *  - Each past day with completion < 50% adds a strike (loses a life), up to 3.
  *  - Each run of THREE consecutive past days with completion >= 50% removes
  *    a strike (recharges a life). Recovery streak resets on any bad day.
  *  - Today is excluded — the user can still rescue it.
- *  - Days where the user hadn't started (no summary, or totalHabits === 0)
- *    are skipped entirely; they neither strike nor count toward recovery.
- *  - If `lastRestartAt` is set, only days after it are counted — the user
- *    declared a fresh start via /restart, so prior days don't carry over.
+ *  - The walk starts on the earliest habit `createdAt` (or `lastRestartAt`,
+ *    whichever is later). Days before that are skipped — user hadn't started.
+ *  - A day with NO summary, or a summary with `totalHabits === 0`, counts as
+ *    a missed day (strike). The earlier implementation skipped these, which
+ *    was wrong for a "Mario lives" model — silently skipping the app for two
+ *    days has to actually cost lives, otherwise nobody ever loses one without
+ *    explicitly opening the app and undertracking.
  *  - Result is clamped to [0, 3]. */
 export function computeStrikes(
   summaries: Record<string, DailySummary>,
   today: string,
   lastRestartAt?: string,
+  habits?: { createdAt: string }[],
 ): number {
-  const cutoff = lastRestartAt
-    ? lastRestartAt.slice(0, 10)
-    : undefined;
-  // Walk past days chronologically. Sorting all keys keeps the implementation
-  // simple — typical usage has a few hundred entries max.
-  const days = Object.keys(summaries)
-    .filter((d) => d < today)
-    .filter((d) => !cutoff || d > cutoff)
-    .sort();
+  // Walk floor: max(earliest habit creation, lastRestartAt).
+  // No habits → nothing to be accountable for, so no strikes.
+  if (!habits || habits.length === 0) return 0;
+  const earliestHabit = habits
+    .map((h) => h.createdAt.slice(0, 10))
+    .sort()[0];
+  const restartFloor = lastRestartAt?.slice(0, 10);
+  const floor =
+    restartFloor && restartFloor > earliestHabit ? restartFloor : earliestHabit;
+
+  // If lastRestartAt is set, the floor is exclusive (start after it).
+  // Otherwise the floor is the earliest habit day — include it.
+  const yesterday = previousDayKey(today);
+  if (floor >= today) return 0;
+  let cursor = restartFloor && restartFloor === floor ? nextDayKey(floor) : floor;
 
   let strikes = 0;
   let recoveryStreak = 0;
-  for (const d of days) {
-    const s = summaries[d];
-    if (!s || s.totalHabits === 0) continue;
-    if (s.completionRate < 0.5) {
+  while (cursor <= yesterday) {
+    const s = summaries[cursor];
+    const hasWork = s && s.totalHabits > 0;
+    const rate = hasWork ? s!.completionRate : 0;
+    if (rate < 0.5) {
       strikes = Math.min(3, strikes + 1);
       recoveryStreak = 0;
     } else {
@@ -41,6 +53,7 @@ export function computeStrikes(
         recoveryStreak = 0;
       }
     }
+    cursor = nextDayKey(cursor);
   }
   return strikes;
 }
