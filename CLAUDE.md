@@ -541,8 +541,12 @@ MohsenTracker/
   Theme (auto/light/dark). Ramadan mode override (auto/on/off).
   Sound on/off. **Motivation voice (Smart / Islamic / Universal)** —
   drives the StreakFire sentence track. Prayer city + method.
-  Daily notification time + per-habit toggles **(UI exists; no
-  notification delivery is wired — see "Push Notifications" gap)**.
+  Notifications section is a static "Not active yet" status card per
+  §24.3 — identity-framed copy explains why the app stays quiet by
+  default and names what will fire when delivery ships (prayer times,
+  Iftar countdown, opt-in nightly streak check-in). The
+  `profile.notifications` shape is preserved for forward-compat — no
+  toggles or time-picker render today (see "Push Notifications" gap).
   Consequence sensitivity. Reset progress (wipes local). Delete
   account (wipes Firebase user + local).
 - `src/app/[locale]/profile/page.tsx`
@@ -557,17 +561,45 @@ MohsenTracker/
 - `src/app/[locale]/{books,habits,categories}/detail/page.tsx` plus
   legacy `[id]/page.tsx` redirect shims
 
+### Anger Management Protocol
+- Spec §22
+- **Status**: Complete
+- New `manageAnger` preset (Islamic category, good habit) plus a
+  full-screen `AngerProtocol` overlay that walks the Prophetic ﷺ
+  protocol — ta'awwudh → posture change → wudu → 90-second silent
+  breathing timer → closing dua. Opt-in via `profile.angerProtocolEnabled`
+  (off by default); when on, a calm one-tap trigger button surfaces on
+  the Home screen so the protocol is reachable at the moment of anger
+  without navigating. Replaces the rejected "Sukoon Mode" module idea.
+- `src/components/AngerProtocol.tsx`, `src/domain/seed.ts`
+  (`manageAnger` preset), `src/domain/types.ts`
+  (`profile.angerProtocolEnabled`), `src/app/[locale]/page.tsx`
+  (Home trigger button), `messages/{en,fa}.json` → `angerProtocol.*`
+
+### Positive Cargo (pair each slip with a good deed)
+- Spec §24.2
+- **Status**: Complete
+- Optional `Habit.positiveCargo` field on bad habits — a good-deed
+  prompt the user sets in advance and is shown immediately after a
+  slip ("you slipped — carry the cargo"). Edited from both the
+  habit-creation form and the detail page via a dedicated `CargoCard`.
+  Quranic anchor: "Indeed, good deeds erase bad deeds" (Quran 11:114).
+- `src/domain/types.ts` (`Habit.positiveCargo`), `src/lib/store.ts`
+  (`setHabitPositiveCargo`), `src/app/[locale]/habits/new/page.tsx`
+  (creation UI), `src/app/[locale]/habits/detail/page.tsx`
+  (inline `CargoCard` + slip prompt), `messages/{en,fa}.json` →
+  `habit.cargo*` + `habitDetail.cargo.*` + `cargoSlip.*`
+
 ## Features Not Yet Implemented
 
-### Push Notifications (Spec §3 Backend, §7.7, §24.3)
-- The Settings UI exposes daily-time + per-habit notification toggles
-  and the values are persisted, but **no actual delivery is wired**.
-  No FCM SDK calls, no service-worker push handler, no notification
-  permission prompt. Cloud Messaging is on the spec stack but unused
-  in code. Per §24.3 the design target is notifications-off-by-default
-  with identity-framed opt-in copy; the smallest correct fix is
-  "remove the toggles + reframe + leave the door open," with full
-  FCM wiring as the larger alternative.
+### Push Notifications (Spec §3 Backend, §7.7)
+- The §24.3 reframe shipped (PR #17): Settings now renders an honest
+  "Not active yet" status card instead of fake toggles. The actual
+  delivery pipeline is still **not wired** — no FCM SDK calls, no
+  service-worker push handler, no notification permission prompt.
+  Cloud Messaging is on the spec stack but unused in code. The
+  `profile.notifications` shape is preserved so a future FCM wiring
+  can read the same fields without a migration.
 
 ### Cloud Storage (Spec §3 Backend)
 - Book covers are stored as data-URLs inside the Zustand snapshot
@@ -607,12 +639,6 @@ MohsenTracker/
 ### Task Bracketing (Spec §24.1)
 - Optional `startRitual` / `endRitual` text fields on each habit,
   shown on the detail page. **Not in codebase.**
-
-### Positive Cargo (Spec §24.2)
-- Optional `positiveCargo` field on bad habits — a good deed to do
-  immediately after a slip. When the user logs a bad habit, the UI
-  prompts the cargo. Quranic anchor: "Indeed, good deeds erase bad
-  deeds" (Quran 11:114). **Not in codebase.**
 
 ### Tests
 - **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
@@ -863,10 +889,11 @@ across files. Violating them creates cross-cutting rework.
    `src/domain/seed.ts`, with a free-text / habit-picker fallback for
    custom bad habits. Habits store the link in `replacementHabitId`.
    This is a product-level promise from §5.7. **Wired**.
-   **Related (§24.2 Positive Cargo):** Each bad habit should also get
-   an optional `positiveCargo` good deed prompted immediately after a
-   slip — Hebbian plasticity + Quranic anchor (11:114). Not yet
-   implemented.
+   **Related (§24.2 Positive Cargo):** Each bad habit also carries an
+   optional `positiveCargo` good deed prompted immediately after a
+   slip — Hebbian plasticity + Quranic anchor (11:114). **Wired** via
+   `Habit.positiveCargo` (set in creation / detail; surfaced via
+   `cargoSlip` prompt when the user logs the bad habit).
 
 6. **Every preset habit ships in two sizes (§23).** Each entry in
    `presetHabits` must carry both a `fullVersion` and a
@@ -881,9 +908,11 @@ across files. Violating them creates cross-cutting rework.
    exceptions: prayer-time alerts, Iftar countdown during Ramadan,
    a single nightly streak-on-the-line check-in (opt-in). When the
    user does enable, copy must be identity-framed ("Time to be the
-   reader you are"), not nag-framed ("Don't forget!"). Today the
-   default IS `false`, but the UI still promises delivery that
-   doesn't fire — see Push Notifications gap.
+   reader you are"), not nag-framed ("Don't forget!"). The Settings
+   page already follows this — a static "Not active yet" status card
+   instead of fake toggles. Delivery itself isn't wired yet (see
+   Push Notifications gap); when it is, hold the line on the
+   exception list.
 
 8. **Ramadan Mode auto-activates from the Hijri calendar** and
    reshapes the home dashboard (Iftar countdown most prominent,
