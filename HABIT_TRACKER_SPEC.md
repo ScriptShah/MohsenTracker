@@ -2208,7 +2208,292 @@ This pairing carries unique weight for Muslim users: science confirming what the
 
 ---
 
-## 22. Open Questions / Future Decisions
+## 22. Anger Management Protocol (Habit-Level, Not Module-Level)
+
+**Design decision:** Anger and stress management is handled as a **trackable habit with a guided protocol**, NOT as a separate module like Dopamine Reset. This keeps the app focused on its core mission — habit tracking — and prevents feature bloat.
+
+### 22.1 Why Habit-Level, Not Module-Level
+
+Earlier drafts of this spec proposed a full "Sukoon Mode" with its own dashboard, dedicated logging, multiple tiers, and trigger journals. That approach was rejected because:
+
+- It duplicates infrastructure already in the habit system (logging, streaks, history)
+- It creates a separate emotional-regulation app inside the habit app, diluting focus
+- Users in distress don't need new screens to navigate — they need an immediate intervention
+- The Prophetic ﷺ protocol is short and actionable; it doesn't need a whole module to deliver
+
+The right answer: a single habit ("Manage anger today") with a one-tap "Anger Now" emergency protocol available from anywhere in the app.
+
+### 22.2 The Habit
+
+Add to the Islamic / Character preset library:
+
+- **Name:** Manage anger today
+- **Type:** Good habit (the *practice* of managing it, not a counter of episodes)
+- **Unit:** Yes/no daily check-off, or a 1–10 calmness self-rating
+- **2-minute version:** "When you feel anger today, pause for 2 minutes before responding."
+- **Hadith pairing:** *"The strong man is not the one who can wrestle others, but the one who controls himself in anger"* (Bukhari & Muslim).
+
+### 22.3 The "Anger Now" Emergency Protocol
+
+A button always visible from the home screen (small, discreet — not a permanent reminder of anger, just available when needed). Tapping it opens a guided overlay that walks the user through the Prophetic ﷺ protocol with modern science woven in:
+
+1. **A'udhu billahi min ash-shaytan ir-rajeem** (audio + text)
+2. **Change posture** — "If standing, sit. If sitting, lie down." (Sunnah; activates parasympathetic nervous system)
+3. **Make wudu** — "Cold water on your face." (Sunnah; mammalian dive reflex drops heart rate 10–25% within seconds)
+4. **Stay silent for 90 seconds** — guided breathing timer (4 in, 7 hold, 8 out). The biochemical anger surge lasts ~90 seconds.
+5. **Make dua / dhikr** — guided.
+
+The overlay doesn't log anything by default. Users can optionally check off "I used the protocol today" which contributes to the "Manage anger" habit streak. This way the feature is helpful without being shame-inducing or surveillance-feeling.
+
+### 22.4 What This Looks Like in Code (Not a Module)
+
+- One new preset habit (`manageAnger`) in `domain/seed.ts`
+- One new component (`AngerProtocol.tsx`) — modal overlay
+- One trigger button in the home page header (or a long-press on the home screen)
+- One settings toggle: "Show Anger Now button" (off by default for users who don't need it)
+- Reuses all existing logging, streak, and habit infrastructure
+
+**No new dashboard. No new database collection. No new tier system. No trigger journal.**
+
+### 22.5 If a User Needs Deeper Help
+
+The protocol screen ends with a gentle line: "If anger or stress are affecting your life consistently, please consider speaking with a qualified counselor or scholar. The app is a companion, not a substitute for real support."
+
+This honors the seriousness of chronic anger and stress without pretending the app can replace professional or scholarly help.
+
+---
+
+## 23. The 2-Minute Rule (Core Habit Design Principle)
+
+This is **a design principle, not a feature**. Every preset habit in the app must have a **2-minute starter version** alongside its full version. The user picks which version to start with — but the app actively recommends the 2-minute version for new habits.
+
+### 23.1 The Principle
+
+> *"When you start a new habit, it should take less than two minutes to do."* — James Clear, *Atomic Habits*
+
+You don't build the final habit on day one. You build the **gateway version** — small enough that it's impossible to fail. Once the habit is established (~30 days), users can scale up.
+
+This principle is also Sunnah:
+> *"The most beloved of deeds to Allah are the most consistent of them, even if they are small."* — Bukhari & Muslim
+
+The 2-Minute Rule is a modern formulation of an ancient Islamic principle: **small + consistent > big + sporadic**.
+
+### 23.2 Implementation
+
+Every preset habit gets two fields in `domain/seed.ts`:
+
+```ts
+{
+  presetKey: 'readQuran',
+  fullVersion: { target: 5, unit: 'pages' },     // "Read 5 pages of Quran"
+  twoMinuteVersion: { target: 1, unit: 'ayah' }, // "Read 1 ayah"
+  ...
+}
+```
+
+When the user adds a habit, the UI offers both versions side-by-side, with the 2-minute version visually highlighted as the recommended starting point and a brief explanation: *"Start tiny. Build the habit first. Scale up after 30 days."*
+
+### 23.3 Auto-Suggested Scale-Up
+
+After **30 consecutive days** at the current target (using existing streak infrastructure), the home screen shows a one-time prompt:
+
+> "🎉 30-day streak on [habit]. The habit is wired in. Ready to level up?"
+>
+> [Stay at current level]   [Level up to: full version]
+
+User choice. They can stay at 2 minutes forever — the habit is what matters.
+
+### 23.4 Examples by Category
+
+A short reference table (full table lives in `domain/seed.ts`, not duplicated here):
+
+| Full Habit | 2-Minute Version |
+|-----------|------------------|
+| Read Quran 5 pages | Read 1 ayah |
+| Tahajjud 8 rakats | 2 rakats once a week |
+| Exercise 30 minutes | 5 push-ups OR walk to the door and back |
+| Read books 50 pages | Read 1 page |
+| Save 20% of income | Transfer $1 to savings today |
+| Journal | Write 1 sentence |
+| Quality time with each child | 2 minutes phone-free per child |
+| Daily sadaqah | Give one unit of currency today |
+
+### 23.5 What This Replaces
+
+This principle replaces an earlier 10-subsection version of "The 2-Minute Rule" that proposed a separate UI flow, a "Show Up" streak, hard-day messaging, habit stacking onboarding, compound effect math screens, and 10 implementation requirements. **All of that was over-engineered.** The principle is one sentence and two fields per habit. Everything else flows from existing infrastructure.
+
+### 23.6 Optional Enhancement: Habit Stacking Phrasing
+
+When a user creates a habit, the form offers a single optional field: *"After I [existing routine], I will [this habit]."* This is habit stacking from *Atomic Habits*, applied as a free-text helper rather than a complex flow. Stored as a string on the habit. Shown on the habit detail page as a reminder. That's it.
+
+---
+
+## 24. Three Distilled Insights from Habit Neuroscience
+
+Earlier drafts of this spec included a 13-subsection "Huberman's Habit Neuroscience" treatment that mostly restated principles already covered elsewhere (identity-based habits, friction, environmental cues, habit stacking, never-miss-twice). To respect the user's time and the app's focus, this section keeps only the **three genuinely novel, high-leverage insights** that aren't already implemented or covered in *Atomic Habits*.
+
+### 24.1 Task Bracketing (Start and End Rituals)
+
+**The science:** The basal ganglia create "brackets" around habit sequences. The brain marks the **start** and **end** of a habit, then runs the entire sequence automatically. How you start and end matters more than what's in the middle.
+
+**Implementation:** Each habit gets an optional `startRitual` and `endRitual` text field. Examples:
+- Reading Quran: start = "make wudu", end = "close mushaf and say dua"
+- Exercise: start = "put on workout shoes", end = "drink water and stretch"
+- Deep work: start = "phone in another room", end = "write down what's done"
+
+Shown on the habit detail page, not enforced. The presence of a ritual is what trains the brain — the user doesn't have to log it separately.
+
+### 24.2 Positive Cargo (The Bad-Habit Aftermath)
+
+**The science:** This is the most novel insight from Huberman's research and is **deeply Islamic**. Instead of just trying to stop a bad habit (which often fails), you immediately follow the bad habit with a positive habit. Hebbian plasticity ("neurons that fire together wire together") means the brain learns to expect the positive behavior after the negative one, weakening the bad habit's standalone reward pathway.
+
+**The Quranic anchor:**
+> *"Indeed, good deeds erase bad deeds."* (Quran 11:114)
+
+The Sunnah teaches: when you slip, immediately make istighfar and follow the bad with a good. Modern neuroscience just discovered the mechanism.
+
+**Implementation:**
+- Every bad habit gets an optional `positiveCargo` field — a single good deed to do immediately after a slip
+- When the user logs a bad habit (e.g., "I scrolled for 30 min"), the UI immediately prompts: *"Now do your positive cargo: [the good deed they specified]."*
+- Cargo completion is tracked separately — even if the bad habit happens, the cargo helps weaken it over time
+
+**Default cargo suggestions:**
+
+| Bad Habit Slip | Default Positive Cargo |
+|-----------|--------------------------|
+| Scrolled social media | Read 1 page of a book |
+| Ate junk food | Drink 2 glasses of water + walk 5 min |
+| Lost temper | Make wudu + 2 rakats nawafil |
+| Watched something inappropriate | Make istighfar + recite Surah Falaq/Nas |
+| Skipped a prayer | Make qada + extra dua |
+| Backbit someone | Make dua FOR that person |
+
+Users can customize these. This is one of the most powerful, science-backed, and Islamically grounded features the app can offer.
+
+### 24.3 Notifications-Off-By-Default (Critical Design Decision)
+
+**The science:** Heavy notification dependence trains the brain to require external prompts. Habits triggered by notifications don't build internal motivation or identity. Over time, notifications become noise users disable.
+
+**Implementation:**
+- Default: **all habit-reminder notifications OFF**.
+- Onboarding briefly explains why: *"Notifications train your brain to need reminding. Real habits come from within. We'll show you better tools — habit stacking, environment design, and start rituals."*
+- Users can enable notifications, but they're:
+  - Minimal (max 1–2 per day)
+  - Identity-framed: *"Time to be the reader you are"* (not *"Don't forget to read!"*)
+  - User-scheduled, not algorithmic
+
+**Exceptions where notifications are appropriate:**
+- Prayer time alerts (these are divine commands at fixed times, not habit reminders)
+- Iftar countdown during Ramadan
+- A streak being on the line at end of day (single nightly check-in, optional)
+
+This is a major departure from typical habit apps that drown users in pings. It's a deliberate, philosophical choice that respects the user's brain.
+
+### 24.4 What This Section Does NOT Add
+
+To be clear about what was deliberately cut from earlier Huberman-related drafts:
+
+- ❌ "Limbic friction tagging" per habit — adds UI complexity for marginal benefit
+- ❌ "Linchpin habit" labels — useful concept, but doesn't justify a new visual/data layer
+- ❌ "Phase-based habit plan" with 3 phases of the day — over-engineered scheduling logic
+- ❌ "21-day installation system" with "testing" and "consolidation" phases — replaces the existing simpler streak with an academic system
+- ❌ "Dopamine spotlighting" UI screens — adds friction after every habit completion
+- ❌ "Synaptic depression visualization" — fancy idea, low ROI
+- ❌ "Procedural memory visualization" prompts — opt-in feature most users will ignore
+
+All of these were beautiful neuroscience concepts. None of them earn their place in a habit-tracker app whose whole identity is **simplicity, focus, and faith-grounded depth**. They would have made the app smarter on paper but worse in practice.
+
+---
+
+## 25. Build Status (Reality Check — As of Last CLAUDE.md Snapshot)
+
+This section is the honest mirror to the spec's plans. It reflects what is **actually built and shipping** in the codebase, derived from `CLAUDE.md`. Update this section whenever the project state changes meaningfully.
+
+### 25.1 What's Built and Working
+
+- ✅ Onboarding (8-step flow, sign-in, name pre-fill from Google)
+- ✅ Home dashboard (greeting, Ramadan banner, Iftar countdown, compound-of-the-day, future-self reminder, dopamine-reset card, current-reading book card, today's habit checklist with completion ring)
+- ✅ Habit tracking (toggle, edit, delete, mark critical, detail page with projection + hadith)
+- ✅ Streaks (current + longest, recomputed from full history)
+- ✅ Categories (7 defaults, rename/reorder/archive/restore/add-custom)
+- ✅ GitHub-style year heatmap (53×7 grid, today as leftmost column on mobile)
+- ✅ Progress page (heatmap, 14-day bar chart, per-habit ranking, per-category consistency)
+- ✅ Future Self screen (vision, why, days-in counter, 30-day per-category bars, daily reflection prompt)
+- ✅ Reward + Punishment system (21 rewards across 4 tiers, 15 punishments with safety guardrails)
+- ✅ Ramadan Mode (auto-activates from Hijri date, full hub with prayers/fasting/juz/taraweeh/sadaqah/Laylat al-Qadr/Shawwal six fasts, manual override)
+- ✅ Dopamine Reset (4 tiers, stage progression, daily check-in, replacement activities, relapse logging)
+- ✅ Book Tracker (add/edit/log/complete with rating + review + favourite quote, year-end review)
+- ✅ Live Habit Counts ("X people doing this today" via atomic Firestore transactions)
+- ✅ Authentication (Google, email/password, anonymous guest, account deletion)
+- ✅ Cloud sync (per-user snapshot doc, pull on sign-in, debounced push on changes)
+- ✅ Bilingual + RTL plumbing (next-intl, Vazirmatn, Persian numeral toggle, logical Tailwind utilities)
+- ✅ PWA (service worker, manifest, install prompt, generated PNG icons)
+- ✅ Real consequences engine (sensitivity tone control, partial library coverage)
+- ✅ Compound effect projections (~10 of ~30 habits with custom narratives, rest fall through to generic)
+
+### 25.2 What's Not Yet Built (Honest Gap List)
+
+In priority order:
+
+1. **Bad-habit auto-replacement (§5.7)** — `replacementHabitId` field exists in types but no UI reads or writes it. This is a "product-level promise" that's currently broken. Smallest, highest-ROI fix.
+
+2. **Push notifications** — Settings UI shows toggles and persists values, but **no FCM delivery is wired**. The UI is currently lying to users. Either build it or remove the toggles. Don't ship a lie.
+
+3. **Splash text quality** — 4 of 5 splash quotes were rejected by the user but never replaced. Most visible "translation feel" moment in the app.
+
+4. **Persian content quality** — Plumbing is complete, but most strings outside splash + onboarding read as literal English-to-Persian translation. Needs idiomatic rewrite, ideally chunk by chunk with a native Persian speaker review.
+
+5. **Compound narrative coverage** — Only ~10 of ~30 preset habits have custom narratives. The rest fall through to `genericNarrative`. Workable but bland. The new `negativeSelfTalk` preset has no custom narrative.
+
+6. **Vercel deployment** — No `vercel.json`, no live URL. The app runs locally only. Cannot show it to anyone outside the developer.
+
+7. **Per-doc Firestore writes (§8 schema)** — Currently using a single per-user snapshot doc. Last-writer-wins on concurrent edits from two devices. Pragmatic for v1, must change before scale.
+
+8. **Encryption of sensitive fields** — App holds faith, finance, and personal-goal data. Snapshot is sent as plain JSON to Firestore. Architectural Constraint #9 in `CLAUDE.md` says this needs to be done.
+
+9. **Tests** — Zero test coverage. `store.ts` is ~950 lines of stateful logic. `hijri.ts` is custom date math that's easy to break silently. Vitest + a few focused unit tests would prevent regressions.
+
+10. **Habit packs (Sahaba pack, Muslim Youth pack, Family pack)** — Spec sections §15, §16, §17 are content libraries. Nothing is loaded into the app. These are valid v2 features, not blockers for launch.
+
+### 25.3 New Features From This Spec Update (Not Yet Built)
+
+These are the new concepts added in this spec revision (sections 22, 23, 24). All require implementation work; none are in the codebase yet. Build order recommendation:
+
+1. **2-Minute Rule** (§23) — Add `twoMinuteVersion` field to all preset habits in `domain/seed.ts`, update habit-creation UI to offer both versions side-by-side, recommend the 2-minute version. The auto-suggested scale-up after 30 days is a small addition to the existing streak logic.
+
+2. **Positive Cargo** (§24.2) — Add `positiveCargo` field to bad habits in `domain/seed.ts`, prompt for cargo when user logs a bad habit. Reuses existing habit logging infrastructure.
+
+3. **Notifications-Off-By-Default** (§24.3) — One settings change. Update onboarding copy to explain why. **Easiest win on the list.** Fixes the "lying notifications UI" gap from §25.2 simultaneously.
+
+4. **Anger Habit + Protocol** (§22) — One new preset habit, one new modal component, one settings toggle. Smaller and more contained than the rejected "Sukoon Mode" module.
+
+5. **Task Bracketing** (§24.1) — Optional `startRitual` / `endRitual` text fields on habits, displayed on detail page. No new infrastructure.
+
+6. **Habit Stacking Phrasing** (§23.6) — Single optional text field on habit creation. Trivial.
+
+### 25.4 What Was Deliberately Cut From Earlier Drafts
+
+To preserve the app's focus and prevent feature bloat, these earlier proposals were rejected:
+
+- ❌ **Sukoon Mode as a standalone module** — replaced with a single habit + protocol overlay
+- ❌ **The 2-Minute Rule as a 10-subsection feature** — replaced with two fields per habit
+- ❌ **Huberman's 13 subsections** — distilled to 3 high-leverage insights
+- ❌ **Limbic friction tagging, linchpin labels, phase-based scheduling, 21-day installation system, dopamine spotlighting screens, synaptic depression visualizations** — all over-engineered
+- ❌ **Trigger journals, mood sliders, calmness scores as separate UI** — anger/stress data piggybacks on existing habit logging if needed at all
+
+The discipline here is intentional: every feature has to earn its place against the question *"does this serve the core goal of helping a Muslim build good habits and break bad ones?"* If the answer is "kind of" or "in a roundabout way," it gets cut.
+
+### 25.5 Recommended Next Three Actions (From CLAUDE.md, In Order)
+
+1. **Fix the notifications lie**: either build push delivery, or remove the toggles from the Settings UI. (1–2 hours either way.)
+2. **Wire bad-habit auto-replacement UI**: when user creates a bad habit, suggest the opposite good habit and link it. The data model already supports it. (~3 hours.)
+3. **Deploy to Vercel**: get a real URL so people can actually use the app. (~1 hour.)
+
+After those three, the app is genuinely shippable. Everything else is enhancement.
+
+---
+
+## 26. Open Questions / Future Decisions
 
 - Premium tier vs. fully free? (Could charge for advanced analytics, custom themes, family/group accountability later.)
 - Social features (sharing streaks with friends, accountability partners) — Phase 2 or later.
@@ -2222,4 +2507,4 @@ This pairing carries unique weight for Muslim users: science confirming what the
 
 ---
 
-*This document is the source of truth for the project. Bring it into Claude Code at the start of development and reference it as features are built.*
+*This document is the source of truth for the project. The plan sections (1–24) describe the design. Section 25 is the honest mirror — what is actually built — and should be updated as work progresses. Bring this file into Claude Code at the start of each work session.*
