@@ -39,6 +39,8 @@ function NewHabit() {
   const [limit, setLimit] = useState('');
   const [replacementName, setReplacementName] = useState('');
   const [positiveCargo, setPositiveCargo] = useState('');
+  const [startRitual, setStartRitual] = useState('');
+  const [endRitual, setEndRitual] = useState('');
 
   const canSubmit = name.trim().length > 0 && categoryId.length > 0;
 
@@ -66,6 +68,8 @@ function NewHabit() {
       limit: type === 'bad' && limit ? Number(limit) : undefined,
       replacementHabitId,
       positiveCargo: type === 'bad' && positiveCargo.trim() ? positiveCargo.trim() : undefined,
+      startRitual: startRitual.trim() || undefined,
+      endRitual: endRitual.trim() || undefined,
       frequency: 'daily',
     });
 
