@@ -217,6 +217,16 @@ function Profile() {
             onChange={(v) => setProfile({ soundEnabled: v })}
           />
         </Field>
+
+        <Field
+          label={t('settings.angerProtocolLabel')}
+          hint={t('settings.angerProtocolHint')}
+        >
+          <Toggle
+            active={profile.angerProtocolEnabled === true}
+            onChange={(v) => setProfile({ angerProtocolEnabled: v })}
+          />
+        </Field>
       </Card>
 
       <Card className="space-y-4">

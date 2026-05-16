@@ -109,6 +109,11 @@ export interface Profile {
   readingHabitId?: string;
   /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
   soundEnabled: boolean;
+  /** Spec §22: when true, Home surfaces a one-tap "I'm angry" button that
+   *  opens the Prophetic ﷺ anger protocol overlay (ta'awwudh → posture →
+   *  wudu → 90s silence → dua). Off by default — the feature is opt-in so
+   *  users who'd find it judgmental never see it. */
+  angerProtocolEnabled?: boolean;
   /** Which sentence track the streak-fire celebrations use. 'smart' picks
    *  Islamic for habits in the Islamic Practices category and Universal
    *  for everything else. Default 'smart'. Optional for back-compat. */
