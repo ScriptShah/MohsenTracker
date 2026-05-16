@@ -20,6 +20,7 @@ import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
 import { AngerProtocol } from '@/components/AngerProtocol';
+import { getFireTrack } from '@/lib/streakFire';
 
 export default function HomePage() {
   return (
@@ -57,6 +58,13 @@ function Home() {
   const fmt = useNumberFormatter();
   const angerProtocolEnabled = profile?.angerProtocolEnabled === true;
   const [showAnger, setShowAnger] = useState(false);
+  const islamicCategoryId = useAppStore(
+    (s) => s.categories.find((c) => c.key === 'islamic')?.id,
+  );
+  const angerTrack = useMemo(
+    () => getFireTrack(profile, habits, islamicCategoryId),
+    [profile, habits, islamicCategoryId],
+  );
 
   const phase = useMemo(() => ramadanPhase(), []);
   const ramadanOn = profile ? isRamadanModeActive(profile.ramadanMode) : false;
@@ -196,7 +204,7 @@ function Home() {
           className="tap-44 w-full rounded-2xl border border-sand-200 bg-sand-50 px-4 py-3 text-start transition hover:border-sand-300"
         >
           <p className="text-xs uppercase tracking-wide text-sand-600">
-            {t('angerProtocol.homeButtonEyebrow')}
+            {t(`angerProtocol.${angerTrack}.homeButtonEyebrow` as any)}
           </p>
           <p className="pt-1 text-sm font-medium leading-relaxed text-ink-800">
             {t('angerProtocol.homeButtonLabel')}
