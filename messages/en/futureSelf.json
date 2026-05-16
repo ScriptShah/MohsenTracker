@@ -1,0 +1,39 @@
+{
+  "yourBecoming": "Your becoming",
+  "emptyState": "Start any habit today. By tomorrow, your first spark will light here.",
+  "continue": "Continue",
+  "oneYearBadge": "1 year",
+  "daysIn": "Day {n} of your transformation",
+  "thirtyDayTitle": "Last 30 days",
+  "thirtyDayHint": "How consistent you've been per category.",
+  "edit": "Edit",
+  "editTitle": "Edit your future self",
+  "save": "Save changes",
+  "compoundTitle": "Today's compound truth",
+  "smallestTitle": "Today's leverage",
+  "smallestBody": "What's the smallest thing you can do today that would have the biggest impact on your life?",
+  "noVision": "Describe the person you're becoming.",
+  "noWhy": "Add the reason that drives you.",
+  "noFutureSelfName": "Give your future self a name.",
+  "setUp": "Set up future self",
+  "becoming": "You are becoming",
+  "fields": {
+    "futureSelfName": "Future self name",
+    "vision": "1-year vision",
+    "why": "Why it matters"
+  },
+  "quotes": {
+    "q0": "10 pages a day → 12 books a year → 120 books in a decade. Still a small daily act, but a transformed life.",
+    "q1": "30 minutes of movement daily → 182 hours a year — enough to walk from London to Paris twice.",
+    "q2": "1 hour less scrolling daily → 15 full days reclaimed every year.",
+    "q3": "5 pages of Quran daily → completes the Quran every 4 months. Three khatmas a year.",
+    "q4": "Tahajjud once a week → 52 nights of closeness with your Lord this year.",
+    "q5": "1 act of sadaqah daily → 365 acts a year. Charity that keeps giving.",
+    "q6": "15 minutes of learning daily → 91 hours of mastery a year. Compounded over a decade, a new identity.",
+    "q7": "“The most beloved deeds to Allah are those that are consistent, even if small.” — Sahih al-Bukhari 6464",
+    "q8": "You are a gainer when today is better than yesterday. — Prophetic wisdom",
+    "q9": "“The strong one is not the wrestler — he is the one who controls himself when angry.” — Bukhari & Muslim",
+    "q10": "“Truthfulness leads to virtue. Stay truthful until you are written as a truthful one.” — Bukhari & Muslim",
+    "q11": "“Sitting alone is better than sitting with the bad — and sitting with the good is better than sitting alone.” — Hadith"
+  }
+}
