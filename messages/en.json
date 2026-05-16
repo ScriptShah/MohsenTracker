@@ -183,6 +183,12 @@
     "replacement": "Replacement habit",
     "replacementHint": "What good habit will you do instead?",
     "replacementPlaceholder": "Read instead of scrolling",
+    "startRitualLabel": "Before you start (optional)",
+    "startRitualHint": "A short ritual that signals \"I'm beginning.\" Same two-second move every time.",
+    "startRitualPlaceholder": "Phone in another room, water on the desk…",
+    "endRitualLabel": "After you finish (optional)",
+    "endRitualHint": "A short ritual that signals \"I'm done.\" Closes the loop cleanly.",
+    "endRitualPlaceholder": "Close the laptop, jot one line about what you did…",
     "create": "Create habit",
     "presetsTitle": "Pick from presets",
     "presetsBody": "One-tap add for the habits you don't have yet."
@@ -875,6 +881,23 @@
       "replacementFor": "Replacement for",
       "body": "When the urge hits, do this instead.",
       "openLink": "Open"
+    },
+    "bracketing": {
+      "title": "Bracket the habit",
+      "body": "Same opening, same closing — every time. The repeated bookends train your brain to flip into this habit on cue and flip out cleanly when it's done.",
+      "startTitle": "Before",
+      "endTitle": "After",
+      "emptyTitle": "Bracket this habit",
+      "emptyBody": "Pair a tiny opening and closing ritual with this habit. The same two-second moves before and after train the brain to flip into this habit on cue.",
+      "set": "Set rituals",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "clear": "Clear both",
+      "startPlaceholder": "Phone in another room, water on the desk…",
+      "endPlaceholder": "Close the laptop, jot one line about what you did…",
+      "startLabel": "Before",
+      "endLabel": "After"
     },
     "muted": {
       "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",

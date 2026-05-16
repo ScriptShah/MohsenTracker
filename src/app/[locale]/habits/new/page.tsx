@@ -36,6 +36,8 @@ function NewHabit() {
   const [target, setTarget] = useState('');
   const [limit, setLimit] = useState('');
   const [replacementName, setReplacementName] = useState('');
+  const [startRitual, setStartRitual] = useState('');
+  const [endRitual, setEndRitual] = useState('');
 
   const canSubmit = name.trim().length > 0 && categoryId.length > 0;
 
@@ -62,6 +64,8 @@ function NewHabit() {
       target: type === 'good' && target ? Number(target) : undefined,
       limit: type === 'bad' && limit ? Number(limit) : undefined,
       replacementHabitId,
+      startRitual: startRitual.trim() || undefined,
+      endRitual: endRitual.trim() || undefined,
       frequency: 'daily',
     });
 
@@ -165,6 +169,26 @@ function NewHabit() {
             />
           </Field>
         )}
+
+        <Field label={t('habit.startRitualLabel')} hint={t('habit.startRitualHint')}>
+          <input
+            value={startRitual}
+            onChange={(e) => setStartRitual(e.target.value)}
+            placeholder={t('habit.startRitualPlaceholder')}
+            maxLength={140}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+          />
+        </Field>
+
+        <Field label={t('habit.endRitualLabel')} hint={t('habit.endRitualHint')}>
+          <input
+            value={endRitual}
+            onChange={(e) => setEndRitual(e.target.value)}
+            placeholder={t('habit.endRitualPlaceholder')}
+            maxLength={140}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+          />
+        </Field>
       </Card>
 
       <div className="flex items-center justify-end gap-2">

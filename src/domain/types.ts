@@ -38,6 +38,13 @@ export interface Habit {
   limit?: number;
   frequency: Frequency;
   replacementHabitId?: string;
+  /** Spec §24.1: optional opening + closing rituals the user does every time
+   *  they do this habit. Same two-second moves before and after train the
+   *  brain to flip into the habit on cue and flip out cleanly when it's done
+   *  ("task bracketing" — habit-formation research). Free text on both
+   *  sides; meaningful on any habit type. */
+  startRitual?: string;
+  endRitual?: string;
   /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
   isCritical?: boolean;
   /** When true, this habit is driven by book-page logs (spec §20.11). Tapping

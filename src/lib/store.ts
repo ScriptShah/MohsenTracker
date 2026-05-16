@@ -104,6 +104,10 @@ interface AppState {
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
+  setHabitRituals: (
+    habitId: string,
+    rituals: { startRitual?: string; endRitual?: string },
+  ) => void;
   toggleHabit: (habitId: string, date?: string) => void;
   setHabitValue: (habitId: string, value: number, date?: string) => void;
 
@@ -505,6 +509,22 @@ export const useAppStore = create<AppState>()(
       setHabitCritical: (habitId, isCritical) => {
         set((s) => ({
           habits: s.habits.map((h) => (h.id === habitId ? { ...h, isCritical } : h)),
+        }));
+      },
+
+      setHabitRituals: (habitId, rituals) => {
+        const start = rituals.startRitual?.trim();
+        const end = rituals.endRitual?.trim();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? {
+                  ...h,
+                  startRitual: start && start.length > 0 ? start : undefined,
+                  endRitual: end && end.length > 0 ? end : undefined,
+                }
+              : h,
+          ),
         }));
       },
 
