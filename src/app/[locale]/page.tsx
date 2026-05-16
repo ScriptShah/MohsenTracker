@@ -46,8 +46,8 @@ function Home() {
   const allSummaries = useAppStore((s) => s.summaries);
   const lastRestartAt = useAppStore((s) => s.profile?.lastRestartAt);
   const restartStrikes = useMemo(
-    () => computeStrikes(allSummaries, today, lastRestartAt),
-    [allSummaries, today, lastRestartAt],
+    () => computeStrikes(allSummaries, today, lastRestartAt, habits),
+    [allSummaries, today, lastRestartAt, habits],
   );
   const offerRestart = useMemo(
     () => shouldOfferRestart({ strikes: restartStrikes, lastRestartAt, today }),
