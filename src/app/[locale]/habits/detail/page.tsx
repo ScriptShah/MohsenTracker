@@ -270,6 +270,14 @@ function HabitDetail() {
         </Card>
       )}
 
+      <BracketingCard
+        startRitual={habit.startRitual}
+        endRitual={habit.endRitual}
+        onSave={(start, end) =>
+          setHabitRituals(habit.id, { startRitual: start, endRitual: end })
+        }
+      />
+
       <BooksSection habit={habit} />
 
       <Card className="flex items-start justify-between gap-3">
