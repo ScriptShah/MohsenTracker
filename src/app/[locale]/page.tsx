@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
@@ -19,6 +19,9 @@ import { currentDay, stageFor } from '@/lib/reset';
 import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
+import { AngerProtocol } from '@/components/AngerProtocol';
+import { LevelUpCard } from '@/components/LevelUpCard';
+import { eligibleLevelUps } from '@/lib/twoMinute';
 
 export default function HomePage() {
   return (
@@ -54,6 +57,15 @@ function Home() {
     [restartStrikes, lastRestartAt, today],
   );
   const fmt = useNumberFormatter();
+  const angerProtocolEnabled = profile?.angerProtocolEnabled === true;
+  const [showAnger, setShowAnger] = useState(false);
+  const islamicCategoryId = useAppStore(
+    (s) => s.categories.find((c) => c.key === 'islamic')?.id,
+  );
+  const angerTrack = useMemo(
+    () => getFireTrack(profile, habits, islamicCategoryId),
+    [profile, habits, islamicCategoryId],
+  );
 
   const phase = useMemo(() => ramadanPhase(), []);
   const ramadanOn = profile ? isRamadanModeActive(profile.ramadanMode) : false;
@@ -80,6 +92,14 @@ function Home() {
   const dailyHabits = useMemo(() => habits.filter((h) => h.frequency === 'daily'), [habits]);
 
   const allLogs = useAppStore((s) => s.logs);
+  const streaksMap = useAppStore((s) => s.streaks);
+  const levelUpCandidate = useMemo(() => {
+    const eligible = eligibleLevelUps(habits, streaksMap, new Date().toISOString());
+    return eligible[0];
+  }, [habits, streaksMap]);
+  const levelUpStreak = levelUpCandidate
+    ? streaksMap[levelUpCandidate.id]?.current ?? 0
+    : 0;
   const rotating = useMemo(() => {
     if (dailyHabits.length === 0) return null;
     const habit = dailyHabits[dailyQuoteIndex(dailyHabits.length)];
@@ -184,6 +204,25 @@ function Home() {
             </p>
           </Card>
         </Link>
+      )}
+
+      {angerProtocolEnabled && (
+        <button
+          type="button"
+          onClick={() => setShowAnger(true)}
+          className="tap-44 w-full rounded-2xl border border-sand-200 bg-sand-50 px-4 py-3 text-start transition hover:border-sand-300"
+        >
+          <p className="text-xs uppercase tracking-wide text-sand-600">
+            {t(`angerProtocol.${angerTrack}.homeButtonEyebrow` as any)}
+          </p>
+          <p className="pt-1 text-sm font-medium leading-relaxed text-ink-800">
+            {t('angerProtocol.homeButtonLabel')}
+          </p>
+        </button>
+      )}
+
+      {levelUpCandidate && (
+        <LevelUpCard habit={levelUpCandidate} streak={levelUpStreak} />
       )}
 
       {rotating && (
@@ -307,6 +346,8 @@ function Home() {
           + {t('home.addHabit')}
         </Link>
       </section>
+
+      {showAnger && <AngerProtocol onClose={() => setShowAnger(false)} />}
     </div>
   );
 }

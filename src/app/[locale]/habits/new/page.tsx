@@ -10,6 +10,8 @@ import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { presetHabits, presetReplacements, seedCategories } from '@/domain/seed';
 import type { PresetHabit } from '@/domain/seed';
+import { useNumberFormatter } from '@/lib/format';
+import { useUnitLabel } from '@/lib/units';
 
 export default function NewHabitPage() {
   return (
@@ -36,8 +38,7 @@ function NewHabit() {
   const [target, setTarget] = useState('');
   const [limit, setLimit] = useState('');
   const [replacementName, setReplacementName] = useState('');
-  const [startRitual, setStartRitual] = useState('');
-  const [endRitual, setEndRitual] = useState('');
+  const [positiveCargo, setPositiveCargo] = useState('');
 
   const canSubmit = name.trim().length > 0 && categoryId.length > 0;
 
@@ -64,8 +65,7 @@ function NewHabit() {
       target: type === 'good' && target ? Number(target) : undefined,
       limit: type === 'bad' && limit ? Number(limit) : undefined,
       replacementHabitId,
-      startRitual: startRitual.trim() || undefined,
-      endRitual: endRitual.trim() || undefined,
+      positiveCargo: type === 'bad' && positiveCargo.trim() ? positiveCargo.trim() : undefined,
       frequency: 'daily',
     });
 
@@ -159,15 +159,26 @@ function NewHabit() {
         </div>
 
         {type === 'bad' && (
-          <Field label={t('habit.replacement')} hint={t('habit.replacementHint')}>
-            <input
-              value={replacementName}
-              onChange={(e) => setReplacementName(e.target.value)}
-              placeholder={t('habit.replacementPlaceholder')}
-              maxLength={60}
-              className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
-            />
-          </Field>
+          <>
+            <Field label={t('habit.replacement')} hint={t('habit.replacementHint')}>
+              <input
+                value={replacementName}
+                onChange={(e) => setReplacementName(e.target.value)}
+                placeholder={t('habit.replacementPlaceholder')}
+                maxLength={60}
+                className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+              />
+            </Field>
+            <Field label={t('habit.cargoLabel')} hint={t('habit.cargoHint')}>
+              <input
+                value={positiveCargo}
+                onChange={(e) => setPositiveCargo(e.target.value)}
+                placeholder={t('habit.cargoPlaceholder')}
+                maxLength={140}
+                className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+              />
+            </Field>
+          </>
         )}
 
         <Field label={t('habit.startRitualLabel')} hint={t('habit.startRitualHint')}>
@@ -257,6 +268,13 @@ function PresetPicker() {
   const categories = useAppStore((s) => s.categories);
   const addHabit = useAppStore((s) => s.addHabit);
   const addCategory = useAppStore((s) => s.addCategory);
+  const fmt = useNumberFormatter();
+  const unitLabel = useUnitLabel();
+
+  // Spec §23: when a preset has a 2-minute version, the picker pauses on a
+  // size-choice card before adding. `pendingPreset` holds the preset under
+  // review; null means no pending choice and chips behave as before.
+  const [pendingPreset, setPendingPreset] = useState<PresetHabit | null>(null);
 
   const available = useMemo(() => {
     const haveByPreset = new Set(habits.map((h) => h.presetKey).filter(Boolean));
@@ -283,18 +301,24 @@ function PresetPicker() {
     return categories.find((c) => c.isActive);
   };
 
-  const addPresetHabit = (preset: PresetHabit, replacementHabitId?: string) => {
+  const addPresetHabit = (
+    preset: PresetHabit,
+    options?: { replacementHabitId?: string; useTwoMinute?: boolean },
+  ) => {
     const cat = resolveCategory(preset);
     if (!cat) return undefined;
+    const useSmall = options?.useTwoMinute === true && preset.twoMinuteVersion !== undefined;
+    const tmv = useSmall ? preset.twoMinuteVersion! : undefined;
     return addHabit({
       categoryId: cat.id,
       presetKey: preset.presetKey,
-      name: t(`presets.${preset.presetKey}` as any),
+      name: tmv ? t(tmv.nameKey as any) : t(`presets.${preset.presetKey}` as any),
       type: preset.type,
-      unit: preset.unit,
-      target: preset.target,
+      unit: tmv ? tmv.unit ?? preset.unit : preset.unit,
+      target: tmv ? tmv.target : preset.target,
       limit: preset.limit,
-      replacementHabitId,
+      replacementHabitId: options?.replacementHabitId,
+      isTwoMinuteVersion: useSmall ? true : undefined,
       frequency: 'daily',
     });
   };
@@ -303,10 +327,8 @@ function PresetPicker() {
     router.replace(initialCategoryId ? `/categories/detail?id=${initialCategoryId}` : '/');
   };
 
-  const onPick = (presetKey: string) => {
-    const preset = presetHabits.find((p) => p.presetKey === presetKey);
-    if (!preset) return;
-
+  /** Add the preset (and a silent replacement pair for bad presets) and exit. */
+  const commitPreset = (preset: PresetHabit, useTwoMinute: boolean) => {
     // Spec §5.7: bad-habit presets with a known good-habit counterpart get
     // paired silently. If the counterpart already exists, link to it; if
     // not, add it alongside the bad habit. No dialog — we don't interrupt
@@ -316,23 +338,111 @@ function PresetPicker() {
       if (replacementKey) {
         const existing = habits.find((h) => h.presetKey === replacementKey);
         if (existing) {
-          addPresetHabit(preset, existing.id);
+          addPresetHabit(preset, { replacementHabitId: existing.id, useTwoMinute });
           goBackOrHome();
           return;
         }
         const goodPreset = presetHabits.find((p) => p.presetKey === replacementKey);
         if (goodPreset) {
-          const good = addPresetHabit(goodPreset);
-          addPresetHabit(preset, good?.id);
+          // The replacement good habit defaults to its 2-minute size too,
+          // for the same Atomic-Habits reason.
+          const good = addPresetHabit(goodPreset, { useTwoMinute: true });
+          addPresetHabit(preset, { replacementHabitId: good?.id, useTwoMinute });
           goBackOrHome();
           return;
         }
       }
     }
 
-    addPresetHabit(preset);
+    addPresetHabit(preset, { useTwoMinute });
     goBackOrHome();
   };
+
+  const onPick = (presetKey: string) => {
+    const preset = presetHabits.find((p) => p.presetKey === presetKey);
+    if (!preset) return;
+    // Spec §23: target-based presets with a 2-minute alternative pause on
+    // a size-choice card. Everything else (binary toggles, bad presets) is
+    // a one-tap add as before.
+    if (preset.twoMinuteVersion) {
+      setPendingPreset(preset);
+      return;
+    }
+    commitPreset(preset, false);
+  };
+
+  if (pendingPreset) {
+    const tmv = pendingPreset.twoMinuteVersion!;
+    const fullName = t(`presets.${pendingPreset.presetKey}` as any);
+    const fullUnit = pendingPreset.unit;
+    const tmvUnit = tmv.unit ?? pendingPreset.unit;
+    return (
+      <Card className="space-y-4 border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-leaf-700">
+            {t('habit.twoMinuteStarter.eyebrow')}
+          </p>
+          <h2 className="pt-1 text-base font-semibold text-ink-800">
+            {t('habit.twoMinuteStarter.title', { name: fullName })}
+          </h2>
+          <p className="pt-1 text-sm leading-relaxed text-ink-700">
+            {t('habit.twoMinuteStarter.body')}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => commitPreset(pendingPreset, true)}
+            className="tap-44 block w-full rounded-2xl border-2 border-leaf-500 bg-white p-3 text-start shadow-sm transition hover:bg-leaf-50"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-leaf-700">
+                {t('habit.twoMinuteStarter.twoMinuteLabel')}
+              </span>
+              <span className="rounded-full bg-leaf-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                {t('habit.twoMinuteStarter.recommended')}
+              </span>
+            </div>
+            <p className="pt-1 text-base font-medium text-ink-800">
+              {t(tmv.nameKey as any)}
+            </p>
+            <p className="numeral pt-0.5 text-xs text-ink-500">
+              {t('habit.twoMinuteStarter.targetLine', {
+                value: fmt(tmv.target),
+                unit: unitLabel(tmvUnit ?? ''),
+              })}
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => commitPreset(pendingPreset, false)}
+            className="tap-44 block w-full rounded-2xl border border-ink-200 bg-white p-3 text-start transition hover:border-ink-300"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+              {t('habit.twoMinuteStarter.fullLabel')}
+            </span>
+            <p className="pt-1 text-base font-medium text-ink-800">{fullName}</p>
+            {pendingPreset.target !== undefined && (
+              <p className="numeral pt-0.5 text-xs text-ink-500">
+                {t('habit.twoMinuteStarter.targetLine', {
+                  value: fmt(pendingPreset.target),
+                  unit: unitLabel(fullUnit ?? ''),
+                })}
+              </p>
+            )}
+          </button>
+        </div>
+
+        <div className="flex items-center justify-end">
+          <Button type="button" variant="ghost" onClick={() => setPendingPreset(null)}>
+            {t('common.cancel')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="space-y-3">

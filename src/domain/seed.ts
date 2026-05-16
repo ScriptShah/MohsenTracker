@@ -23,45 +23,156 @@ export interface PresetHabit {
   unit?: string;
   target?: number;
   limit?: number;
+  /** Spec §23: the smaller starter alternative. When present, the habit
+   *  creation UI offers both versions side-by-side and recommends this one.
+   *  After a 30-day streak the app prompts the user to level up to the full
+   *  target above. Only set for target-based good habits; binary toggles and
+   *  bad habits don't carry it. */
+  twoMinuteVersion?: {
+    /** Translation key for the smaller name, e.g. "Read 1 page of Quran". */
+    nameKey: string;
+    target: number;
+    /** Falls back to the preset's full unit when omitted. */
+    unit?: string;
+  };
 }
 
 export const presetHabits: PresetHabit[] = [
   // Islamic
-  { presetKey: 'fivePrayers', category: 'islamic', type: 'good', unit: 'prayers', target: 5 },
+  {
+    presetKey: 'fivePrayers',
+    category: 'islamic',
+    type: 'good',
+    unit: 'prayers',
+    target: 5,
+    twoMinuteVersion: { nameKey: 'presets.fivePrayersTwoMinute', target: 1, unit: 'prayers' },
+  },
   { presetKey: 'fajr', category: 'islamic', type: 'good' },
-  { presetKey: 'quranPages', category: 'islamic', type: 'good', unit: 'pages', target: 5 },
+  {
+    presetKey: 'quranPages',
+    category: 'islamic',
+    type: 'good',
+    unit: 'pages',
+    target: 5,
+    twoMinuteVersion: { nameKey: 'presets.quranPagesTwoMinute', target: 1, unit: 'pages' },
+  },
   { presetKey: 'morningAdhkar', category: 'islamic', type: 'good' },
   { presetKey: 'eveningAdhkar', category: 'islamic', type: 'good' },
   { presetKey: 'tahajjud', category: 'islamic', type: 'good' },
   { presetKey: 'sadaqah', category: 'islamic', type: 'good' },
   { presetKey: 'gheebat', category: 'islamic', type: 'bad', unit: 'incidents', limit: 0 },
+  { presetKey: 'manageAnger', category: 'islamic', type: 'good' },
 
   // Health
   { presetKey: 'sleep', category: 'health', type: 'good', unit: 'hours', target: 7 },
-  { presetKey: 'water', category: 'health', type: 'good', unit: 'glasses', target: 8 },
+  {
+    presetKey: 'water',
+    category: 'health',
+    type: 'good',
+    unit: 'glasses',
+    target: 8,
+    twoMinuteVersion: { nameKey: 'presets.waterTwoMinute', target: 1, unit: 'glasses' },
+  },
   { presetKey: 'screenTime', category: 'health', type: 'bad', unit: 'hours', limit: 2 },
   { presetKey: 'junkFood', category: 'health', type: 'bad', unit: 'servings', limit: 0 },
 
   // Sport
-  { presetKey: 'exercise', category: 'sport', type: 'good', unit: 'minutes', target: 30 },
-  { presetKey: 'steps', category: 'sport', type: 'good', unit: 'steps', target: 8000 },
-  { presetKey: 'pushups', category: 'sport', type: 'good', unit: 'reps', target: 30 },
-  { presetKey: 'squats', category: 'sport', type: 'good', unit: 'reps', target: 30 },
-  { presetKey: 'jumpRope', category: 'sport', type: 'good', unit: 'minutes', target: 10 },
-  { presetKey: 'walking', category: 'sport', type: 'good', unit: 'minutes', target: 30 },
-  { presetKey: 'running', category: 'sport', type: 'good', unit: 'minutes', target: 20 },
+  {
+    presetKey: 'exercise',
+    category: 'sport',
+    type: 'good',
+    unit: 'minutes',
+    target: 30,
+    twoMinuteVersion: { nameKey: 'presets.exerciseTwoMinute', target: 5, unit: 'minutes' },
+  },
+  {
+    presetKey: 'steps',
+    category: 'sport',
+    type: 'good',
+    unit: 'steps',
+    target: 8000,
+    twoMinuteVersion: { nameKey: 'presets.stepsTwoMinute', target: 1000, unit: 'steps' },
+  },
+  {
+    presetKey: 'pushups',
+    category: 'sport',
+    type: 'good',
+    unit: 'reps',
+    target: 30,
+    twoMinuteVersion: { nameKey: 'presets.pushupsTwoMinute', target: 5, unit: 'reps' },
+  },
+  {
+    presetKey: 'squats',
+    category: 'sport',
+    type: 'good',
+    unit: 'reps',
+    target: 30,
+    twoMinuteVersion: { nameKey: 'presets.squatsTwoMinute', target: 5, unit: 'reps' },
+  },
+  {
+    presetKey: 'jumpRope',
+    category: 'sport',
+    type: 'good',
+    unit: 'minutes',
+    target: 10,
+    twoMinuteVersion: { nameKey: 'presets.jumpRopeTwoMinute', target: 2, unit: 'minutes' },
+  },
+  {
+    presetKey: 'walking',
+    category: 'sport',
+    type: 'good',
+    unit: 'minutes',
+    target: 30,
+    twoMinuteVersion: { nameKey: 'presets.walkingTwoMinute', target: 5, unit: 'minutes' },
+  },
+  {
+    presetKey: 'running',
+    category: 'sport',
+    type: 'good',
+    unit: 'minutes',
+    target: 20,
+    twoMinuteVersion: { nameKey: 'presets.runningTwoMinute', target: 5, unit: 'minutes' },
+  },
 
   // Finance
-  { presetKey: 'saving', category: 'finance', type: 'good', unit: 'amount', target: 10 },
+  {
+    presetKey: 'saving',
+    category: 'finance',
+    type: 'good',
+    unit: 'amount',
+    target: 10,
+    twoMinuteVersion: { nameKey: 'presets.savingTwoMinute', target: 1, unit: 'amount' },
+  },
   { presetKey: 'noImpulseBuy', category: 'finance', type: 'good' },
 
   // Career
-  { presetKey: 'deepWork', category: 'career', type: 'good', unit: 'minutes', target: 90 },
+  {
+    presetKey: 'deepWork',
+    category: 'career',
+    type: 'good',
+    unit: 'minutes',
+    target: 90,
+    twoMinuteVersion: { nameKey: 'presets.deepWorkTwoMinute', target: 15, unit: 'minutes' },
+  },
   { presetKey: 'noSocialBeforeWork', category: 'career', type: 'good' },
 
   // Growth
-  { presetKey: 'reading', category: 'growth', type: 'good', unit: 'pages', target: 10 },
-  { presetKey: 'learning', category: 'growth', type: 'good', unit: 'minutes', target: 15 },
+  {
+    presetKey: 'reading',
+    category: 'growth',
+    type: 'good',
+    unit: 'pages',
+    target: 10,
+    twoMinuteVersion: { nameKey: 'presets.readingTwoMinute', target: 1, unit: 'pages' },
+  },
+  {
+    presetKey: 'learning',
+    category: 'growth',
+    type: 'good',
+    unit: 'minutes',
+    target: 15,
+    twoMinuteVersion: { nameKey: 'presets.learningTwoMinute', target: 2, unit: 'minutes' },
+  },
   { presetKey: 'negativeSelfTalk', category: 'growth', type: 'bad', unit: 'incidents', limit: 0 },
 
   // Relationships
@@ -96,22 +207,32 @@ export function buildSeedCategories(translate: (key: CategoryKey) => string): Ca
 
 export function buildSeedHabits(
   selectedPresetKeys: string[],
-  translate: (presetKey: string) => string,
+  /** Resolves any translation path. Called with `presets.<key>` for the full
+   *  preset name and with the 2-minute version's `nameKey` for the smaller
+   *  starter label. */
+  translate: (key: string) => string,
+  options?: { useTwoMinuteVersion?: boolean },
 ): Habit[] {
   const now = new Date().toISOString();
   const set = new Set(selectedPresetKeys);
+  const preferTwoMinute = options?.useTwoMinuteVersion ?? false;
   return presetHabits
     .filter((p) => set.has(p.presetKey))
-    .map((p) => ({
-      id: `habit_${p.presetKey}`,
-      categoryId: `cat_${p.category}`,
-      presetKey: p.presetKey,
-      name: translate(p.presetKey),
-      type: p.type,
-      unit: p.unit,
-      target: p.target,
-      limit: p.limit,
-      frequency: 'daily' as const,
-      createdAt: now,
-    }));
+    .map((p) => {
+      const useSmall = preferTwoMinute && p.twoMinuteVersion !== undefined;
+      const tmv = useSmall ? p.twoMinuteVersion! : undefined;
+      return {
+        id: `habit_${p.presetKey}`,
+        categoryId: `cat_${p.category}`,
+        presetKey: p.presetKey,
+        name: tmv ? translate(tmv.nameKey) : translate(`presets.${p.presetKey}`),
+        type: p.type,
+        unit: tmv ? tmv.unit ?? p.unit : p.unit,
+        target: tmv ? tmv.target : p.target,
+        limit: p.limit,
+        frequency: 'daily' as const,
+        isTwoMinuteVersion: useSmall || undefined,
+        createdAt: now,
+      };
+    });
 }

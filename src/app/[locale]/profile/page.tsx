@@ -15,7 +15,6 @@ import { SignInForm } from '@/components/SignInForm';
 import type {
   CalendarPreference,
   ConsequenceSensitivity,
-  Habit,
   PrayerCalcMethod,
   Profile as ProfileT,
   ThemeMode,
@@ -218,6 +217,16 @@ function Profile() {
             onChange={(v) => setProfile({ soundEnabled: v })}
           />
         </Field>
+
+        <Field
+          label={t('settings.angerProtocolLabel')}
+          hint={t('settings.angerProtocolHint')}
+        >
+          <Toggle
+            active={profile.angerProtocolEnabled === true}
+            onChange={(v) => setProfile({ angerProtocolEnabled: v })}
+          />
+        </Field>
       </Card>
 
       <Card className="space-y-4">
@@ -268,62 +277,21 @@ function Profile() {
         </Field>
       </Card>
 
-      <Card className="space-y-4">
-        <h2 className="text-sm font-semibold text-ink-800">
-          {t('settings.notifSection')}
-        </h2>
-        <p className="text-xs text-ink-500">{t('settings.notifNote')}</p>
-
-        <Field label={t('settings.notifEnabled')}>
-          <Toggle
-            active={profile.notifications.enabled}
-            onChange={(v) =>
-              setProfile({
-                notifications: { ...profile.notifications, enabled: v },
-              })
-            }
-          />
-        </Field>
-
-        <Field label={t('settings.notifTime')}>
-          <input
-            type="time"
-            value={profile.notifications.dailyTime}
-            disabled={!profile.notifications.enabled}
-            onChange={(e) =>
-              setProfile({
-                notifications: {
-                  ...profile.notifications,
-                  dailyTime: e.target.value,
-                },
-              })
-            }
-            className="numeral rounded-xl border border-ink-200 bg-white px-3 py-2 outline-none focus:border-leaf-500 disabled:opacity-50"
-          />
-        </Field>
-
-        {habits.length > 0 && (
-          <Field label={t('settings.notifPerHabit')}>
-            <ul className="divide-y divide-ink-100">
-              {habits.map((h) => (
-                <PerHabitNotifRow
-                  key={h.id}
-                  habit={h}
-                  enabled={profile.notifications.perHabit[h.id] ?? true}
-                  globalDisabled={!profile.notifications.enabled}
-                  onChange={(v) =>
-                    setProfile({
-                      notifications: {
-                        ...profile.notifications,
-                        perHabit: { ...profile.notifications.perHabit, [h.id]: v },
-                      },
-                    })
-                  }
-                />
-              ))}
-            </ul>
-          </Field>
-        )}
+      <Card className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('settings.notifSection')}
+          </h2>
+          <span className="rounded-full bg-sand-100 px-2.5 py-0.5 text-[11px] font-medium text-ink-600">
+            {t('settings.notifStatusBadge')}
+          </span>
+        </div>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {t('settings.notifBody1')}
+        </p>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {t('settings.notifBody2')}
+        </p>
       </Card>
 
       <Card className="space-y-3">
@@ -624,25 +592,6 @@ function ProfileEditCard({
         <Button onClick={save}>{t('settings.profileEditSave')}</Button>
       </div>
     </Card>
-  );
-}
-
-function PerHabitNotifRow({
-  habit,
-  enabled,
-  globalDisabled,
-  onChange,
-}: {
-  habit: Habit;
-  enabled: boolean;
-  globalDisabled: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <li className="flex items-center justify-between gap-3 py-2">
-      <span className="text-sm">{habit.name}</span>
-      <Toggle active={enabled} disabled={globalDisabled} onChange={onChange} />
-    </li>
   );
 }
 

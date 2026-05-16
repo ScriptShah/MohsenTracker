@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { ArrowBack, ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
+import { LevelUpCard } from '@/components/LevelUpCard';
 import { useAppStore } from '@/lib/store';
 import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
@@ -16,6 +17,7 @@ import { shouldMuteConsequences } from '@/lib/sensitivity';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { useUnitLabel } from '@/lib/units';
 import { todayKey } from '@/lib/dates';
+import { isLevelUpEligible } from '@/lib/twoMinute';
 import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
 function sliceForSensitivity(
@@ -59,7 +61,7 @@ function HabitDetail() {
   );
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
-  const setHabitRituals = useAppStore((s) => s.setHabitRituals);
+  const setHabitPositiveCargo = useAppStore((s) => s.setHabitPositiveCargo);
   const sensitivity = useAppStore(
     (s) => s.profile?.consequenceSensitivity ?? 'honest',
   );
@@ -135,6 +137,10 @@ function HabitDetail() {
         </div>
       </header>
 
+      {habit.isTwoMinuteVersion && isLevelUpEligible(habit, streak, new Date().toISOString()) && (
+        <LevelUpCard habit={habit} streak={streak} />
+      )}
+
       {(replacementOut || replacementIn) && (
         <Card className={
           habit.type === 'bad'
@@ -163,6 +169,13 @@ function HabitDetail() {
             </p>
           )}
         </Card>
+      )}
+
+      {habit.type === 'bad' && (
+        <CargoCard
+          cargo={habit.positiveCargo}
+          onSave={(v) => setHabitPositiveCargo(habit.id, v)}
+        />
       )}
 
       {narrative && (
@@ -309,127 +322,94 @@ function HabitDetail() {
   );
 }
 
-/** Spec §24.1: optional start + end rituals the user does every time they do
- *  this habit. Habit-formation research calls this "task bracketing" — the
- *  repeated bookends teach the brain to flip into the habit on cue and flip
- *  out cleanly when it's done. Either field can stand alone (or both, or
- *  neither — it's optional).
+/** Spec §24.2: the "positive cargo" — a small good deed the user commits to
+ *  do right after a slip on a bad habit. Hebbian-plasticity-pair: pair the bad
+ *  cue with a good response so the brain learns the linkage. The Quranic
+ *  anchor 11:114 makes the pairing concrete.
  */
-function BracketingCard({
-  startRitual,
-  endRitual,
+function CargoCard({
+  cargo,
   onSave,
 }: {
-  startRitual?: string;
-  endRitual?: string;
-  onSave: (start: string | undefined, end: string | undefined) => void;
+  cargo?: string;
+  onSave: (v: string | undefined) => void;
 }) {
   const t = useTranslations();
   const [editing, setEditing] = useState(false);
-  const [draftStart, setDraftStart] = useState(startRitual ?? '');
-  const [draftEnd, setDraftEnd] = useState(endRitual ?? '');
+  const [draft, setDraft] = useState(cargo ?? '');
 
+  // Keep the draft in sync if the underlying cargo changes (e.g. cleared
+  // elsewhere) and we're not mid-edit.
   useEffect(() => {
-    if (!editing) {
-      setDraftStart(startRitual ?? '');
-      setDraftEnd(endRitual ?? '');
-    }
-  }, [startRitual, endRitual, editing]);
+    if (!editing) setDraft(cargo ?? '');
+  }, [cargo, editing]);
 
   const startEdit = () => {
-    setDraftStart(startRitual ?? '');
-    setDraftEnd(endRitual ?? '');
+    setDraft(cargo ?? '');
     setEditing(true);
   };
 
   const save = () => {
-    const s = draftStart.trim();
-    const e = draftEnd.trim();
-    onSave(s.length > 0 ? s : undefined, e.length > 0 ? e : undefined);
+    const trimmed = draft.trim();
+    onSave(trimmed.length > 0 ? trimmed : undefined);
     setEditing(false);
   };
 
   const cancel = () => {
-    setDraftStart(startRitual ?? '');
-    setDraftEnd(endRitual ?? '');
+    setDraft(cargo ?? '');
     setEditing(false);
   };
 
-  const clearBoth = () => {
-    onSave(undefined, undefined);
-    setDraftStart('');
-    setDraftEnd('');
+  const clear = () => {
+    onSave(undefined);
+    setDraft('');
     setEditing(false);
   };
-
-  const hasAny = Boolean(startRitual || endRitual);
 
   if (editing) {
     return (
-      <Card className="space-y-3">
-        <p className="text-xs uppercase tracking-wide text-ink-600">
-          {t('habitDetail.bracketing.title')}
+      <Card className="space-y-3 border-leaf-200 bg-leaf-50">
+        <p className="text-xs uppercase tracking-wide text-leaf-700">
+          {t('habitDetail.cargo.editLabel')}
         </p>
-        <label className="block space-y-1.5">
-          <span className="block text-sm font-medium text-ink-700">
-            {t('habitDetail.bracketing.startLabel')}
-          </span>
-          <textarea
-            value={draftStart}
-            onChange={(e) => setDraftStart(e.target.value)}
-            placeholder={t('habitDetail.bracketing.startPlaceholder')}
-            maxLength={140}
-            rows={2}
-            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
-          />
-        </label>
-        <label className="block space-y-1.5">
-          <span className="block text-sm font-medium text-ink-700">
-            {t('habitDetail.bracketing.endLabel')}
-          </span>
-          <textarea
-            value={draftEnd}
-            onChange={(e) => setDraftEnd(e.target.value)}
-            placeholder={t('habitDetail.bracketing.endPlaceholder')}
-            maxLength={140}
-            rows={2}
-            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
-          />
-        </label>
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={t('habitDetail.cargo.editPlaceholder')}
+          maxLength={140}
+          rows={3}
+          autoFocus
+          className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+        />
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {hasAny && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={clearBoth}
-              className="text-red-600 hover:bg-red-50"
-            >
-              {t('habitDetail.bracketing.clear')}
+          {cargo && (
+            <Button type="button" variant="ghost" onClick={clear} className="text-red-600 hover:bg-red-50">
+              {t('habitDetail.cargo.clear')}
             </Button>
           )}
           <Button type="button" variant="ghost" onClick={cancel}>
-            {t('habitDetail.bracketing.cancel')}
+            {t('habitDetail.cargo.cancel')}
           </Button>
           <Button type="button" onClick={save}>
-            {t('habitDetail.bracketing.save')}
+            {t('habitDetail.cargo.save')}
           </Button>
         </div>
       </Card>
     );
   }
 
-  if (!hasAny) {
+  if (!cargo) {
     return (
       <Card className="space-y-2 border-sand-200 bg-sand-50">
         <p className="text-xs uppercase tracking-wide text-sand-700">
-          {t('habitDetail.bracketing.emptyTitle')}
+          {t('habitDetail.cargo.emptyTitle')}
         </p>
         <p className="text-sm leading-relaxed text-ink-700">
-          {t('habitDetail.bracketing.emptyBody')}
+          {t('habitDetail.cargo.emptyBody')}
         </p>
         <div className="pt-1">
           <Button type="button" onClick={startEdit}>
-            {t('habitDetail.bracketing.set')}
+            {t('habitDetail.cargo.set')}
           </Button>
         </div>
       </Card>
@@ -437,14 +417,17 @@ function BracketingCard({
   }
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-3 border-leaf-200 bg-leaf-50">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <p className="text-xs uppercase tracking-wide text-ink-600">
-            {t('habitDetail.bracketing.title')}
+        <div className="flex-1 space-y-1">
+          <p className="text-xs uppercase tracking-wide text-leaf-700">
+            {t('habitDetail.cargo.title')}
           </p>
-          <p className="pt-1 text-xs text-ink-500">
-            {t('habitDetail.bracketing.body')}
+          <p className="text-base font-medium leading-relaxed text-ink-800">
+            {cargo}
+          </p>
+          <p className="text-xs text-ink-600">
+            {t('habitDetail.cargo.body')}
           </p>
         </div>
         <button
@@ -452,30 +435,19 @@ function BracketingCard({
           onClick={startEdit}
           className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
         >
-          {t('habitDetail.bracketing.edit')}
+          {t('habitDetail.cargo.edit')}
         </button>
       </div>
-      <div className="space-y-2">
-        {startRitual && (
-          <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-leaf-700">
-              {t('habitDetail.bracketing.startTitle')}
-            </p>
-            <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
-              {startRitual}
-            </p>
-          </div>
-        )}
-        {endRitual && (
-          <div className="rounded-xl border-s-2 border-sand-400 bg-sand-50 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-sand-700">
-              {t('habitDetail.bracketing.endTitle')}
-            </p>
-            <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
-              {endRitual}
-            </p>
-          </div>
-        )}
+      <div className="rounded-xl border-s-2 border-leaf-400 bg-white px-3 py-2">
+        <p dir="rtl" lang="ar" className="text-base leading-relaxed text-ink-800">
+          {t('habitDetail.cargo.verseArabic')}
+        </p>
+        <p className="pt-1 text-sm text-ink-600">
+          {t('habitDetail.cargo.verseTranslation')}
+        </p>
+        <p className="pt-1 text-[11px] uppercase tracking-wide text-ink-400">
+          {t('habitDetail.cargo.verseSource')}
+        </p>
       </div>
     </Card>
   );

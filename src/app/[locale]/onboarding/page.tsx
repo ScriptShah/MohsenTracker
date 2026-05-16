@@ -78,7 +78,9 @@ export default function OnboardingPage() {
       profile,
       selectedCategoryKeys: selectedKeys,
       selectedPresetKeys: finalPresets,
-      presetTranslate: (key) => t(`presets.${key}` as any),
+      // Spec §23: translator resolves full paths so it can look up both
+      // `presets.<key>` (full version) and the 2-minute `nameKey`.
+      presetTranslate: (key) => t(key as any),
       categoryTranslate: (key) => t(`categories.names.${key}` as any),
     });
     router.replace('/');

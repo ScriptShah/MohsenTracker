@@ -38,13 +38,12 @@ export interface Habit {
   limit?: number;
   frequency: Frequency;
   replacementHabitId?: string;
-  /** Spec §24.1: optional opening + closing rituals the user does every time
-   *  they do this habit. Same two-second moves before and after train the
-   *  brain to flip into the habit on cue and flip out cleanly when it's done
-   *  ("task bracketing" — habit-formation research). Free text on both
-   *  sides; meaningful on any habit type. */
-  startRitual?: string;
-  endRitual?: string;
+  /** Spec §24.2: bad habits can carry a "positive cargo" — a small good deed
+   *  the user commits to doing immediately after a slip. When set, the
+   *  checklist surfaces it as a prompt the moment a slip is logged, paired
+   *  with the Quranic anchor (11:114): "Indeed, good deeds erase bad deeds."
+   *  Free text; meaningful only on bad habits. */
+  positiveCargo?: string;
   /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
   isCritical?: boolean;
   /** When true, this habit is driven by book-page logs (spec §20.11). Tapping
@@ -52,6 +51,15 @@ export interface Habit {
    *  is the sum of pages logged today across books with matching `Book.habitId`.
    *  Multiple habits can carry this flag — e.g. one per category of reading. */
   linksToBooks?: boolean;
+  /** Spec §23: true when the habit was created at its 2-minute starter size
+   *  rather than the full preset target. After a 30-day streak the home and
+   *  detail screens surface a one-time "ready to level up?" prompt. Cleared
+   *  when the user accepts the level-up. Only set for preset habits whose
+   *  preset has a `twoMinuteVersion` defined. */
+  isTwoMinuteVersion?: boolean;
+  /** Spec §23: ISO timestamp set when the user chooses "stay at this size".
+   *  Suppresses the level-up prompt for ~30 days so we don't nag. */
+  levelUpPromptDismissedAt?: string;
   createdAt: string;
 }
 
@@ -116,6 +124,11 @@ export interface Profile {
   readingHabitId?: string;
   /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
   soundEnabled: boolean;
+  /** Spec §22: when true, Home surfaces a one-tap "I'm angry" button that
+   *  opens the Prophetic ﷺ anger protocol overlay (ta'awwudh → posture →
+   *  wudu → 90s silence → dua). Off by default — the feature is opt-in so
+   *  users who'd find it judgmental never see it. */
+  angerProtocolEnabled?: boolean;
   /** Which sentence track the streak-fire celebrations use. 'smart' picks
    *  Islamic for habits in the Islamic Practices category and Universal
    *  for everything else. Default 'smart'. Optional for back-compat. */
