@@ -108,6 +108,12 @@ interface AppState {
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
   setHabitPositiveCargo: (habitId: string, cargo: string | undefined) => void;
+  /** Spec §24.1: save the opening + closing rituals for a habit. Either or
+   *  both can be undefined; the store trims and normalizes empty values. */
+  setHabitRituals: (
+    habitId: string,
+    rituals: { startRitual?: string; endRitual?: string },
+  ) => void;
   /** Spec §23: scale a 2-minute habit up to its full version. The caller
    *  resolves the translated full name and target/unit from the preset and
    *  passes them in; the store just persists. Clears `isTwoMinuteVersion`. */
@@ -533,6 +539,22 @@ export const useAppStore = create<AppState>()(
           habits: s.habits.map((h) =>
             h.id === habitId
               ? { ...h, positiveCargo: trimmed && trimmed.length > 0 ? trimmed : undefined }
+              : h,
+          ),
+        }));
+      },
+
+      setHabitRituals: (habitId, rituals) => {
+        const start = rituals.startRitual?.trim();
+        const end = rituals.endRitual?.trim();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? {
+                  ...h,
+                  startRitual: start && start.length > 0 ? start : undefined,
+                  endRitual: end && end.length > 0 ? end : undefined,
+                }
               : h,
           ),
         }));

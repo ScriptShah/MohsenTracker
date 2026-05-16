@@ -22,6 +22,7 @@ import { IftarCountdown } from '@/components/IftarCountdown';
 import { AngerProtocol } from '@/components/AngerProtocol';
 import { LevelUpCard } from '@/components/LevelUpCard';
 import { eligibleLevelUps } from '@/lib/twoMinute';
+import { getFireTrack } from '@/lib/streakFire';
 
 export default function HomePage() {
   return (

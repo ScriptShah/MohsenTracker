@@ -62,6 +62,7 @@ function HabitDetail() {
   const deleteHabit = useAppStore((s) => s.deleteHabit);
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
   const setHabitPositiveCargo = useAppStore((s) => s.setHabitPositiveCargo);
+  const setHabitRituals = useAppStore((s) => s.setHabitRituals);
   const sensitivity = useAppStore(
     (s) => s.profile?.consequenceSensitivity ?? 'honest',
   );
@@ -599,5 +600,177 @@ function BookLogRow({ book }: { book: Book }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Spec §24.1: optional start + end rituals the user does every time they do
+ *  this habit. Habit-formation research calls this "task bracketing" — the
+ *  repeated bookends teach the brain to flip into the habit on cue and flip
+ *  out cleanly when it's done. Either field can stand alone (or both, or
+ *  neither — it's optional).
+ */
+function BracketingCard({
+  startRitual,
+  endRitual,
+  onSave,
+}: {
+  startRitual?: string;
+  endRitual?: string;
+  onSave: (start: string | undefined, end: string | undefined) => void;
+}) {
+  const t = useTranslations();
+  const [editing, setEditing] = useState(false);
+  const [draftStart, setDraftStart] = useState(startRitual ?? '');
+  const [draftEnd, setDraftEnd] = useState(endRitual ?? '');
+
+  useEffect(() => {
+    if (!editing) {
+      setDraftStart(startRitual ?? '');
+      setDraftEnd(endRitual ?? '');
+    }
+  }, [startRitual, endRitual, editing]);
+
+  const startEdit = () => {
+    setDraftStart(startRitual ?? '');
+    setDraftEnd(endRitual ?? '');
+    setEditing(true);
+  };
+
+  const save = () => {
+    const s = draftStart.trim();
+    const e = draftEnd.trim();
+    onSave(s.length > 0 ? s : undefined, e.length > 0 ? e : undefined);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraftStart(startRitual ?? '');
+    setDraftEnd(endRitual ?? '');
+    setEditing(false);
+  };
+
+  const clearBoth = () => {
+    onSave(undefined, undefined);
+    setDraftStart('');
+    setDraftEnd('');
+    setEditing(false);
+  };
+
+  const hasAny = Boolean(startRitual || endRitual);
+
+  if (editing) {
+    return (
+      <Card className="space-y-3">
+        <p className="text-xs uppercase tracking-wide text-ink-600">
+          {t('habitDetail.bracketing.title')}
+        </p>
+        <label className="block space-y-1.5">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('habitDetail.bracketing.startLabel')}
+          </span>
+          <textarea
+            value={draftStart}
+            onChange={(e) => setDraftStart(e.target.value)}
+            placeholder={t('habitDetail.bracketing.startPlaceholder')}
+            maxLength={140}
+            rows={2}
+            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+          />
+        </label>
+        <label className="block space-y-1.5">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('habitDetail.bracketing.endLabel')}
+          </span>
+          <textarea
+            value={draftEnd}
+            onChange={(e) => setDraftEnd(e.target.value)}
+            placeholder={t('habitDetail.bracketing.endPlaceholder')}
+            maxLength={140}
+            rows={2}
+            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+          />
+        </label>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {hasAny && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearBoth}
+              className="text-red-600 hover:bg-red-50"
+            >
+              {t('habitDetail.bracketing.clear')}
+            </Button>
+          )}
+          <Button type="button" variant="ghost" onClick={cancel}>
+            {t('habitDetail.bracketing.cancel')}
+          </Button>
+          <Button type="button" onClick={save}>
+            {t('habitDetail.bracketing.save')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!hasAny) {
+    return (
+      <Card className="space-y-2 border-sand-200 bg-sand-50">
+        <p className="text-xs uppercase tracking-wide text-sand-700">
+          {t('habitDetail.bracketing.emptyTitle')}
+        </p>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {t('habitDetail.bracketing.emptyBody')}
+        </p>
+        <div className="pt-1">
+          <Button type="button" onClick={startEdit}>
+            {t('habitDetail.bracketing.set')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <p className="text-xs uppercase tracking-wide text-ink-600">
+            {t('habitDetail.bracketing.title')}
+          </p>
+          <p className="pt-1 text-xs text-ink-500">
+            {t('habitDetail.bracketing.body')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={startEdit}
+          className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
+        >
+          {t('habitDetail.bracketing.edit')}
+        </button>
+      </div>
+      <div className="space-y-2">
+        {startRitual && (
+          <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-leaf-700">
+              {t('habitDetail.bracketing.startTitle')}
+            </p>
+            <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
+              {startRitual}
+            </p>
+          </div>
+        )}
+        {endRitual && (
+          <div className="rounded-xl border-s-2 border-sand-400 bg-sand-50 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-sand-700">
+              {t('habitDetail.bracketing.endTitle')}
+            </p>
+            <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
+              {endRitual}
+            </p>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
