@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
@@ -19,6 +19,7 @@ import { currentDay, stageFor } from '@/lib/reset';
 import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
+import { AngerProtocol } from '@/components/AngerProtocol';
 
 export default function HomePage() {
   return (
@@ -54,6 +55,8 @@ function Home() {
     [restartStrikes, lastRestartAt, today],
   );
   const fmt = useNumberFormatter();
+  const angerProtocolEnabled = profile?.angerProtocolEnabled === true;
+  const [showAnger, setShowAnger] = useState(false);
 
   const phase = useMemo(() => ramadanPhase(), []);
   const ramadanOn = profile ? isRamadanModeActive(profile.ramadanMode) : false;
@@ -186,6 +189,21 @@ function Home() {
         </Link>
       )}
 
+      {angerProtocolEnabled && (
+        <button
+          type="button"
+          onClick={() => setShowAnger(true)}
+          className="tap-44 w-full rounded-2xl border border-sand-200 bg-sand-50 px-4 py-3 text-start transition hover:border-sand-300"
+        >
+          <p className="text-xs uppercase tracking-wide text-sand-600">
+            {t('angerProtocol.homeButtonEyebrow')}
+          </p>
+          <p className="pt-1 text-sm font-medium leading-relaxed text-ink-800">
+            {t('angerProtocol.homeButtonLabel')}
+          </p>
+        </button>
+      )}
+
       {rotating && (
         <Link href={`/habits/detail?id=${rotating.habit.id}`} className="block">
           <Card className="border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
@@ -307,6 +325,8 @@ function Home() {
           + {t('home.addHabit')}
         </Link>
       </section>
+
+      {showAnger && <AngerProtocol onClose={() => setShowAnger(false)} />}
     </div>
   );
 }

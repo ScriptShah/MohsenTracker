@@ -35,6 +35,7 @@ export const presetHabits: PresetHabit[] = [
   { presetKey: 'tahajjud', category: 'islamic', type: 'good' },
   { presetKey: 'sadaqah', category: 'islamic', type: 'good' },
   { presetKey: 'gheebat', category: 'islamic', type: 'bad', unit: 'incidents', limit: 0 },
+  { presetKey: 'manageAnger', category: 'islamic', type: 'good' },
 
   // Health
   { presetKey: 'sleep', category: 'health', type: 'good', unit: 'hours', target: 7 },
