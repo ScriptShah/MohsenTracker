@@ -188,7 +188,16 @@
     "cargoPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
     "create": "Create habit",
     "presetsTitle": "Pick from presets",
-    "presetsBody": "One-tap add for the habits you don't have yet."
+    "presetsBody": "One-tap add for the habits you don't have yet.",
+    "twoMinuteStarter": {
+      "eyebrow": "How big do you want to start?",
+      "title": "{name}",
+      "body": "Start tiny. Build the habit first — you can scale up after 30 days.",
+      "twoMinuteLabel": "2-minute starter",
+      "fullLabel": "Full version",
+      "recommended": "Recommended",
+      "targetLine": "{value} {unit} a day"
+    }
   },
   "progress": {
     "title": "Progress",
@@ -419,42 +428,78 @@
   "angerProtocol": {
     "title": "Anger settling in",
     "body": "Walk these steps in order. Don't rush. The wave passes.",
-    "homeButtonEyebrow": "Prophetic protocol",
     "homeButtonLabel": "Anger settling in? Open the protocol.",
     "close": "Done",
-    "steps": {
-      "taawwudh": {
-        "title": "Seek refuge from Satan",
-        "body": "The Prophet ﷺ said: \"If a man seeks refuge with Allah from Satan when angry, his anger will go away.\" Say it now, even silently.",
-        "arabic": "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
-        "translation": "I seek refuge in Allah from Satan, the accursed.",
-        "source": "Sahih al-Bukhari 6048"
-      },
-      "posture": {
-        "title": "Change your posture",
-        "body": "If you are standing, sit down. If you are sitting, lie down. Move your body out of the position anger has it in.",
-        "source": "Sunan Abi Dawud 4782"
-      },
-      "wudu": {
-        "title": "Make wudu",
-        "body": "\"Anger is from Satan, and Satan was created from fire — and fire is extinguished by water. So when one of you is angry, let him make ablution.\" Cool the heat literally.",
-        "source": "Sunan Abi Dawud 4784"
-      },
-      "breath": {
-        "title": "Be silent. Breathe for 90 seconds.",
-        "body": "\"When one of you is angry, let him be silent.\" The adrenaline wave in the body lasts about 90 seconds — outlast it. Breathe in slowly through the nose, out slowly through the mouth.",
-        "start": "Start 90 seconds",
-        "stop": "Stop",
-        "done": "The wave has passed.",
-        "restart": "Restart timer",
-        "source": "Musnad Ahmad"
-      },
-      "dua": {
-        "title": "Close with a dua",
-        "body": "Hand the moment back to Allah.",
-        "arabic": "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْغَضَبِ وَالْكَسَلِ",
-        "translation": "O Allah, I seek refuge in You from anger and laziness.",
-        "source": "Sunan Abi Dawud 1555"
+    "islamic": {
+      "homeButtonEyebrow": "Prophetic protocol",
+      "steps": {
+        "taawwudh": {
+          "title": "Seek refuge from Satan",
+          "body": "The Prophet ﷺ said: \"If a man seeks refuge with Allah from Satan when angry, his anger will go away.\" Say it now, even silently.",
+          "arabic": "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+          "translation": "I seek refuge in Allah from Satan, the accursed.",
+          "source": "Sahih al-Bukhari 6048"
+        },
+        "posture": {
+          "title": "Change your posture",
+          "body": "If you are standing, sit down. If you are sitting, lie down. Move your body out of the position anger has it in.",
+          "source": "Sunan Abi Dawud 4782"
+        },
+        "wudu": {
+          "title": "Make wudu",
+          "body": "\"Anger is from Satan, and Satan was created from fire — and fire is extinguished by water. So when one of you is angry, let him make ablution.\" Cool the heat literally.",
+          "source": "Sunan Abi Dawud 4784"
+        },
+        "breath": {
+          "title": "Be silent. Breathe for 90 seconds.",
+          "body": "\"When one of you is angry, let him be silent.\" The adrenaline wave in the body lasts about 90 seconds — outlast it. Breathe in slowly through the nose, out slowly through the mouth.",
+          "start": "Start 90 seconds",
+          "stop": "Stop",
+          "done": "The wave has passed.",
+          "restart": "Restart timer",
+          "source": "Musnad Ahmad"
+        },
+        "dua": {
+          "title": "Close with a dua",
+          "body": "Hand the moment back to Allah.",
+          "arabic": "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْغَضَبِ وَالْكَسَلِ",
+          "translation": "O Allah, I seek refuge in You from anger and laziness.",
+          "source": "Sunan Abi Dawud 1555"
+        }
+      }
+    },
+    "universal": {
+      "homeButtonEyebrow": "Calming protocol",
+      "steps": {
+        "name": {
+          "title": "Name the feeling",
+          "body": "Say to yourself, even silently: \"I'm angry right now.\" Naming an emotion measurably reduces the amygdala response — the labeling itself does work.",
+          "source": "Affect-labeling research, UCLA (Lieberman, 2007)"
+        },
+        "posture": {
+          "title": "Change your posture",
+          "body": "If you're standing, sit. If you're sitting, lie down. The body and mind move together — shifting one shifts the other.",
+          "source": "Embodied cognition"
+        },
+        "water": {
+          "title": "Cold water",
+          "body": "Splash cold water on your face, or hold your wrists under the tap for 30 seconds. Cold triggers the mammalian dive reflex and slows your heart rate.",
+          "source": "DBT TIPP skill — Temperature"
+        },
+        "breath": {
+          "title": "Be silent. Breathe for 90 seconds.",
+          "body": "The adrenaline wave in the body lasts about 90 seconds — outlast it. Breathe in slowly through the nose, out slowly through the mouth.",
+          "start": "Start 90 seconds",
+          "stop": "Stop",
+          "done": "The wave has passed.",
+          "restart": "Restart timer",
+          "source": "Neuroscience: the 90-second rule (Jill Bolte Taylor)"
+        },
+        "close": {
+          "title": "Close with a calming line",
+          "body": "Take one more slow breath and say, quietly, to yourself: \"It came. It went. I'm still here.\"",
+          "source": "Self-affirmation"
+        }
       }
     }
   },
@@ -729,7 +774,7 @@
     "sound": "Sound effects",
     "soundHint": "Soft chimes when you check off habits, hit streak milestones, claim rewards, finish a book.",
     "angerProtocolLabel": "Anger protocol button",
-    "angerProtocolHint": "Show a one-tap button on Home that opens the Prophetic ﷺ anger protocol: ta'awwudh → posture → wudu → 90 seconds of silence → dua.",
+    "angerProtocolHint": "Show a one-tap button on Home that opens a 5-step calming protocol for the moment of anger. The exact wording follows your Motivation voice — the Prophetic ﷺ steps when Islamic, a secular calming sequence when Universal.",
     "prayerSection": "Prayer times",
     "prayerCity": "City",
     "prayerCityCustom": "Custom city",
@@ -1208,6 +1253,29 @@
     "screenTime": "Screen time (hours)",
     "junkFood": "Junk food (servings)",
     "gheebat": "Backbiting incidents",
-    "manageAnger": "Manage anger (Prophetic protocol)"
+    "manageAnger": "Manage anger (Prophetic protocol)",
+    "fivePrayersTwoMinute": "Pray one prayer on time today",
+    "quranPagesTwoMinute": "Read one page of Quran",
+    "waterTwoMinute": "Drink one glass at wake-up",
+    "exerciseTwoMinute": "Move for five minutes",
+    "stepsTwoMinute": "Walk one thousand steps",
+    "pushupsTwoMinute": "Five push-ups",
+    "squatsTwoMinute": "Five squats",
+    "jumpRopeTwoMinute": "Jump rope for two minutes",
+    "walkingTwoMinute": "Walk for five minutes",
+    "runningTwoMinute": "Run for five minutes",
+    "savingTwoMinute": "Set aside one unit today",
+    "deepWorkTwoMinute": "Deep work for fifteen minutes",
+    "readingTwoMinute": "Read one page",
+    "learningTwoMinute": "Learn for two minutes"
+  },
+  "levelUp": {
+    "eyebrow": "Ready to level up?",
+    "title": "{days}-day streak on {habit}. The habit is wired in.",
+    "body": "You started small on purpose. Thirty days in, you can scale up — or stay where you are. The habit is what matters.",
+    "scaleUpTo": "Scale up to",
+    "targetLine": "{value} {unit} a day",
+    "cta": "Level up",
+    "stay": "Stay at this size"
   }
 }

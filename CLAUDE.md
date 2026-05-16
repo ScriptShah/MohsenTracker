@@ -34,7 +34,7 @@ Versions are exact ranges from `package.json` (Next.js 14 line, not 15+):
   not `dark:` variants). Logical properties (`ms-`/`me-`/`ps-`/`pe-`)
   are used throughout for RTL.
 - **State**: Zustand `^4.5.5` with `persist` middleware → `localStorage`
-  under `mohsen-tracker:v1`. Schema version 14 (additive migrations —
+  under `mohsen-tracker:v1`. Schema version 15 (additive migrations —
   every release has only added optional fields, defaulted new arrays to
   empty, never broken older snapshots).
 - **i18n**: `next-intl` `^3.20.0`, locale routing `/en/...` and `/fa/...`,
@@ -122,6 +122,7 @@ MohsenTracker/
     │   ├── streakFire.ts          # 7-tier fire metadata + sentence track
     │   ├── streaks.ts             # Per-habit streak from log history
     │   ├── sync.ts                # Cloud snapshot push/pull
+    │   ├── twoMinute.ts           # §23 level-up eligibility (30-day threshold)
     │   ├── units.ts               # Unit label translation
     │   └── useLiveCounts.ts       # Live-count subscription hook
     ├── components/
@@ -142,6 +143,7 @@ MohsenTracker/
     │   ├── IftarCountdown.tsx
     │   ├── InstallPrompt.tsx      # Android beforeinstallprompt + iOS hint
     │   ├── LeafLogo.tsx
+    │   ├── LevelUpCard.tsx        # §23 "ready to level up?" prompt
     │   ├── RouteGuard.tsx
     │   ├── SignInForm.tsx
     │   ├── SoundUnlock.tsx        # iOS gesture-unlock for AudioContext
@@ -243,6 +245,27 @@ MohsenTracker/
   both `habits/new` and `habits/detail`.
 - `src/domain/seed.ts` (`presetReplacements`),
   `src/app/[locale]/habits/{new,detail}/page.tsx`
+
+### 2-Minute Rule
+- Spec §23
+- **Status**: Complete (habit-stacking phrasing §23.6 still pending)
+- Every target-based preset carries a `twoMinuteVersion` (`PresetHabit`
+  field) with a smaller `target` and a distinct `nameKey`. The habit
+  creation picker pauses on a size-choice card when the user taps a
+  preset with a 2-minute alternative, recommending the smaller starter.
+  Onboarding seeds habits at their 2-minute size by default. Habits
+  created at the smaller size carry `Habit.isTwoMinuteVersion = true`;
+  after 30 consecutive days of streak (via `eligibleLevelUps`), a
+  "ready to level up?" card surfaces on Home (highest-streak candidate)
+  and on the habit detail page. "Stay at this size" stamps
+  `levelUpPromptDismissedAt` for a 30-day cooldown. "Level up" rewrites
+  the habit's name/target/unit to the preset's full version.
+- `src/domain/seed.ts` (`twoMinuteVersion`, `buildSeedHabits`),
+  `src/lib/twoMinute.ts`, `src/components/LevelUpCard.tsx`,
+  `src/app/[locale]/habits/new/page.tsx` (size-choice card),
+  `src/app/[locale]/habits/detail/page.tsx`,
+  `src/app/[locale]/page.tsx`,
+  `src/lib/store.ts` (`levelUpHabit`, `dismissLevelUpPrompt`)
 
 ### Per-Habit Streaks
 - Spec §5.6
@@ -601,12 +624,17 @@ MohsenTracker/
   Islamic context). **Nothing from them is loaded into the app.**
   They are "future content packs" — not even data files exist.
 
-### 2-Minute Rule (Spec §23)
-- Every preset habit needs `fullVersion` and `twoMinuteVersion`
-  fields. Habit-creation UI offers both side-by-side and recommends
-  the 2-minute version. After a 30-day streak, prompts the user to
-  level up. Optional habit-stacking phrase field on creation. **Not
-  in codebase**; current `presetHabits` only carry the full version.
+### Anger Management Protocol (Spec §22)
+- New preset habit `manageAnger` + a one-tap `AngerProtocol.tsx`
+  modal overlay that walks the Prophetic ﷺ protocol (ta'awwudh →
+  posture → wudu → 90-second silent breathing → dua), home-screen
+  trigger button, settings toggle (off by default). **Not in
+  codebase.** Replaces the rejected "Sukoon Mode" module.
+
+### 2-Minute Rule (Spec §23) — *moved to Implemented; see "2-Minute Rule"*
+- Habit-stacking phrasing (§23.6) is **still not wired** — the optional
+  free-text field "After I [routine], I will [this habit]" is the only
+  outstanding piece from §23.
 
 ### Task Bracketing (Spec §24.1)
 - Optional `startRitual` / `endRitual` text fields on each habit,
@@ -785,17 +813,17 @@ Reverse chronological — last ~20 commits, condensed:
 
 ## Next Recommended Steps
 
-With the §24.3 notifications reframe (PR #17), Anger Protocol (§22,
-PR #19), and Positive Cargo (§24.2, PR #18) all shipped since the
-original spec §25.5 list was written, the remaining shippable
-priority list is:
+The original spec §25.5 list (auto-replacement, Vercel deploy) is
+done; so are the notifications-honest-copy reframe (PR #17), Anger
+Protocol (PR #19), Positive Cargo (PR #18), and the 2-Minute Rule
+(this PR). Remaining shippable priorities:
 
-1. **2-Minute Rule (§23)** — add `fullVersion` + `twoMinuteVersion`
-   to `PresetHabit` and `Habit`, update the creation UI to offer both
-   and recommend the 2-minute starter. Touches the preset list and
-   unlocks subsequent §22-§24 features per spec §25.3.
-2. **Task Bracketing (§24.1)** — small field additions on `Habit`
-   (`startRitual` / `endRitual`) with paired UI on the detail page.
+1. **Task Bracketing (§24.1)** — optional `startRitual` / `endRitual`
+   text fields on `Habit`, shown on the detail page. No new
+   infrastructure; small field additions plus a single UI card.
+2. **Habit Stacking phrasing (§23.6)** — single optional free-text
+   field "After I [routine], I will [this habit]" on the creation
+   form, displayed on the detail page. Trivial.
 
 Beyond those, in rough order:
 

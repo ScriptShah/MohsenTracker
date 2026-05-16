@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { ArrowBack, ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { BookCover } from '@/components/BookCover';
+import { LevelUpCard } from '@/components/LevelUpCard';
 import { useAppStore } from '@/lib/store';
 import { getNarrative, recentAvgValue } from '@/lib/projections';
 import { useNumberFormatter } from '@/lib/format';
@@ -16,6 +17,7 @@ import { shouldMuteConsequences } from '@/lib/sensitivity';
 import { isAudiobook, pagesRead, progressPercent } from '@/lib/books';
 import { useUnitLabel } from '@/lib/units';
 import { todayKey } from '@/lib/dates';
+import { isLevelUpEligible } from '@/lib/twoMinute';
 import type { Book, ConsequenceSensitivity, Habit } from '@/domain/types';
 
 function sliceForSensitivity(
@@ -134,6 +136,10 @@ function HabitDetail() {
             ) : null)}
         </div>
       </header>
+
+      {habit.isTwoMinuteVersion && isLevelUpEligible(habit, streak, new Date().toISOString()) && (
+        <LevelUpCard habit={habit} streak={streak} />
+      )}
 
       {(replacementOut || replacementIn) && (
         <Card className={
@@ -263,6 +269,14 @@ function HabitDetail() {
           <p className="pt-2 text-xs text-ink-500">— {narrative.hadith.source}</p>
         </Card>
       )}
+
+      <BracketingCard
+        startRitual={habit.startRitual}
+        endRitual={habit.endRitual}
+        onSave={(start, end) =>
+          setHabitRituals(habit.id, { startRitual: start, endRitual: end })
+        }
+      />
 
       <BooksSection habit={habit} />
 
