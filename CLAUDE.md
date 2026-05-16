@@ -518,8 +518,12 @@ MohsenTracker/
   Theme (auto/light/dark). Ramadan mode override (auto/on/off).
   Sound on/off. **Motivation voice (Smart / Islamic / Universal)** —
   drives the StreakFire sentence track. Prayer city + method.
-  Daily notification time + per-habit toggles **(UI exists; no
-  notification delivery is wired — see "Push Notifications" gap)**.
+  Notifications section is a static "Not active yet" status card per
+  §24.3 — identity-framed copy explains why the app stays quiet by
+  default and names what will fire when delivery ships (prayer times,
+  Iftar countdown, opt-in nightly streak check-in). The
+  `profile.notifications` shape is preserved for forward-compat — no
+  toggles or time-picker render today (see "Push Notifications" gap).
   Consequence sensitivity. Reset progress (wipes local). Delete
   account (wipes Firebase user + local).
 - `src/app/[locale]/profile/page.tsx`
@@ -534,17 +538,45 @@ MohsenTracker/
 - `src/app/[locale]/{books,habits,categories}/detail/page.tsx` plus
   legacy `[id]/page.tsx` redirect shims
 
+### Anger Management Protocol
+- Spec §22
+- **Status**: Complete
+- New `manageAnger` preset (Islamic category, good habit) plus a
+  full-screen `AngerProtocol` overlay that walks the Prophetic ﷺ
+  protocol — ta'awwudh → posture change → wudu → 90-second silent
+  breathing timer → closing dua. Opt-in via `profile.angerProtocolEnabled`
+  (off by default); when on, a calm one-tap trigger button surfaces on
+  the Home screen so the protocol is reachable at the moment of anger
+  without navigating. Replaces the rejected "Sukoon Mode" module idea.
+- `src/components/AngerProtocol.tsx`, `src/domain/seed.ts`
+  (`manageAnger` preset), `src/domain/types.ts`
+  (`profile.angerProtocolEnabled`), `src/app/[locale]/page.tsx`
+  (Home trigger button), `messages/{en,fa}.json` → `angerProtocol.*`
+
+### Positive Cargo (pair each slip with a good deed)
+- Spec §24.2
+- **Status**: Complete
+- Optional `Habit.positiveCargo` field on bad habits — a good-deed
+  prompt the user sets in advance and is shown immediately after a
+  slip ("you slipped — carry the cargo"). Edited from both the
+  habit-creation form and the detail page via a dedicated `CargoCard`.
+  Quranic anchor: "Indeed, good deeds erase bad deeds" (Quran 11:114).
+- `src/domain/types.ts` (`Habit.positiveCargo`), `src/lib/store.ts`
+  (`setHabitPositiveCargo`), `src/app/[locale]/habits/new/page.tsx`
+  (creation UI), `src/app/[locale]/habits/detail/page.tsx`
+  (inline `CargoCard` + slip prompt), `messages/{en,fa}.json` →
+  `habit.cargo*` + `habitDetail.cargo.*` + `cargoSlip.*`
+
 ## Features Not Yet Implemented
 
-### Push Notifications (Spec §3 Backend, §7.7, §24.3)
-- The Settings UI exposes daily-time + per-habit notification toggles
-  and the values are persisted, but **no actual delivery is wired**.
-  No FCM SDK calls, no service-worker push handler, no notification
-  permission prompt. Cloud Messaging is on the spec stack but unused
-  in code. Per §24.3 the design target is notifications-off-by-default
-  with identity-framed opt-in copy; the smallest correct fix is
-  "remove the toggles + reframe + leave the door open," with full
-  FCM wiring as the larger alternative.
+### Push Notifications (Spec §3 Backend, §7.7)
+- The §24.3 reframe shipped (PR #17): Settings now renders an honest
+  "Not active yet" status card instead of fake toggles. The actual
+  delivery pipeline is still **not wired** — no FCM SDK calls, no
+  service-worker push handler, no notification permission prompt.
+  Cloud Messaging is on the spec stack but unused in code. The
+  `profile.notifications` shape is preserved so a future FCM wiring
+  can read the same fields without a migration.
 
 ### Cloud Storage (Spec §3 Backend)
 - Book covers are stored as data-URLs inside the Zustand snapshot
@@ -569,13 +601,6 @@ MohsenTracker/
   Islamic context). **Nothing from them is loaded into the app.**
   They are "future content packs" — not even data files exist.
 
-### Anger Management Protocol (Spec §22)
-- New preset habit `manageAnger` + a one-tap `AngerProtocol.tsx`
-  modal overlay that walks the Prophetic ﷺ protocol (ta'awwudh →
-  posture → wudu → 90-second silent breathing → dua), home-screen
-  trigger button, settings toggle (off by default). **Not in
-  codebase.** Replaces the rejected "Sukoon Mode" module.
-
 ### 2-Minute Rule (Spec §23)
 - Every preset habit needs `fullVersion` and `twoMinuteVersion`
   fields. Habit-creation UI offers both side-by-side and recommends
@@ -586,12 +611,6 @@ MohsenTracker/
 ### Task Bracketing (Spec §24.1)
 - Optional `startRitual` / `endRitual` text fields on each habit,
   shown on the detail page. **Not in codebase.**
-
-### Positive Cargo (Spec §24.2)
-- Optional `positiveCargo` field on bad habits — a good deed to do
-  immediately after a slip. When the user logs a bad habit, the UI
-  prompts the cargo. Quranic anchor: "Indeed, good deeds erase bad
-  deeds" (Quran 11:114). **Not in codebase.**
 
 ### Tests
 - **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
@@ -660,36 +679,34 @@ recompute deterministically).
 
 ## Known Issues and Bugs
 
-1. **Notification UI is a lie**: toggles persist values but no
-   notifications are ever sent. Top of the gap list.
-2. **Splash text debt**: 4 of 5 wisdom-quote slides are rejected
+1. **Splash text debt**: 4 of 5 wisdom-quote slides are rejected
    literary drafts.
-3. **Persian content quality**: most strings outside splash +
+2. **Persian content quality**: most strings outside splash +
    onboarding read as literal translation.
-4. **Compound narrative coverage**: 20 of 31 preset habits use
+3. **Compound narrative coverage**: 20 of 31 preset habits use
    `genericNarrative` — workable but bland.
-5. **Cloud sync is last-writer-wins**. Two devices editing
+4. **Cloud sync is last-writer-wins**. Two devices editing
    concurrently → whichever writes last clobbers the other. The new
    `overallStreak` block is also subject to this; self-heals on next
    mutation since both clients recompute deterministically.
-6. **`profile.numeralSystem` is legacy dead code** — still written
+5. **`profile.numeralSystem` is legacy dead code** — still written
    by onboarding for back-compat, but no consumer reads it after the
    locale-driven numeral fix.
-7. **`profile.readingHabitId` is legacy** — multi-instance reading
+6. **`profile.readingHabitId` is legacy** — multi-instance reading
    habits via `Habit.linksToBooks` superseded it; carry-forward only.
-8. **`onboardingComplete: false` users with a stale local profile
+7. **`onboardingComplete: false` users with a stale local profile
    can land on a category-pick step they already saw** — onboarding
    doesn't deeply validate state on resume.
-9. **No tests anywhere.** `overallStreak.ts`'s qualifying-day rule
+8. **No tests anywhere.** `overallStreak.ts`'s qualifying-day rule
    and recompute walk are the highest-risk untested code.
-10. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
-    in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
-    dep in `books/[id]/page.tsx` (legacy redirect shim).
-11. **Hot-reload swallows persistent IndexedDB cache** (dev only) —
+9. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
+   in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
+   dep in `books/[id]/page.tsx` (legacy redirect shim).
+10. **Hot-reload swallows persistent IndexedDB cache** (dev only) —
     `firebase.ts` falls back to in-memory; data still works.
-12. **Force-quit before sync push = data-loss window**. Includes
+11. **Force-quit before sync push = data-loss window**. Includes
     `overallStreak` mutations.
-13. **`negativeSelfTalk` preset uses unit "incidents"** — same string
+12. **`negativeSelfTalk` preset uses unit "incidents"** — same string
     key as `gheebat`. Both render with the same unit label; fine, but
     worth flagging when touching unit translations.
 
@@ -768,25 +785,20 @@ Reverse chronological — last ~20 commits, condensed:
 
 ## Next Recommended Steps
 
-With bad-habit auto-replacement and Vercel deployment both done since
-the original spec §25.5 list was written, the remaining shippable
+With the §24.3 notifications reframe (PR #17), Anger Protocol (§22,
+PR #19), and Positive Cargo (§24.2, PR #18) all shipped since the
+original spec §25.5 list was written, the remaining shippable
 priority list is:
 
-1. **Fix the notifications lie** — either wire FCM end-to-end OR
-   remove the toggles from Settings and add identity-framed opt-in
-   copy per §24.3. The "remove + reframe + leave the door open"
-   variant is the smallest correct fix; full FCM is the bigger one.
-2. **2-Minute Rule (§23)** — add `fullVersion` + `twoMinuteVersion`
+1. **2-Minute Rule (§23)** — add `fullVersion` + `twoMinuteVersion`
    to `PresetHabit` and `Habit`, update the creation UI to offer both
    and recommend the 2-minute starter. Touches the preset list and
    unlocks subsequent §22-§24 features per spec §25.3.
-3. **Anger Management Protocol (§22)** — `manageAnger` preset +
-   one-tap modal overlay. Self-contained, medium-sized.
+2. **Task Bracketing (§24.1)** — small field additions on `Habit`
+   (`startRitual` / `endRitual`) with paired UI on the detail page.
 
 Beyond those, in rough order:
 
-- **Positive Cargo (§24.2)** + **Task Bracketing (§24.1)** — small
-  field additions on `Habit` with paired UI bits.
 - **Compound-narrative coverage for the remaining 20 presets.**
 - **Idiomatic Persian rewrite, chunk by chunk** — splash + onboarding
   are done; the rest still reads as literal translation.
@@ -849,10 +861,11 @@ across files. Violating them creates cross-cutting rework.
    `src/domain/seed.ts`, with a free-text / habit-picker fallback for
    custom bad habits. Habits store the link in `replacementHabitId`.
    This is a product-level promise from §5.7. **Wired**.
-   **Related (§24.2 Positive Cargo):** Each bad habit should also get
-   an optional `positiveCargo` good deed prompted immediately after a
-   slip — Hebbian plasticity + Quranic anchor (11:114). Not yet
-   implemented.
+   **Related (§24.2 Positive Cargo):** Each bad habit also carries an
+   optional `positiveCargo` good deed prompted immediately after a
+   slip — Hebbian plasticity + Quranic anchor (11:114). **Wired** via
+   `Habit.positiveCargo` (set in creation / detail; surfaced via
+   `cargoSlip` prompt when the user logs the bad habit).
 
 6. **Every preset habit ships in two sizes (§23).** Each entry in
    `presetHabits` must carry both a `fullVersion` and a
@@ -867,9 +880,11 @@ across files. Violating them creates cross-cutting rework.
    exceptions: prayer-time alerts, Iftar countdown during Ramadan,
    a single nightly streak-on-the-line check-in (opt-in). When the
    user does enable, copy must be identity-framed ("Time to be the
-   reader you are"), not nag-framed ("Don't forget!"). Today the
-   default IS `false`, but the UI still promises delivery that
-   doesn't fire — see Push Notifications gap.
+   reader you are"), not nag-framed ("Don't forget!"). The Settings
+   page already follows this — a static "Not active yet" status card
+   instead of fake toggles. Delivery itself isn't wired yet (see
+   Push Notifications gap); when it is, hold the line on the
+   exception list.
 
 8. **Ramadan Mode auto-activates from the Hijri calendar** and
    reshapes the home dashboard (Iftar countdown most prominent,
