@@ -26,10 +26,19 @@ export function CloudSync() {
     lastPulledUid.current = auth.uid;
     let cancelled = false;
     (async () => {
-      const restored = await pullSnapshot(auth.uid);
+      const result = await pullSnapshot(auth.uid);
       if (cancelled) return;
+      // Only allow pushes after we've definitively heard back from the
+      // cloud (either 'found' or 'empty'). On 'error', leave pulledRef
+      // false so the subscriber effect below won't push local mutations
+      // up — we don't know what's in the cloud, and pushing blind would
+      // overwrite the user's data on the other device with whatever
+      // happens to be on this one.
+      if (result === 'error') return;
       pulledRef.current = true;
-      // First sign-in for this user — no cloud snapshot yet. Two cases:
+      // Cloud doc exists and was applied — nothing else to do.
+      if (result === 'found') return;
+      // 'empty' — no cloud snapshot for this user yet. Two cases:
       //   1. The local data belongs to this same user (e.g. they used the
       //      app as a guest, or this is their first device): push it up
       //      so it becomes their cloud starting point.
@@ -37,13 +46,11 @@ export function CloudSync() {
       //      account on this shared device. Pushing it would contaminate
       //      the new user's cloud with someone else's habits. Wipe local
       //      first, then push an empty starting state.
-      if (!restored) {
-        const localUid = useAppStore.getState().profile?.cloudSyncUid;
-        if (localUid && localUid !== auth.uid) {
-          useAppStore.getState().reset();
-        }
-        void pushSnapshot(auth.uid);
+      const localUid = useAppStore.getState().profile?.cloudSyncUid;
+      if (localUid && localUid !== auth.uid) {
+        useAppStore.getState().reset();
       }
+      void pushSnapshot(auth.uid);
     })();
     return () => {
       cancelled = true;

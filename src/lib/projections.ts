@@ -147,7 +147,7 @@ const builders: Record<string, Builder> = {
         t('narratives.saving.c2', { tenYear: fmt(Math.round(tenYear)) }),
       ],
       reversalLines: [
-        t('narratives.saving.r1'),
+        t('narratives.saving.r1', { yearly: fmt(Math.round(yearly)) }),
         t('narratives.saving.r2'),
       ],
       hadith: hadithFromKey(t, 'saving'),

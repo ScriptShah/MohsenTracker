@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { usePathname } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,6 +11,12 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = 'install_prompt_dismissed';
+/** Ms of "snooze" applied when the user taps "Not now". After this much
+ *  time the prompt may surface again on Home; before then it stays hidden
+ *  on every page. Tapping the X (permanent dismiss) writes DISMISSED_KEY
+ *  instead and bypasses this. */
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const SNOOZED_AT_KEY = 'install_prompt_snoozed_at';
 
 function isStandalone(): boolean {
   if (typeof window === 'undefined') return false;
@@ -26,14 +33,21 @@ function isIOS(): boolean {
 
 /** Bottom-floating install banner. Hidden when:
  *  - the app is already running in standalone (PWA installed)
- *  - the user has dismissed it before (localStorage flag)
+ *  - the user permanently dismissed it (DISMISSED_KEY)
+ *  - the user snoozed it within the last 7 days (SNOOZED_AT_KEY)
  *  - the user hasn't completed onboarding yet
+ *  - the user is on any page other than Home — the prompt used to
+ *    follow the user around (workspaces/new, settings, etc.) and could
+ *    overlap CTAs like "Create workspace". Restricting it to Home keeps
+ *    it out of the way during real work and is still discoverable on
+ *    every return to the home screen.
  *  - on desktop: until the browser fires beforeinstallprompt
  *  - on iOS Safari: shows a manual "Share → Add to Home Screen" hint
  *    (iOS doesn't expose a programmatic install API).
  */
 export function InstallPrompt() {
   const t = useTranslations();
+  const pathname = usePathname();
   const onboardingComplete = useAppStore(
     (s) => s.profile?.onboardingComplete ?? false,
   );
@@ -46,6 +60,8 @@ export function InstallPrompt() {
     if (typeof window === 'undefined') return;
     if (isStandalone()) return;
     if (localStorage.getItem(DISMISSED_KEY) === '1') return;
+    const snoozedAt = Number(localStorage.getItem(SNOOZED_AT_KEY) || 0);
+    if (snoozedAt && Date.now() - snoozedAt < SNOOZE_MS) return;
 
     if (isIOS()) {
       setVariant('ios');
@@ -75,6 +91,11 @@ export function InstallPrompt() {
     setHidden(true);
   }, []);
 
+  const snooze = useCallback(() => {
+    localStorage.setItem(SNOOZED_AT_KEY, String(Date.now()));
+    setHidden(true);
+  }, []);
+
   const triggerInstall = useCallback(async () => {
     if (!installEvent) return;
     try {
@@ -91,6 +112,9 @@ export function InstallPrompt() {
   }, [installEvent]);
 
   if (hidden || variant === 'none' || !onboardingComplete) return null;
+  // Only render on Home. Pathname comes from next-intl/routing so it's
+  // already locale-stripped — '/' matches /en, /fa, etc.
+  if (pathname !== '/') return null;
 
   return (
     <div
@@ -139,12 +163,30 @@ export function InstallPrompt() {
         </button>
       </div>
       {variant === 'android' && (
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={snooze}
+            className="tap-44 flex-1 rounded-xl border border-ink-200 bg-white py-2 text-sm font-medium text-ink-600 hover:bg-ink-50"
+          >
+            {t('install.notNow')}
+          </button>
+          <button
+            type="button"
+            onClick={triggerInstall}
+            className="tap-44 flex-[2] rounded-xl bg-leaf-600 py-2 text-sm font-semibold text-white hover:bg-leaf-700 active:bg-leaf-800"
+          >
+            {t('install.installButton')}
+          </button>
+        </div>
+      )}
+      {variant === 'ios' && (
         <button
           type="button"
-          onClick={triggerInstall}
-          className="tap-44 mt-3 w-full rounded-xl bg-leaf-600 py-2 text-sm font-semibold text-white hover:bg-leaf-700 active:bg-leaf-800"
+          onClick={snooze}
+          className="tap-44 mt-3 w-full rounded-xl border border-ink-200 bg-white py-2 text-sm font-medium text-ink-600 hover:bg-ink-50"
         >
-          {t('install.installButton')}
+          {t('install.notNow')}
         </button>
       )}
     </div>

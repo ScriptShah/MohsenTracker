@@ -2,6 +2,7 @@
   "title": "Install MohsenTracker",
   "androidBody": "Install the app for fullscreen use, faster loads, and offline habit logging.",
   "installButton": "Install",
+  "notNow": "Not now",
   "iosStep1": "Tap",
   "iosStep2": "Then \"Add to Home Screen\"",
   "dismiss": "Dismiss"

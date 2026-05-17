@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
 import { Button } from './Button';
 
@@ -30,14 +31,30 @@ interface TutorialStep {
   preferred: 'above' | 'below';
   /** Translation key suffix → `tutorial.steps.{slug}.{title|body}`. */
   slug: string;
+  /** Optional in-app destination. When set, the tooltip gains an
+   *  **Open** button that navigates there and finishes the tutorial —
+   *  so the tour can actually take the user to the workspaces hub,
+   *  settings page, etc. instead of just describing them. */
+  href?: string;
 }
 
+/** Order matters: home elements first (so the user learns the daily
+ *  loop), then the bottom nav (so they learn navigation), then the
+ *  top-bar profile (so they know where settings + sign-out live).
+ *  Each step is independently optional — a missing target is skipped
+ *  silently, so e.g. the workspaces step is a no-op for users with no
+ *  workspaces section rendered yet. */
 const STEPS: TutorialStep[] = [
   { key: 'lives', preferred: 'below', slug: 'hearts' },
   { key: 'ring', preferred: 'below', slug: 'ring' },
   { key: 'checklist', preferred: 'above', slug: 'checklist' },
-  { key: 'workspaces', preferred: 'above', slug: 'workspaces' },
-  { key: 'nav-futureSelf', preferred: 'above', slug: 'futureSelf' },
+  { key: 'add-habit', preferred: 'above', slug: 'addHabit', href: '/habits/new' },
+  { key: 'workspaces', preferred: 'above', slug: 'workspaces', href: '/workspaces' },
+  { key: 'nav-categories', preferred: 'above', slug: 'categories', href: '/categories' },
+  { key: 'nav-progress', preferred: 'above', slug: 'progress', href: '/progress' },
+  { key: 'nav-futureSelf', preferred: 'above', slug: 'futureSelf', href: '/future-self' },
+  { key: 'nav-books', preferred: 'above', slug: 'books', href: '/books' },
+  { key: 'profile', preferred: 'below', slug: 'profile', href: '/profile' },
 ];
 
 const PAD = 8; // Padding around the target rect for the spotlight ring.
@@ -46,6 +63,7 @@ const TOOLTIP_MAX_WIDTH = 320;
 
 export function Tutorial() {
   const t = useTranslations();
+  const router = useRouter();
   const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
 
@@ -91,17 +109,44 @@ export function Tutorial() {
         if (bounds.width === 0 && bounds.height === 0) continue;
 
         // Scroll into view if the target is off-screen or only partly in
-        // view. `block: 'center'` puts it mid-viewport so the tooltip has
-        // room on both sides regardless of preferred placement. Sync
-        // (default behavior), so the very next measurement reflects the
-        // scrolled position.
+        // view. For TALL targets (checklist, workspace section) `block:
+        // 'start'` puts the top of the target near the top of the
+        // viewport so the spotlight visibly starts from a real edge —
+        // `block: 'center'` would put the middle of a tall list under
+        // the tooltip, with no visible top boundary on the cutout. For
+        // SHORT targets, 'center' is still best (tooltip has room on
+        // both sides). The 60vh threshold separates the two cases.
         const vh = window.innerHeight;
         const margin = 80;
         const offTop = bounds.top < margin;
         const offBottom = bounds.bottom > vh - margin;
+        const isTall = bounds.height > vh * 0.6;
         if (offTop || offBottom) {
-          el.scrollIntoView({ block: 'center', inline: 'nearest' });
+          el.scrollIntoView({
+            block: isTall ? 'start' : 'center',
+            inline: 'nearest',
+          });
           bounds = el.getBoundingClientRect();
+        }
+
+        // Clamp the cutout to a reasonable height when the target is
+        // longer than the visible viewport. Without this, a 1500-px-tall
+        // checklist becomes a 1500-px-tall cutout, which fills the
+        // screen and leaves no visible dim area — the spotlight
+        // disappears. Cap at ~viewport height minus a tooltip-sized
+        // reserve, so the bottom of the cutout still falls inside the
+        // visible area and the dim shoulder is obvious. Note: this is
+        // a presentation-only clamp on `bounds` for the cutout; the
+        // tooltip math below uses the same clamped value, so tooltip
+        // placement stays consistent.
+        const maxHeight = vh - 240; // leave room for the tooltip below
+        if (bounds.height > maxHeight) {
+          bounds = new DOMRect(
+            bounds.left,
+            bounds.top,
+            bounds.width,
+            maxHeight,
+          );
         }
 
         setTarget({ step, bounds });
@@ -149,6 +194,18 @@ export function Tutorial() {
     // Bump past current; the measure loop walks forward to find the
     // next live target.
     setRawStepIdx(STEPS.indexOf(step) + 1);
+  };
+
+  /** Navigate to the step's destination and finish the tour. Used by the
+   *  per-step Open button. We finish (rather than pause-and-resume) on
+   *  purpose: once the user has gone where the tour pointed them, the
+   *  best UX is to let them explore — re-popping a coach-mark inside an
+   *  unfamiliar screen would be jarring. They can always re-trigger the
+   *  tutorial from Profile if they want a refresh. */
+  const openHref = () => {
+    if (!step.href) return;
+    finish();
+    router.push(step.href as any);
   };
 
   // Cutout pattern: an absolutely-positioned rectangle at the target's
@@ -244,12 +301,17 @@ export function Tutorial() {
               total: String(STEPS.length),
             })}
           </span>
+          {/* Tiny corner skip kept as a quick-out for power users, but
+              the bottom row now carries the primary Skip / Next / Open
+              actions in equal-weight buttons so the choice is obvious. */}
           <button
             type="button"
             onClick={finish}
-            className="text-xs font-medium text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline"
+            className="text-xs font-medium text-ink-400 underline-offset-4 hover:text-ink-700 hover:underline"
+            aria-hidden
+            tabIndex={-1}
           >
-            {t('tutorial.skip')}
+            ✕
           </button>
         </div>
         <h2
@@ -261,7 +323,19 @@ export function Tutorial() {
         <p className="mt-1 text-sm leading-relaxed text-ink-600">
           {t(`tutorial.steps.${step.slug}.body` as any)}
         </p>
-        <div className="mt-4 flex items-center justify-end">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={finish}
+            className="tap-44 rounded-xl px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-100"
+          >
+            {t('tutorial.skip')}
+          </button>
+          {step.href && !isLast && (
+            <Button type="button" variant="ghost" onClick={openHref}>
+              {t('tutorial.open')}
+            </Button>
+          )}
           <Button type="button" onClick={next}>
             {isLast ? t('tutorial.start') : t('tutorial.next')}
           </Button>

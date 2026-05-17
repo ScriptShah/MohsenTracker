@@ -30,13 +30,32 @@ export function SignInForm({ onDone }: { onDone?: () => void }) {
     else setError(translateError(res.error, t));
   };
 
+  const [confirmingGuest, setConfirmingGuest] = useState(false);
+
+  const requestGuest = () => {
+    // Two-tap pattern: the first tap surfaces a small confirmation panel
+    // explaining what guest mode means; the second commits. Previously
+    // a single tap dropped the user into an anonymous session with no
+    // obvious way back to the sign-in form — they had to dig into
+    // Profile → Sign out. The confirmation halves the "I tapped guest
+    // by accident" rate and surfaces the trade-off (no cross-device
+    // sync) before the user is committed.
+    setError(null);
+    setConfirmingGuest(true);
+  };
+
   const onGuest = async () => {
     setError(null);
+    setConfirmingGuest(false);
     setLoading(true);
     const res = await signInAsGuest();
     setLoading(false);
     if (res.ok) onDone?.();
     else setError(translateError(res.error, t));
+  };
+
+  const cancelGuest = () => {
+    setConfirmingGuest(false);
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -111,17 +130,48 @@ export function SignInForm({ onDone }: { onDone?: () => void }) {
       </button>
 
       <div className="border-t border-ink-100 pt-3">
-        <button
-          type="button"
-          onClick={onGuest}
-          disabled={loading}
-          className="block w-full text-center text-xs text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline disabled:opacity-50"
-        >
-          {t('auth.continueAsGuest')}
-        </button>
-        <p className="pt-1 text-center text-[10px] text-ink-400">
-          {t('auth.guestNote')}
-        </p>
+        {confirmingGuest ? (
+          <div className="space-y-2 rounded-xl border border-sand-200 bg-sand-50 p-3">
+            <p className="text-sm font-semibold text-ink-800">
+              {t('auth.guestConfirmTitle')}
+            </p>
+            <p className="text-xs leading-relaxed text-ink-600">
+              {t('auth.guestConfirmBody')}
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={cancelGuest}
+                disabled={loading}
+                className="tap-44 rounded-xl px-3 py-1.5 text-sm font-medium text-ink-700 hover:bg-ink-100"
+              >
+                {t('auth.guestConfirmCancel')}
+              </button>
+              <button
+                type="button"
+                onClick={onGuest}
+                disabled={loading}
+                className="tap-44 rounded-xl bg-sand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sand-700 disabled:opacity-50"
+              >
+                {t('auth.guestConfirmContinue')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={requestGuest}
+              disabled={loading}
+              className="block w-full text-center text-xs text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline disabled:opacity-50"
+            >
+              {t('auth.continueAsGuest')}
+            </button>
+            <p className="pt-1 text-center text-[10px] text-ink-400">
+              {t('auth.guestNote')}
+            </p>
+          </>
+        )}
       </div>
     </Card>
   );

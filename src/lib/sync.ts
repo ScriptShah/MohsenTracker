@@ -47,23 +47,33 @@ function applySnapshot(state: ReturnType<typeof snapshotState>) {
   useAppStore.setState(state, /* replace */ false);
 }
 
-/** Pulls the user's snapshot doc from Firestore and hydrates the store.
- *  Returns true when a snapshot was applied, false otherwise (no snapshot,
- *  Firebase disabled, or read failed). */
-export async function pullSnapshot(uid: string): Promise<boolean> {
-  if (!firebaseEnabled() || !uid) return false;
+/** Result of a pull attempt. Callers MUST distinguish 'empty' (legit
+ *  first sign-in — push local up to seed the cloud) from 'error'
+ *  (transient failure — do NOT push, or we silently clobber the cloud
+ *  with whatever was on this device). The old boolean return collapsed
+ *  these two cases together, which caused cross-device data loss when
+ *  the network blipped during sign-in: the pull failed, the caller
+ *  pushed local data up, and the cloud version was lost. */
+export type PullResult = 'found' | 'empty' | 'error';
+
+/** Pulls the user's snapshot doc from Firestore and hydrates the store. */
+export async function pullSnapshot(uid: string): Promise<PullResult> {
+  if (!firebaseEnabled() || !uid) return 'error';
   const fb = getFirebase();
-  if (!fb) return false;
+  if (!fb) return 'error';
   try {
     const ref = doc(fb.db, 'userSnapshots', uid);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return false;
+    if (!snap.exists()) return 'empty';
     const data = snap.data();
-    if (!data || !data.state) return false;
+    // A doc exists but has no state payload — could be a corrupted
+    // write, an old schema, or a half-written doc. Treat as 'error'
+    // (don't overwrite) rather than 'empty' (would push our local up).
+    if (!data || !data.state) return 'error';
     applySnapshot(data.state as ReturnType<typeof snapshotState>);
-    return true;
+    return 'found';
   } catch {
-    return false;
+    return 'error';
   }
 }
 

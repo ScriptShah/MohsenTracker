@@ -396,6 +396,8 @@ function Profile() {
         </Button>
       </Card>
 
+      <ReplayTutorialCard />
+
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-ink-800">
           {t('settings.resetProgressTitle')}
@@ -410,6 +412,38 @@ function Profile() {
 
       <DeleteAccountCard />
     </div>
+  );
+}
+
+/** "Replay tour" button. Clearing `tutorialCompletedAt` re-arms the
+ *  Tutorial component (which gates on that flag), so the next time the
+ *  user lands on Home the coach-marks fire again. We send them to Home
+ *  explicitly so they don't have to navigate manually — the tour
+ *  starts there. */
+function ReplayTutorialCard() {
+  const t = useTranslations();
+  const router = useRouter();
+  const setProfile = useAppStore((s) => s.setProfile);
+  const hasCompleted = useAppStore(
+    (s) => Boolean(s.profile?.tutorialCompletedAt),
+  );
+  if (!hasCompleted) return null;
+  const onReplay = () => {
+    setProfile({ tutorialCompletedAt: undefined });
+    router.push('/');
+  };
+  return (
+    <Card className="space-y-2">
+      <h2 className="text-sm font-semibold text-ink-800">
+        {t('settings.replayTutorialTitle')}
+      </h2>
+      <p className="text-xs text-ink-500">
+        {t('settings.replayTutorialHint')}
+      </p>
+      <Button type="button" variant="ghost" onClick={onReplay}>
+        {t('settings.replayTutorial')}
+      </Button>
+    </Card>
   );
 }
 
