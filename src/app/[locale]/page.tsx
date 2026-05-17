@@ -20,6 +20,7 @@ import { computeStrikes, shouldOfferRestart } from '@/lib/restart';
 import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
 import { AngerProtocol } from '@/components/AngerProtocol';
+import { WorkspacesHomeSection } from '@/components/WorkspaceChecklist';
 import { LevelUpCard } from '@/components/LevelUpCard';
 import { eligibleLevelUps } from '@/lib/twoMinute';
 import { getFireTrack } from '@/lib/streakFire';
@@ -347,6 +348,8 @@ function Home() {
           + {t('home.addHabit')}
         </Link>
       </section>
+
+      <WorkspacesHomeSection />
 
       {showAnger && <AngerProtocol onClose={() => setShowAnger(false)} />}
     </div>
