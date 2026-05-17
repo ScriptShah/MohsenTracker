@@ -1,0 +1,28 @@
+{
+  "title": "Autophagy fast",
+  "intro": "Start a timer-based fast (16:8, 18:6, OMAD, or longer). Water only — your body switches into repair mode after the first chunk of hours.",
+  "categoryCardTitle": "Autophagy fast",
+  "categoryCardBody": "Start the timer and let your body do its own cleanup work.",
+  "startTitle": "Start a new fast",
+  "startBody": "Pick a target window. You can end the fast whenever you want — the goal is just to know where you are.",
+  "startSubmit": "Start {hours}-hour fast",
+  "fastingActive": "Fast in progress",
+  "elapsed": "Elapsed",
+  "target": "Target: {hours} hours",
+  "remaining": "{hours}h {minutes}m to target",
+  "targetReached": "Target reached — keep going or end it whenever",
+  "end": "End fast",
+  "cancel": "Discard",
+  "cancelConfirm": "Discard this fast without saving?",
+  "historyTitle": "History",
+  "deleteConfirm": "Delete this fast?",
+  "endSheet": {
+    "title": "How are you feeling?",
+    "body": "Before you close this fast, take a moment. Energy, hunger, mood, clarity — what's actually going on right now? This goes into your history so you can spot patterns over time.",
+    "feelingLabel": "Your reflection",
+    "feelingPlaceholder": "Sharper than usual, hungry but steady, calmer in the head…",
+    "confirm": "Save & end fast",
+    "endWithout": "End without notes",
+    "cancel": "Keep fasting"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "title": "دسته‌ها",
+  "addHabit": "افزودن عادت",
+  "addCustom": "دستهٔ جدید",
+  "newTitle": "دستهٔ سفارشی",
+  "newName": "نام",
+  "newIcon": "نماد",
+  "newColor": "رنگ",
+  "namePlaceholder": "سرگرمی، پروژهٔ جانبی، ازدواج…",
+  "create": "ساختن",
+  "habitsCount": "{n} عادت",
+  "habitsCountOne": "۱ عادت",
+  "noHabitsInCategory": "هنوز عادتی این‌جا نیست.",
+  "names": {
+    "islamic": "اعمال اسلامی",
+    "health": "سلامتی",
+    "sport": "ورزش",
+    "finance": "مالی",
+    "career": "کار و بهره‌وری",
+    "growth": "رشد فردی",
+    "relationships": "روابط"
+  },
+  "islamicVerse": {
+    "arabic": "إِنَّ ٱللَّهَ يُحِبُّ ٱلتَّوَّٰبِينَ وَيُحِبُّ ٱلْمُتَطَهِّرِينَ",
+    "translation": "همانا الله توبه‌کنندگان را دوست دارد و پاک‌کنندگانِ خویش را دوست دارد.",
+    "source": "سورهٔ بقره ۲:۲۲۲"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "homeBannerEyebrow": "Restart smaller",
+  "homeBannerTitle": "{strikes} days under 50% in the last fortnight",
+  "homeBannerBody": "The list got too long. Pare it back so the streak can breathe — less is more.",
+  "homeBannerCta": "Open the restart flow",
+  "eyebrow": "Restart smaller",
+  "heroTitle": "It's not failure. The list got too big.",
+  "heroBody": "Three days under 50% means the design is wrong, not you. The compound effect only works on habits you actually finish — so let some go for now.",
+  "heroStat": "{strikes} under-50% days in the last 14",
+  "principleTitle": "Less, done daily",
+  "principleBody": "The Prophet ﷺ said the most beloved deeds to Allah are the most consistent, even if small. Keep the few you'll do today. You can always add more later when these are automatic.",
+  "chooseTitle": "Choose what stays ({n})",
+  "chooseBody": "Tap a habit to drop it. The ones still ticked will be your shorter list. Dropped habits and their logs are removed — by design, this is a fresh start.",
+  "noHabits": "No daily habits to pare. Add some, give them a couple of weeks, then come back if you over-committed.",
+  "summaryLabel": "Plan",
+  "summaryCount": "Keep {keep} · Drop {drop}",
+  "summaryWarning": "Dropping a habit also removes its history. The streak is gone with it.",
+  "commit": "Drop {n} and start fresh",
+  "commitNoChanges": "Keep them all",
+  "confirm": "Drop {n} habits and reset the slate?"
+}

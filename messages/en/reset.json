@@ -1,0 +1,118 @@
+{
+  "title": "Dopamine Reset",
+  "intro": "Step back from a stimulus that's running you. Let your baseline come back.",
+  "active": "Active reset",
+  "noActive": "No active reset right now.",
+  "history": "Past resets",
+  "targetLabel": "What are you resetting from?",
+  "targetPlaceholder": "e.g. Instagram, junk food, doomscrolling",
+  "startTitle": "Pick a tier",
+  "start": "Start reset",
+  "tier": {
+    "weekly24h": {
+      "label": "24-hour weekly",
+      "body": "A short fast you can repeat each week. Ideal for screens and sweets."
+    },
+    "monthly7d": {
+      "label": "7-day monthly",
+      "body": "A week without the thing. Long enough to feel the difference."
+    },
+    "quarterly30d": {
+      "label": "30-day quarterly",
+      "body": "A real reset. Enough time to break the loop and rebuild the self."
+    },
+    "deep90d": {
+      "label": "90-day deep",
+      "body": "For serious addictions. Three months of compounding clarity."
+    }
+  },
+  "dayCounter": "Day {n} of {total}",
+  "currentStreak": "{n} consecutive clean days",
+  "currentStreakOne": "1 consecutive clean day",
+  "lifetime": "{n} lifetime clean days",
+  "lifetimeOne": "1 lifetime clean day",
+  "stage": {
+    "cravings": "Cravings phase",
+    "adjustment": "Adjustment",
+    "clarity": "Clarity",
+    "restoration": "Restoration",
+    "integration": "Integration",
+    "mastery": "Mastery"
+  },
+  "stageHint": {
+    "cravings": "Your brain is asking for the easy hit. Hardest stretch — stay close to your replacements.",
+    "adjustment": "The pull weakens. Sleep gets better, focus comes back in flashes.",
+    "clarity": "The fog lifts. You start seeing what the stimulus was hiding.",
+    "restoration": "Baseline returning. Small things feel rewarding again.",
+    "integration": "The new normal stabilises. You no longer need willpower the same way.",
+    "mastery": "Identity-level shift. You are someone who doesn't do this anymore."
+  },
+  "checkInTitle": "Today's check-in",
+  "checkInBody": "One a day. Keeps the reset honest.",
+  "mood": "How do you feel? (1 = struggling, 5 = thriving)",
+  "insteadOf": "What did you do instead?",
+  "insteadOfPlaceholder": "Walked, prayed, called my brother…",
+  "urges": "Urges journal (optional)",
+  "urgesPlaceholder": "What did the craving sound like? When did it hit?",
+  "saveCheckIn": "Save check-in",
+  "checkedInToday": "Checked in today.",
+  "moodValue": "Mood: {n} / 5",
+  "replacementsTitle": "Try one of these today",
+  "replacementBucket": {
+    "body": "Body",
+    "mind": "Mind",
+    "soul": "Soul",
+    "connection": "Connection"
+  },
+  "activity": {
+    "walk": "Walk for 20 minutes",
+    "pushups": "Do a set of pushups",
+    "cookMeal": "Cook a real meal",
+    "gardening": "Tend something living — plant, garden",
+    "cleanRoom": "Clean a small space",
+    "shower": "A long shower, then stretch",
+    "stretching": "10 minutes of stretching",
+    "readBook": "Read 10 pages of a book",
+    "journal": "Write a page, anything that's on your mind",
+    "sketchOrDraw": "Sketch something — badly is fine",
+    "puzzle": "A puzzle, chess problem, or sudoku",
+    "learnSomething": "Watch a short lecture on something hard",
+    "listenLecture": "An audiobook or talk you've been meaning to play",
+    "pray": "Pray a unit of nafl",
+    "readQuran": "Read a page of Quran with translation",
+    "dhikr": "100 dhikr — Subhanallah, Alhamdulillah, Allahu Akbar",
+    "gratitudeList": "List five things you're grateful for",
+    "reflectiveSilence": "Sit in silence for ten minutes",
+    "duaForOthers": "Make dua for someone, by name",
+    "callFamily": "Call a parent or sibling",
+    "visitFriend": "Visit a friend in person",
+    "writeLetter": "Write someone a real letter",
+    "helpNeighbour": "Do a small favour for a neighbour",
+    "compliment": "Compliment someone, mean it",
+    "familyMeal": "Eat a meal with your family, no phones"
+  },
+  "completeBanner": "Mashallah — reset complete. The new baseline is yours.",
+  "markComplete": "Mark complete",
+  "abandon": "End reset",
+  "confirmAbandon": "End this reset early? Your lifetime clean days stay with you.",
+  "confirmDelete": "Remove this reset from history?",
+  "relapse": {
+    "button": "I relapsed",
+    "title": "It's okay. Try again.",
+    "body": "Streaks reset. Your lifetime clean days do not. Be honest, then begin again.",
+    "reflection": "What happened? (optional)",
+    "reflectionPlaceholder": "What was the trigger? What can you do differently next time?",
+    "confirm": "Reset and continue",
+    "cancel": "Not now",
+    "quote": "Ten years from now, you'll look back on this moment and remember you chose to stop. The time, energy, and clarity you save by walking away from this — that's the gift you're giving your future self.",
+    "source": "Your future self, looking back"
+  },
+  "relapseHistory": "Relapses",
+  "relapseHistoryItem": "{date} — {days} days clean",
+  "relapseHistoryItemOne": "{date} — 1 day clean",
+  "homeActiveTitle": "Reset in progress",
+  "homeStartCta": "Start a dopamine reset",
+  "homeStartBody": "Step back from a stimulus that's running you. The first 24 hours are the hardest.",
+  "started": "Started {date}",
+  "completedAt": "Completed {date}"
+}
