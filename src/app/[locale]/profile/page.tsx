@@ -12,6 +12,7 @@ import { useUnitLabel } from '@/lib/units';
 import { useAuth, deleteAccount, emailUsername, signOutUser } from '@/lib/auth';
 import { firebaseEnabled } from '@/lib/firebase';
 import { SignInForm } from '@/components/SignInForm';
+import { FirebaseDiagnostics } from '@/components/FirebaseDiagnostics';
 import type {
   CalendarPreference,
   ConsequenceSensitivity,
@@ -398,6 +399,8 @@ function Profile() {
 
       <ReplayTutorialCard />
 
+      <DiagnosticsCard />
+
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-ink-800">
           {t('settings.resetProgressTitle')}
@@ -445,6 +448,20 @@ function ReplayTutorialCard() {
       </Button>
     </Card>
   );
+}
+
+/** Gate-wrapper around the Firebase diagnostic. Hidden when Firebase
+ *  isn't configured (no cloud surfaces to probe) or when the user is
+ *  signed out / anonymous (the killer probe creates a real workspace
+ *  doc, which needs a real account). The diagnostic itself is in
+ *  `FirebaseDiagnostics.tsx` so it can be reused from other places
+ *  later (e.g. a "having trouble?" link from the workspaces error
+ *  toast). */
+function DiagnosticsCard() {
+  const auth = useAuth();
+  if (!firebaseEnabled()) return null;
+  if (auth.status !== 'signed-in' || auth.isAnonymous) return null;
+  return <FirebaseDiagnostics />;
 }
 
 function DeleteAccountCard() {
