@@ -54,11 +54,24 @@ export async function pullSnapshot(uid: string): Promise<boolean> {
 }
 
 /** Writes the current store state to the user's snapshot doc.
- *  Best-effort; offline writes queue via the persistentLocalCache. */
+ *  Best-effort; offline writes queue via the persistentLocalCache.
+ *
+ *  Stamps `profile.cloudSyncUid` with the writing uid before serializing
+ *  so the next sign-in on a shared device can tell whose data the local
+ *  snapshot belongs to.
+ */
 export async function pushSnapshot(uid: string): Promise<void> {
   if (!firebaseEnabled() || !uid) return;
   const fb = getFirebase();
   if (!fb) return;
+  // Stamp the uid into the profile before we snapshot. If the profile
+  // doesn't exist yet (pre-onboarding), there's nothing to stamp and the
+  // first push will be effectively empty — that's fine; the stamp will
+  // land on the next push after onboarding completes.
+  const profile = useAppStore.getState().profile;
+  if (profile && profile.cloudSyncUid !== uid) {
+    useAppStore.setState({ profile: { ...profile, cloudSyncUid: uid } });
+  }
   try {
     const ref = doc(fb.db, 'userSnapshots', uid);
     await setDoc(ref, {

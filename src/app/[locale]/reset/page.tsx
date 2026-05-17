@@ -46,10 +46,11 @@ function ResetView() {
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
-  /** Aggregate stats across every reset the user has ever started. Surfaces
-   *  the user's results so the page is never just "the current reset and
-   *  forget about the rest." Restored after a merge dropped the declaration —
-   *  the JSX below has been referencing `stats` since e99cbc1. */
+  /** Aggregate stats across every reset the user has ever started.
+   *  Surfaces the user's results so the page is never just "the current
+   *  reset and forget about the rest." This useMemo was lost in a merge
+   *  during PR #29 — the JSX referencing it shipped, the declaration
+   *  didn't, and `/reset` has been throwing a ReferenceError since. */
   const stats = useMemo(() => {
     if (resets.length === 0) return null;
     const totalStarted = resets.length;

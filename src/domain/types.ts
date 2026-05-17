@@ -131,6 +131,13 @@ export interface Profile {
   readingHabitId?: string;
   /** Synthesized chimes on habit toggles, rewards, milestones, etc. */
   soundEnabled: boolean;
+  /** The Firebase uid this local snapshot last synced to/from. Used to
+   *  detect cross-account contamination on a shared device: if a fresh
+   *  user signs in (no cloud snapshot yet) but local data is stamped with
+   *  a DIFFERENT uid, we know the local data belongs to a previous user
+   *  on this device and must NOT be pushed into the new user's cloud.
+   *  Stamped on every push and overwritten on every successful pull. */
+  cloudSyncUid?: string;
   /** Spec §22: when true, Home surfaces a one-tap "I'm angry" button that
    *  opens the Prophetic ﷺ anger protocol overlay (ta'awwudh → posture →
    *  wudu → 90s silence → dua). Off by default — the feature is opt-in so
