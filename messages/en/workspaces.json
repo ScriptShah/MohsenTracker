@@ -32,7 +32,12 @@
     "iconLabel": "Icon",
     "iconHint": "Pick one — used in the list + the home-screen badge.",
     "create": "Create workspace",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "errors": {
+      "permissionDenied": "The server rejected the write. This usually means your sign-in session expired — sign out and back in, then try again.",
+      "unavailable": "Couldn't reach the server. Check your connection and try again.",
+      "detailed": "Couldn't create the workspace ({stage} failed: {code}). Check your connection and try again. If it keeps failing, the details above will help us diagnose it."
+    }
   },
   "join": {
     "title": "Join workspace",
