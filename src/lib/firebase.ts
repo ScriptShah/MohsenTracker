@@ -46,6 +46,14 @@ export function getFirebase(): { app: FirebaseApp; db: Firestore; auth: Auth } |
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager(),
         }),
+        // Treat `undefined` values as "field not present" instead of
+        // throwing. Without this, any optional field that resolves to
+        // undefined (e.g. a Google account without a profile photo, an
+        // anonymous user's email, an unset Habit.unit) blows up the
+        // entire write — even though Firestore semantically supports
+        // missing fields. This bit the workspace create flow when the
+        // owner's Google account had no photoURL.
+        ignoreUndefinedProperties: true,
       });
     } catch {
       _db = getFirestore(_app);

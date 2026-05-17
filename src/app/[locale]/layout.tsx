@@ -36,6 +36,15 @@ export const metadata: Metadata = {
     // their home screen — without a PNG, iOS falls back to a screenshot.
     apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
   },
+  // Chrome (and other Chromium browsers) deprecated reading
+  // `apple-mobile-web-app-capable` and now want the cross-vendor
+  // `mobile-web-app-capable` instead. Next's `appleWebApp.capable`
+  // only emits the Apple-prefixed tag, so we ship the modern one
+  // alongside it via `other` to silence the warning + keep iOS Safari
+  // happy with the legacy tag.
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {

@@ -91,17 +91,44 @@ export function Tutorial() {
         if (bounds.width === 0 && bounds.height === 0) continue;
 
         // Scroll into view if the target is off-screen or only partly in
-        // view. `block: 'center'` puts it mid-viewport so the tooltip has
-        // room on both sides regardless of preferred placement. Sync
-        // (default behavior), so the very next measurement reflects the
-        // scrolled position.
+        // view. For TALL targets (checklist, workspace section) `block:
+        // 'start'` puts the top of the target near the top of the
+        // viewport so the spotlight visibly starts from a real edge —
+        // `block: 'center'` would put the middle of a tall list under
+        // the tooltip, with no visible top boundary on the cutout. For
+        // SHORT targets, 'center' is still best (tooltip has room on
+        // both sides). The 60vh threshold separates the two cases.
         const vh = window.innerHeight;
         const margin = 80;
         const offTop = bounds.top < margin;
         const offBottom = bounds.bottom > vh - margin;
+        const isTall = bounds.height > vh * 0.6;
         if (offTop || offBottom) {
-          el.scrollIntoView({ block: 'center', inline: 'nearest' });
+          el.scrollIntoView({
+            block: isTall ? 'start' : 'center',
+            inline: 'nearest',
+          });
           bounds = el.getBoundingClientRect();
+        }
+
+        // Clamp the cutout to a reasonable height when the target is
+        // longer than the visible viewport. Without this, a 1500-px-tall
+        // checklist becomes a 1500-px-tall cutout, which fills the
+        // screen and leaves no visible dim area — the spotlight
+        // disappears. Cap at ~viewport height minus a tooltip-sized
+        // reserve, so the bottom of the cutout still falls inside the
+        // visible area and the dim shoulder is obvious. Note: this is
+        // a presentation-only clamp on `bounds` for the cutout; the
+        // tooltip math below uses the same clamped value, so tooltip
+        // placement stays consistent.
+        const maxHeight = vh - 240; // leave room for the tooltip below
+        if (bounds.height > maxHeight) {
+          bounds = new DOMRect(
+            bounds.left,
+            bounds.top,
+            bounds.width,
+            maxHeight,
+          );
         }
 
         setTarget({ step, bounds });
