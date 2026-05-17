@@ -165,6 +165,11 @@ export interface Profile {
     pendingCelebrationTier?: number;
   };
   onboardingComplete: boolean;
+  /** ISO timestamp when the user finished (or skipped) the first-run
+   *  feature tutorial. Undefined → tutorial hasn't been shown yet. The
+   *  tutorial overlay reads this and stays out of the way once the
+   *  user has seen it once. */
+  tutorialCompletedAt?: string;
   createdAt: string;
 }
 
