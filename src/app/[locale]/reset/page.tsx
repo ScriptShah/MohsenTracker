@@ -42,6 +42,33 @@ function ResetView() {
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
+  /** Every relapse across every reset, newest first. The same data is
+   *  already saved per-reset (with the trigger reflection placeholder
+   *  "What was the trigger?") — this aggregates it so the user can see
+   *  in ONE place what's broken them historically. Patterns hide in
+   *  plain sight when you read them all together. */
+  const allRelapses = useMemo(() => {
+    const out: Array<{
+      at: string;
+      target: string;
+      resetId: string;
+      daysCleanBefore: number;
+      reflection?: string;
+    }> = [];
+    for (const r of resets) {
+      for (const rel of r.relapses) {
+        out.push({
+          at: rel.at,
+          target: r.target,
+          resetId: r.id,
+          daysCleanBefore: rel.daysCleanBefore,
+          reflection: rel.reflection,
+        });
+      }
+    }
+    return out.sort((a, b) => (a.at < b.at ? 1 : -1));
+  }, [resets]);
+
   // Auto-complete: when an active reset reaches its target days, flip status.
   useEffect(() => {
     if (active && reachedTarget(active)) {
@@ -68,6 +95,47 @@ function ResetView() {
         />
       ) : (
         <StartReset onStart={(tier, target) => startReset(tier, target)} />
+      )}
+
+      {allRelapses.length > 0 && (
+        <section className="space-y-2">
+          <div>
+            <h2 className="text-sm font-semibold text-ink-800">
+              {t('reset.triggersTitle')}
+            </h2>
+            <p className="text-xs text-ink-500">
+              {t('reset.triggersBody')}
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {allRelapses.map((r, i) => (
+              <li
+                key={`${r.resetId}-${i}`}
+                className="rounded-xl border-s-2 border-red-400 bg-red-50/40 px-3 py-2"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="numeral text-[11px] uppercase tracking-wide text-red-700">
+                    {r.at.slice(0, 10)} · {r.target}
+                  </span>
+                  <span className="numeral text-[11px] text-ink-500">
+                    {r.daysCleanBefore === 1
+                      ? t('reset.triggersDaysOne')
+                      : t('reset.triggersDays', { n: fmt(r.daysCleanBefore) })}
+                  </span>
+                </div>
+                {r.reflection ? (
+                  <p className="pt-1 text-sm leading-relaxed text-ink-800">
+                    {r.reflection}
+                  </p>
+                ) : (
+                  <p className="pt-1 text-xs italic text-ink-400">
+                    {t('reset.triggersNoText')}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {past.length > 0 && (
