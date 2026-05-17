@@ -187,6 +187,10 @@ function NewBook() {
         <Field label={t('books.field.cover')}>
           <div className="flex items-start gap-3">
             {coverImage && (
+              // Local data-URL preview from the file picker — no remote
+              // fetch to optimize, so next/image would just add hydration
+              // flicker for zero benefit. Same call as BookCover.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={coverImage}
                 alt=""

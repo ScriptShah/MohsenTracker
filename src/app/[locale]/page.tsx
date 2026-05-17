@@ -353,9 +353,12 @@ function Home() {
   );
 }
 
-/** Three-heart "lives" indicator. The user starts each fortnight with three
- *  lives; every day under 50% completion in the last 14 burns one. When all
- *  three are gone, the restart-smaller banner appears below the header. */
+/** Three-heart "lives" indicator. Drives off `computeStrikes` in
+ *  `src/lib/restart.ts`: each past day with <50% completion costs a heart
+ *  (including days the user never opened the app — those count as missed),
+ *  three consecutive days at ≥50% earn one back. Strikes clamp to [0, 3].
+ *  When all three are gone, the restart-smaller banner appears below the
+ *  header. */
 function Lives({ strikes }: { strikes: number }) {
   const t = useTranslations();
   const remaining = Math.max(0, 3 - strikes);
