@@ -133,7 +133,7 @@ export function InstallPrompt() {
           type="button"
           onClick={dismiss}
           aria-label={t('install.dismiss')}
-          className="tap-44 -mr-1 -mt-1 flex h-8 w-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+          className="tap-44 -me-1 -mt-1 flex h-8 w-8 items-center justify-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700"
         >
           <CloseIcon className="h-4 w-4" />
         </button>
