@@ -1,15 +1,39 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
 import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { projectCompound } from '@/lib/compound';
 import { useUnitLabel } from '@/lib/units';
+import { useNumberFormatter } from '@/lib/format';
+import type { Category } from '@/domain/types';
+
+// Same palette + emoji set the new-category form on /categories uses.
+// Kept duplicated rather than extracted into a shared module — the lists
+// are short, change rarely, and keeping the file self-contained makes
+// review easier.
+const COLOR_PALETTE = [
+  '#0ea5e9', // sky
+  '#6366f1', // indigo
+  '#7c3aed', // purple
+  '#ec4899', // pink
+  '#ef4444', // red
+  '#f59e0b', // amber
+  '#84cc16', // lime
+  '#16a34a', // green
+  '#14b8a6', // teal
+  '#06b6d4', // cyan
+  '#64748b', // slate
+  '#a855f7', // violet
+];
+
+const ICON_SUGGESTIONS = ['✦', '◆', '◐', '☀', '☾', '✺', '⚑', '♥', '☘', '◇'];
 
 export default function CategoryDetailPage() {
   // See note on /books/detail — useSearchParams needs a Suspense boundary
@@ -25,10 +49,15 @@ export default function CategoryDetailPage() {
 
 function CategoryDetail() {
   const t = useTranslations();
+  const router = useRouter();
   const unitLabel = useUnitLabel();
+  const fmt = useNumberFormatter();
   const id = useSearchParams().get('id') ?? '';
   const category = useAppStore((s) => s.categories.find((c) => c.id === id));
   const habits = useAppStore((s) => s.habits.filter((h) => h.categoryId === id));
+  const archiveCategory = useAppStore((s) => s.archiveCategory);
+  const updateCategory = useAppStore((s) => s.updateCategory);
+  const [editing, setEditing] = useState(false);
 
   if (!category) {
     return (
@@ -37,6 +66,34 @@ function CategoryDetail() {
           {t('common.back')}
         </Link>
       </div>
+    );
+  }
+
+  // Spec §5.10: archive is soft — sets `archivedAt` + `isActive=false` so the
+  // category disappears from the list but the habits + their logs survive.
+  // The habits keep their categoryId pointing at the now-archived category;
+  // home checklist still shows them. We warn the user in the confirm text so
+  // they know what will happen.
+  const onArchive = () => {
+    const msg =
+      habits.length > 0
+        ? t('categories.archiveConfirmWithHabits', { n: fmt(habits.length) })
+        : t('categories.archiveConfirm');
+    if (!confirm(msg)) return;
+    archiveCategory(category.id);
+    router.replace('/categories');
+  };
+
+  if (editing) {
+    return (
+      <EditCategoryForm
+        category={category}
+        onCancel={() => setEditing(false)}
+        onSave={(patch) => {
+          updateCategory(category.id, patch);
+          setEditing(false);
+        }}
+      />
     );
   }
 
@@ -50,7 +107,15 @@ function CategoryDetail() {
         >
           {category.icon}
         </span>
-        <h1 className="text-xl font-semibold">{category.name}</h1>
+        <h1 className="flex-1 text-xl font-semibold">{category.name}</h1>
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-xs"
+          onClick={() => setEditing(true)}
+        >
+          {t('categories.edit')}
+        </Button>
       </div>
 
       {category.key === 'islamic' && (
@@ -225,6 +290,134 @@ function CategoryDetail() {
       >
         + {t('categories.addHabit')}
       </Link>
+
+      <div className="pt-2">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onArchive}
+          className="text-red-600 hover:bg-red-50"
+        >
+          {t('categories.archive')}
+        </Button>
+      </div>
     </div>
+  );
+}
+
+function EditCategoryForm({
+  category,
+  onCancel,
+  onSave,
+}: {
+  category: Category;
+  onCancel: () => void;
+  onSave: (patch: { name: string; icon: string; color: string }) => void;
+}) {
+  const t = useTranslations();
+  const [name, setName] = useState(category.name);
+  const [icon, setIcon] = useState(category.icon);
+  const [color, setColor] = useState(category.color);
+
+  const canSave =
+    name.trim().length > 0 &&
+    icon.trim().length > 0 &&
+    color.trim().length > 0;
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSave) return;
+    onSave({ name: name.trim(), icon: icon.trim(), color });
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-10 w-10 items-center justify-center rounded-full text-white"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <h1 className="text-xl font-semibold">{t('categories.editTitle')}</h1>
+      </div>
+
+      <Card className="space-y-4">
+        <label className="block space-y-1">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('categories.newName')}
+          </span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={60}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+            required
+            autoFocus
+          />
+        </label>
+
+        <div className="space-y-1">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('categories.newIcon')}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {ICON_SUGGESTIONS.map((i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setIcon(i)}
+                className={`tap-44 flex h-10 w-10 items-center justify-center rounded-full border text-lg ${
+                  icon === i
+                    ? 'border-leaf-500 bg-leaf-50'
+                    : 'border-ink-200 bg-white'
+                }`}
+                aria-pressed={icon === i}
+              >
+                {i}
+              </button>
+            ))}
+          </div>
+          <input
+            value={icon}
+            onChange={(e) => setIcon(e.target.value.slice(0, 2))}
+            maxLength={2}
+            className="numeral w-20 rounded-xl border border-ink-200 px-3 py-2 text-center outline-none focus:border-leaf-500"
+            aria-label={t('categories.newIcon')}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('categories.newColor')}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {COLOR_PALETTE.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setColor(c)}
+                className={`tap-44 h-9 w-9 rounded-full border-2 ${
+                  color === c ? 'border-ink-900' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: c }}
+                aria-label={c}
+                aria-pressed={color === c}
+              />
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          {t('common.cancel')}
+        </Button>
+        <Button type="submit" disabled={!canSave}>
+          {t('categories.save')}
+        </Button>
+      </div>
+    </form>
   );
 }

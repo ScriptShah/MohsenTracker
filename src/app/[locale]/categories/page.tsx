@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Card } from '@/components/Card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
+import { useNumberFormatter } from '@/lib/format';
 
 const COLOR_PALETTE = [
   '#0ea5e9', // sky
@@ -36,9 +37,30 @@ export default function CategoriesPage() {
 
 function Categories() {
   const t = useTranslations();
-  const categories = useAppStore((s) => s.categories.filter((c) => c.isActive));
+  const fmt = useNumberFormatter();
+  const allCategories = useAppStore((s) => s.categories);
   const habits = useAppStore((s) => s.habits);
+  const restoreCategory = useAppStore((s) => s.restoreCategory);
   const [adding, setAdding] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const categories = useMemo(
+    () => allCategories.filter((c) => c.isActive),
+    [allCategories],
+  );
+  // Archived categories surface in a collapsed section so users can find and
+  // restore them. Sorted by archived-at descending so the most-recent archive
+  // appears first — the user's "I just deleted that, bring it back" mental
+  // model wants the freshest one at the top.
+  const archived = useMemo(
+    () =>
+      allCategories
+        .filter((c) => !c.isActive)
+        .sort((a, b) =>
+          (b.archivedAt ?? '').localeCompare(a.archivedAt ?? ''),
+        ),
+    [allCategories],
+  );
 
   return (
     <div className="space-y-4">
@@ -83,6 +105,46 @@ function Categories() {
         >
           + {t('categories.addCustom')}
         </button>
+      )}
+
+      {archived.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className="text-sm text-ink-500 underline-offset-4 hover:text-ink-800 hover:underline"
+          >
+            {showArchived
+              ? t('categories.hideArchived', { n: fmt(archived.length) })
+              : t('categories.showArchived', { n: fmt(archived.length) })}
+          </button>
+          {showArchived && (
+            <ul className="space-y-2">
+              {archived.map((c) => (
+                <li key={c.id}>
+                  <Card className="flex items-center gap-3 border-ink-200 bg-ink-50/40">
+                    <span
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-white opacity-70"
+                      style={{ backgroundColor: c.color }}
+                      aria-hidden
+                    >
+                      {c.icon}
+                    </span>
+                    <span className="flex-1 text-sm text-ink-700">{c.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => restoreCategory(c.id)}
+                    >
+                      {t('categories.restore')}
+                    </Button>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
