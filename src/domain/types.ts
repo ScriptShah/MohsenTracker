@@ -51,6 +51,13 @@ export interface Habit {
    *  sides; meaningful on any habit type. */
   startRitual?: string;
   endRitual?: string;
+  /** Spec §23.6: optional habit-stacking sentence — *"After I [existing
+   *  routine], I will [this habit]."* — borrowed from Atomic Habits.
+   *  Stored as a single free-text string the user phrases themselves
+   *  (we don't try to compose it from two fields; the elegance is in
+   *  the user's own wording). Shown as a reminder card on the habit
+   *  detail page; never enforced or scheduled. */
+  habitStack?: string;
   /** Missing this habit triggers a punishment via daily reconciliation (spec §5.5). */
   isCritical?: boolean;
   /** When true, this habit is driven by book-page logs (spec §20.11). Tapping

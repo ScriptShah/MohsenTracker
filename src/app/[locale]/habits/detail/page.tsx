@@ -67,6 +67,7 @@ function HabitDetail() {
   const setHabitCritical = useAppStore((s) => s.setHabitCritical);
   const setHabitPositiveCargo = useAppStore((s) => s.setHabitPositiveCargo);
   const setHabitRituals = useAppStore((s) => s.setHabitRituals);
+  const setHabitStack = useAppStore((s) => s.setHabitStack);
   const sensitivity = useAppStore(
     (s) => s.profile?.consequenceSensitivity ?? 'honest',
   );
@@ -281,6 +282,11 @@ function HabitDetail() {
         onSave={(start, end) =>
           setHabitRituals(habit.id, { startRitual: start, endRitual: end })
         }
+      />
+
+      <StackCard
+        habitStack={habit.habitStack}
+        onSave={(stack) => setHabitStack(habit.id, stack)}
       />
 
       <BooksSection habit={habit} />
@@ -774,6 +780,136 @@ function BracketingCard({
             </p>
           </div>
         )}
+      </div>
+    </Card>
+  );
+}
+
+/** Spec §23.6: optional habit-stacking sentence — Atomic Habits' "After
+ *  I [routine], I will [this habit]." Stored as a single string the user
+ *  phrases themselves; we deliberately don't try to compose it from two
+ *  fields because the value is in the user's own wording. Shown as a
+ *  read-only reminder card; tap to edit, blank to clear. */
+function StackCard({
+  habitStack,
+  onSave,
+}: {
+  habitStack?: string;
+  onSave: (stack: string | undefined) => void;
+}) {
+  const t = useTranslations();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(habitStack ?? '');
+
+  useEffect(() => {
+    if (!editing) setDraft(habitStack ?? '');
+  }, [habitStack, editing]);
+
+  const startEdit = () => {
+    setDraft(habitStack ?? '');
+    setEditing(true);
+  };
+
+  const save = () => {
+    const trimmed = draft.trim();
+    onSave(trimmed.length > 0 ? trimmed : undefined);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraft(habitStack ?? '');
+    setEditing(false);
+  };
+
+  const clear = () => {
+    onSave(undefined);
+    setDraft('');
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <Card className="space-y-3">
+        <p className="text-xs uppercase tracking-wide text-ink-600">
+          {t('habitDetail.stack.title')}
+        </p>
+        <p className="text-xs text-ink-500">{t('habitDetail.stack.body')}</p>
+        <label className="block space-y-1.5">
+          <span className="block text-sm font-medium text-ink-700">
+            {t('habitDetail.stack.fieldLabel')}
+          </span>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t('habitDetail.stack.placeholder')}
+            maxLength={200}
+            rows={2}
+            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+          />
+        </label>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {habitStack && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clear}
+              className="text-red-600 hover:bg-red-50"
+            >
+              {t('habitDetail.stack.clear')}
+            </Button>
+          )}
+          <Button type="button" variant="ghost" onClick={cancel}>
+            {t('habitDetail.stack.cancel')}
+          </Button>
+          <Button type="button" onClick={save}>
+            {t('habitDetail.stack.save')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!habitStack) {
+    return (
+      <Card className="space-y-2 border-sand-200 bg-sand-50">
+        <p className="text-xs uppercase tracking-wide text-sand-700">
+          {t('habitDetail.stack.emptyTitle')}
+        </p>
+        <p className="text-sm leading-relaxed text-ink-700">
+          {t('habitDetail.stack.emptyBody')}
+        </p>
+        <div className="pt-1">
+          <Button type="button" onClick={startEdit}>
+            {t('habitDetail.stack.set')}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <p className="text-xs uppercase tracking-wide text-ink-600">
+            {t('habitDetail.stack.title')}
+          </p>
+          <p className="pt-1 text-xs text-ink-500">
+            {t('habitDetail.stack.body')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={startEdit}
+          className="text-sm font-medium text-leaf-700 underline-offset-4 hover:underline"
+        >
+          {t('habitDetail.stack.edit')}
+        </button>
+      </div>
+      <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 px-3 py-2">
+        <p className="text-sm italic leading-relaxed text-ink-800">
+          “{habitStack}”
+        </p>
       </div>
     </Card>
   );

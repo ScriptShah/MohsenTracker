@@ -127,6 +127,10 @@ interface AppState {
     habitId: string,
     rituals: { startRitual?: string; endRitual?: string },
   ) => void;
+  /** Spec §23.6: save the habit-stacking sentence ("After I X, I will Y").
+   *  Trims and clears empty values to undefined so the detail card hides
+   *  itself when the user blanks the field. */
+  setHabitStack: (habitId: string, stack: string | undefined) => void;
   /** Spec §23: scale a 2-minute habit up to its full version. The caller
    *  resolves the translated full name and target/unit from the preset and
    *  passes them in; the store just persists. Clears `isTwoMinuteVersion`. */
@@ -586,6 +590,17 @@ export const useAppStore = create<AppState>()(
                   startRitual: start && start.length > 0 ? start : undefined,
                   endRitual: end && end.length > 0 ? end : undefined,
                 }
+              : h,
+          ),
+        }));
+      },
+
+      setHabitStack: (habitId, stack) => {
+        const trimmed = stack?.trim();
+        set((s) => ({
+          habits: s.habits.map((h) =>
+            h.id === habitId
+              ? { ...h, habitStack: trimmed && trimmed.length > 0 ? trimmed : undefined }
               : h,
           ),
         }));

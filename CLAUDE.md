@@ -248,7 +248,7 @@ MohsenTracker/
 
 ### 2-Minute Rule
 - Spec §23
-- **Status**: Complete (habit-stacking phrasing §23.6 still pending)
+- **Status**: Complete
 - Every target-based preset carries a `twoMinuteVersion` (`PresetHabit`
   field) with a smaller `target` and a distinct `nameKey`. The habit
   creation picker pauses on a size-choice card when the user taps a
@@ -266,6 +266,36 @@ MohsenTracker/
   `src/app/[locale]/habits/detail/page.tsx`,
   `src/app/[locale]/page.tsx`,
   `src/lib/store.ts` (`levelUpHabit`, `dismissLevelUpPrompt`)
+
+### Task Bracketing (Start + End Rituals)
+- Spec §24.1
+- **Status**: Complete
+- Optional `Habit.startRitual` + `Habit.endRitual` text fields. The
+  habit creation form exposes both as collapsible inputs; the detail
+  page renders a `BracketingCard` that's editable inline. Same
+  two-second opening + closing moves train the brain to flip into
+  the habit on cue.
+- `src/domain/types.ts` (`Habit.startRitual`, `Habit.endRitual`),
+  `src/lib/store.ts` (`setHabitRituals`),
+  `src/app/[locale]/habits/new/page.tsx`,
+  `src/app/[locale]/habits/detail/page.tsx` (`BracketingCard`),
+  `messages/{en,fa}/habitDetail.json` → `bracketing.*`
+
+### Habit Stacking Phrasing
+- Spec §23.6
+- **Status**: Complete
+- Optional `Habit.habitStack` free-text field for *"After I [existing
+  routine], I will [this habit]"* (Atomic Habits). Exposed on the
+  habit creation form and editable inline via a `StackCard` on the
+  habit detail page. Stored as a single string the user phrases
+  themselves — never enforced or scheduled, just shown back as a
+  reminder. Pairs naturally with the bracketing card above it.
+- `src/domain/types.ts` (`Habit.habitStack`),
+  `src/lib/store.ts` (`setHabitStack`),
+  `src/app/[locale]/habits/new/page.tsx`,
+  `src/app/[locale]/habits/detail/page.tsx` (`StackCard`),
+  `messages/{en,fa}/habit.json` (`habitStackLabel/Hint/Placeholder`)
+  + `messages/{en,fa}/habitDetail.json` → `stack.*`
 
 ### Per-Habit Streaks
 - Spec §5.6
@@ -624,22 +654,6 @@ MohsenTracker/
   Islamic context). **Nothing from them is loaded into the app.**
   They are "future content packs" — not even data files exist.
 
-### Anger Management Protocol (Spec §22)
-- New preset habit `manageAnger` + a one-tap `AngerProtocol.tsx`
-  modal overlay that walks the Prophetic ﷺ protocol (ta'awwudh →
-  posture → wudu → 90-second silent breathing → dua), home-screen
-  trigger button, settings toggle (off by default). **Not in
-  codebase.** Replaces the rejected "Sukoon Mode" module.
-
-### 2-Minute Rule (Spec §23) — *moved to Implemented; see "2-Minute Rule"*
-- Habit-stacking phrasing (§23.6) is **still not wired** — the optional
-  free-text field "After I [routine], I will [this habit]" is the only
-  outstanding piece from §23.
-
-### Task Bracketing (Spec §24.1)
-- Optional `startRitual` / `endRitual` text fields on each habit,
-  shown on the detail page. **Not in codebase.**
-
 ### Tests
 - **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
   config in `package.json`, no testing-library deps. The highest-value
@@ -815,17 +829,10 @@ Reverse chronological — last ~20 commits, condensed:
 
 The original spec §25.5 list (auto-replacement, Vercel deploy) is
 done; so are the notifications-honest-copy reframe (PR #17), Anger
-Protocol (PR #19), Positive Cargo (PR #18), and the 2-Minute Rule
-(this PR). Remaining shippable priorities:
+Protocol (PR #19), Positive Cargo (PR #18), the 2-Minute Rule, Task
+Bracketing (§24.1), and Habit Stacking phrasing (§23.6).
 
-1. **Task Bracketing (§24.1)** — optional `startRitual` / `endRitual`
-   text fields on `Habit`, shown on the detail page. No new
-   infrastructure; small field additions plus a single UI card.
-2. **Habit Stacking phrasing (§23.6)** — single optional free-text
-   field "After I [routine], I will [this habit]" on the creation
-   form, displayed on the detail page. Trivial.
-
-Beyond those, in rough order:
+Remaining shippable priorities, in rough order:
 
 - **Compound-narrative coverage for the remaining 20 presets.**
 - **Idiomatic Persian rewrite, chunk by chunk** — splash + onboarding
