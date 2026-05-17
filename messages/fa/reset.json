@@ -4,6 +4,8 @@
   "active": "ریستِ فعال",
   "noActive": "در حالِ حاضر ریستِ فعالی نداری.",
   "history": "ریست‌های گذشته",
+  "liveCountStarted": "{n} نفر امروز همراهت یک ریست شروع کردند",
+  "liveCountStartedOne": "۱ نفرِ دیگر امروز ریست شروع کرد",
   "statsTitle": "نتایجِ تو",
   "statsStarted": "ریست‌های شروع‌شده",
   "statsCompleted": "تکمیل‌شده",

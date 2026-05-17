@@ -18,6 +18,7 @@ import {
   type ReplacementBucket,
 } from '@/lib/reset';
 import { todayKey } from '@/lib/dates';
+import { useResetLiveCounts } from '@/lib/useActivityCounts';
 import { ResetCompletionSheet } from '@/components/ResetCompletionSheet';
 import type { DopamineReset, ResetTier } from '@/domain/types';
 
@@ -96,6 +97,8 @@ function ResetView() {
         <h1 className="text-xl font-semibold">{t('reset.title')}</h1>
         <p className="text-sm text-ink-500">{t('reset.intro')}</p>
       </header>
+
+      <LiveCountLine />
 
       {active ? (
         <ActiveResetView
@@ -612,5 +615,25 @@ function Stat({ label, value }: { label: string; value: string }) {
         {value}
       </div>
     </div>
+  );
+}
+
+/** Soft "you're not alone" line — today's public count of people who started
+ *  a new dopamine reset. Hides itself when zero so the page doesn't show
+ *  a stale "0 people" line. Identity-framed, no comparison. */
+function LiveCountLine() {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const counts = useResetLiveCounts();
+  const started = counts.started ?? 0;
+  if (started === 0) return null;
+
+  return (
+    <p className="numeral rounded-xl border border-leaf-200 bg-leaf-50/60 px-3 py-2 text-sm text-leaf-800">
+      🌱{' '}
+      {started === 1
+        ? t('reset.liveCountStartedOne')
+        : t('reset.liveCountStarted', { n: fmt(started) })}
+    </p>
   );
 }
