@@ -75,8 +75,11 @@ export function Tutorial() {
     if (!profile || !profile.onboardingComplete) return;
     if (profile.tutorialCompletedAt) return;
 
-    // Find the first present step from rawStepIdx onward. If none are
-    // present, mark the tutorial complete — there's nothing to show.
+    /** Find the first present step from rawStepIdx onward. If the target
+     *  is off-screen, scroll it into view BEFORE measuring (otherwise the
+     *  spotlight gets drawn at viewport-relative coords that point at
+     *  empty space). If no steps are present, mark the tutorial complete
+     *  — there's nothing to point at. */
     function measure() {
       for (let i = rawStepIdx; i < STEPS.length; i++) {
         const step = STEPS[i]!;
@@ -84,8 +87,23 @@ export function Tutorial() {
           `[data-tutorial="${step.key}"]`,
         );
         if (!el) continue;
-        const bounds = el.getBoundingClientRect();
+        let bounds = el.getBoundingClientRect();
         if (bounds.width === 0 && bounds.height === 0) continue;
+
+        // Scroll into view if the target is off-screen or only partly in
+        // view. `block: 'center'` puts it mid-viewport so the tooltip has
+        // room on both sides regardless of preferred placement. Sync
+        // (default behavior), so the very next measurement reflects the
+        // scrolled position.
+        const vh = window.innerHeight;
+        const margin = 80;
+        const offTop = bounds.top < margin;
+        const offBottom = bounds.bottom > vh - margin;
+        if (offTop || offBottom) {
+          el.scrollIntoView({ block: 'center', inline: 'nearest' });
+          bounds = el.getBoundingClientRect();
+        }
+
         setTarget({ step, bounds });
         return;
       }
@@ -133,14 +151,18 @@ export function Tutorial() {
     setRawStepIdx(STEPS.indexOf(step) + 1);
   };
 
-  // Spotlight ring around target (purely decorative — pointer-events
-  // none, can't be tapped through to the real element while the
-  // tutorial is up).
-  const ringStyle: React.CSSProperties = {
+  // Cutout pattern: an absolutely-positioned rectangle at the target's
+  // bounds with a giant `box-shadow` extending outward. The shadow
+  // covers the rest of the viewport in a dim colour while the cutout
+  // itself stays transparent, so the highlighted element shows through
+  // at full opacity. Adding `ring-4 ring-leaf-400` on the same div
+  // gives the spotlight its glowing border.
+  const cutoutStyle: React.CSSProperties = {
     top: bounds.top - PAD,
     left: bounds.left - PAD,
     width: bounds.width + PAD * 2,
     height: bounds.height + PAD * 2,
+    boxShadow: '0 0 0 100vmax rgba(15, 23, 42, 0.7)',
   };
 
   // Tooltip placement: try preferred side, fall back to the other if
@@ -182,7 +204,7 @@ export function Tutorial() {
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-ink-900/65"
+      className="fixed inset-0 z-[80]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="tutorial-title"
@@ -194,11 +216,13 @@ export function Tutorial() {
         finish();
       }}
     >
-      {/* Spotlight ring */}
+      {/* Spotlight cutout: dim everything except the target via a giant
+          box-shadow extending outward from this transparent rectangle.
+          The highlighted element shows through at full opacity. */}
       <div
         aria-hidden
         className="pointer-events-none absolute rounded-2xl ring-4 ring-leaf-400 transition-all"
-        style={ringStyle}
+        style={cutoutStyle}
       />
 
       {/* Tooltip */}
