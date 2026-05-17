@@ -89,6 +89,9 @@
       "confirm": "Delete this workspace for everyone? This can't be undone."
     }
   },
+  "home": {
+    "noHabitsYet": "No shared habits in this workspace yet."
+  },
   "habits": {
     "title": "Shared habits",
     "bodyOwner": "Add habits everyone in this workspace tracks together. Each member logs their own completions; the list is shared.",
