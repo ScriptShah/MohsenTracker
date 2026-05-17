@@ -92,6 +92,11 @@
   "home": {
     "noHabitsYet": "No shared habits in this workspace yet."
   },
+  "crossMember": {
+    "you": "You",
+    "done": "{name} — done today",
+    "notDone": "{name} — not yet today"
+  },
   "habits": {
     "title": "Shared habits",
     "bodyOwner": "Add habits everyone in this workspace tracks together. Each member logs their own completions; the list is shared.",
