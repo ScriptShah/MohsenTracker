@@ -655,13 +655,17 @@ MohsenTracker/
   They are "future content packs" — not even data files exist.
 
 ### Tests
-- **Zero tests.** No `__tests__` folder, no `vitest`/`jest`/`playwright`
-  config in `package.json`, no testing-library deps. The highest-value
-  first target is `src/lib/overallStreak.ts`: the qualifying-day rule
-  reads two independent signals (critical-set existence +
-  `isLogSuccessful`) and the rebuilding walk handles today, gap-day
-  chain breaks, and the migration's one-time compute over full
-  history. Currently shipped without verification.
+- **Vitest infra wired; one suite shipped.** `vitest` is a devDep,
+  `vitest.config.ts` sets `environment: 'node'` and the `@/` alias,
+  `npm run test` runs every `src/**/*.test.ts` file. The first suite
+  is `src/lib/__tests__/overallStreak.test.ts` — 20 tests over
+  `dayQualifies` (critical-set vs fallback paths, target / limit
+  semantics, createdAt gating) and `recomputeOverallStreak` (today
+  partial, back-walk gap breaks, longest >= current, future-date
+  masking, 100-day migration case). Every other module remains
+  untested; the highest-value follow-ups are `streaks.ts` (per-habit
+  walk, mirrors overallStreak) and `restart.ts` (lives recompute on
+  launch, critical for the 3-hearts UI).
 
 ### Encryption of Sensitive Fields
 - Architectural Constraint #9 in this file says encrypt
@@ -739,8 +743,10 @@ recompute deterministically).
 7. **`onboardingComplete: false` users with a stale local profile
    can land on a category-pick step they already saw** — onboarding
    doesn't deeply validate state on resume.
-8. **No tests anywhere.** `overallStreak.ts`'s qualifying-day rule
-   and recompute walk are the highest-risk untested code.
+8. **Minimal test coverage.** `overallStreak.ts` is now covered (20
+   tests), but every other module still ships without verification.
+   `streaks.ts` and `restart.ts` are the most-load-bearing untested
+   files left.
 9. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
    in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
    dep in `books/[id]/page.tsx` (legacy redirect shim).
@@ -788,10 +794,15 @@ npm run build        # prebuild generates PWA icons, then next build
 npm run start        # serve a production build
 npm run lint         # next lint (next/core-web-vitals)
 npm run typecheck    # tsc --noEmit (passes today)
+npm run test         # vitest run — single-shot run
+npm run test:watch   # vitest — watch mode
 npm run gen:icons    # regenerate PNG icons from public/icon.svg
 ```
 
-There is **no test command** — there are no tests.
+Test coverage is minimal — only `src/lib/__tests__/overallStreak.test.ts`
+ships today. Add new suites under `src/**/*.test.ts` and they pick up
+automatically. See the "Tests" section under Features Implemented for
+the priority follow-ups.
 
 ## Recent Changes (Last Sessions)
 
@@ -839,7 +850,9 @@ Remaining shippable priorities, in rough order:
   are done; the rest still reads as literal translation.
 - **Splash text finalization** — 4 of 5 quotes are still rejected
   drafts.
-- **Tests** — set up `vitest`. First target: `overallStreak.ts`.
+- **Test coverage** — `vitest` is wired and `overallStreak.ts` is
+  covered. Next targets: `streaks.ts` (per-habit walk), `restart.ts`
+  (lives recompute), `safety.ts` (punishment validator).
 - **Per-doc Firestore writes (spec §8 schema)** — cures
   last-writer-wins. Large.
 - **Encryption of sensitive fields** — debts + savings make this
