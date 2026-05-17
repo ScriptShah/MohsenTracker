@@ -1,0 +1,92 @@
+{
+  "title": "Workspaces",
+  "intro": "Shared spaces for habits you keep together — with a partner, family, or small group.",
+  "settingsLink": "Workspaces",
+  "settingsLinkHint": "Shared spaces with a partner or small group.",
+  "signInRequiredTitle": "Sign in to use workspaces",
+  "signInRequiredBody": "Workspaces sync between people, so they need a real account — Google or email/password. Guest accounts can't sync.",
+  "empty": {
+    "title": "No workspaces yet",
+    "body": "Create one to track habits alongside a partner or small group, or paste an invite code to join one.",
+    "create": "+ Create a workspace",
+    "joinTitle": "Have an invite code?",
+    "joinPlaceholder": "Paste invite code",
+    "joinButton": "Join"
+  },
+  "list": {
+    "memberCount": "{n} members",
+    "memberCountOne": "1 member",
+    "memberCountTwo": "Just the two of you",
+    "ownerBadge": "Owner",
+    "createCta": "+ Create another"
+  },
+  "modePair": "Pair",
+  "modePairBody": "Two people — buddy, spouse, accountability partner.",
+  "modeGroup": "Group",
+  "modeGroupBody": "Up to 10 people — family, study circle, team.",
+  "new": {
+    "title": "New workspace",
+    "modeLabel": "Type",
+    "titleLabel": "Workspace name",
+    "titlePlaceholder": "Family Ramadan, Sunday Quran circle…",
+    "iconLabel": "Icon",
+    "iconHint": "Pick one — used in the list + the home-screen badge.",
+    "create": "Create workspace",
+    "cancel": "Cancel"
+  },
+  "join": {
+    "title": "Join workspace",
+    "subtitle": "Enter the invite code your friend shared.",
+    "codeLabel": "Invite code",
+    "codePlaceholder": "ABCD1234",
+    "submit": "Join workspace",
+    "joining": "Joining…",
+    "successTitle": "Welcome — you're in.",
+    "successBody": "Opening the workspace…",
+    "openWorkspace": "Open workspace",
+    "errors": {
+      "invalid-code": "That code isn't valid. Double-check the letters and digits.",
+      "workspace-missing": "Workspace not found — it may have been deleted.",
+      "already-member": "You're already a member of this workspace.",
+      "workspace-full": "This workspace is full ({max} members max).",
+      "signed-out": "Sign in first, then try the invite link again.",
+      "firebase-disabled": "Workspaces need Firebase to be configured.",
+      "unknown": "Something went wrong. Try again in a moment."
+    }
+  },
+  "detail": {
+    "modePairLabel": "Pair workspace",
+    "modeGroupLabel": "Group workspace",
+    "ownerBadge": "Owner",
+    "youBadge": "You",
+    "members": "Members",
+    "membersCount": "{n} of {max}",
+    "loading": "Loading…",
+    "notFoundTitle": "Workspace not found",
+    "notFoundBody": "It may have been deleted, or you're no longer a member.",
+    "back": "Back to workspaces",
+    "invite": {
+      "title": "Invite",
+      "body": "Anyone with this link can join, up to {max} members.",
+      "linkLabel": "Invite link",
+      "codeLabel": "Code",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "rotate": "New code",
+      "rotateConfirm": "Generate a new code? The old link stops working immediately."
+    },
+    "leave": {
+      "title": "Leave workspace",
+      "body": "You'll stop seeing the shared habits. Your own logs stay on your device.",
+      "button": "Leave",
+      "confirm": "Leave this workspace? You can rejoin later if someone shares the code.",
+      "ownerCant": "Owners can't leave — delete the workspace instead, or hand over ownership (coming later)."
+    },
+    "delete": {
+      "title": "Delete workspace",
+      "body": "Removes the workspace for everyone. This can't be undone.",
+      "button": "Delete workspace",
+      "confirm": "Delete this workspace for everyone? This can't be undone."
+    }
+  }
+}
