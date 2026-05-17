@@ -86,20 +86,66 @@ export interface CreateWorkspaceInput {
   ownerPhotoURL?: string;
 }
 
+/** Which step of the create flow failed. Surfacing this distinguishes
+ *  "I couldn't even start because you're signed out" from "the workspace
+ *  doc wrote fine but the member subdoc was rejected" — helpful both
+ *  for support diagnosis and for the UI to give specific guidance
+ *  (e.g. only the workspace-doc rejection requires retrying the whole
+ *  flow; a failed invite-doc is recoverable by rotating the code). */
+export type CreateWorkspaceStage =
+  | 'preflight'
+  | 'workspace-doc'
+  | 'member-doc'
+  | 'invite-doc';
+
+export type CreateWorkspaceResult =
+  | { ok: true; workspace: Workspace }
+  | {
+      ok: false;
+      stage: CreateWorkspaceStage;
+      /** Firebase error code if available (e.g. 'permission-denied',
+       *  'unavailable'), else the JS error message, else 'unknown'. */
+      code: string;
+      /** Human-readable message from the underlying error, kept for
+       *  console diagnosis. */
+      message: string;
+    };
+
 /** Creates the workspace, the owner's member doc, and the invite-code
- *  lookup doc. Returns the workspace on success. Best-effort cleanup on
- *  partial failure: if any of the three writes fails, the others linger
- *  and the user retries (acceptable for a low-frequency operation).
- *
- *  Returns `null` when Firebase is disabled or the user is signed out. */
+ *  lookup doc. Returns a structured result so the caller can surface
+ *  the actual failure to the user instead of a generic "something went
+ *  wrong" toast. Best-effort cleanup on partial failure: if any of the
+ *  three writes fails, the others linger and the user retries
+ *  (acceptable for a low-frequency operation). */
 export async function createWorkspace(
   input: CreateWorkspaceInput,
-): Promise<Workspace | null> {
-  if (!firebaseEnabled()) return null;
+): Promise<CreateWorkspaceResult> {
+  if (!firebaseEnabled()) {
+    return {
+      ok: false,
+      stage: 'preflight',
+      code: 'firebase-disabled',
+      message: 'Firebase is not configured on this build.',
+    };
+  }
   const uid = await currentUidPromise();
-  if (!uid) return null;
+  if (!uid) {
+    return {
+      ok: false,
+      stage: 'preflight',
+      code: 'signed-out',
+      message: 'No signed-in user.',
+    };
+  }
   const fb = getFirebase();
-  if (!fb) return null;
+  if (!fb) {
+    return {
+      ok: false,
+      stage: 'preflight',
+      code: 'firebase-disabled',
+      message: 'Firebase client unavailable.',
+    };
+  }
 
   const wsId = `ws_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const inviteCode = generateInviteCode();
@@ -118,28 +164,67 @@ export async function createWorkspace(
     createdAt: nowIso,
   };
 
+  // Stage 1: the workspace doc itself. This is the only stage whose
+  // failure means "nothing was created" — we have to give up here.
   try {
     await setDoc(doc(fb.db, 'workspaces', wsId), {
       ...workspace,
       createdAtServer: serverTimestamp(),
     });
-    const member: WorkspaceMember = {
-      uid,
-      displayName: input.ownerDisplayName,
-      photoURL: input.ownerPhotoURL,
-      joinedAt: nowIso,
-      role: 'owner',
+  } catch (e: any) {
+    console.error('[createWorkspace] workspace-doc write failed:', e);
+    return {
+      ok: false,
+      stage: 'workspace-doc',
+      code: e?.code ?? 'unknown',
+      message: e?.message ?? String(e ?? 'unknown'),
     };
+  }
+
+  // Stage 2: member subdoc. Failure here means the workspace exists but
+  // the owner isn't visible in the member list yet — degraded but not
+  // unusable. Surface the error so the user can retry; the parent doc
+  // can be re-used (idempotent setDoc on the same wsId).
+  const member: WorkspaceMember = {
+    uid,
+    displayName: input.ownerDisplayName,
+    photoURL: input.ownerPhotoURL,
+    joinedAt: nowIso,
+    role: 'owner',
+  };
+  try {
     await setDoc(doc(fb.db, 'workspaces', wsId, 'members', uid), member);
+  } catch (e: any) {
+    console.error('[createWorkspace] member-doc write failed:', e);
+    return {
+      ok: false,
+      stage: 'member-doc',
+      code: e?.code ?? 'unknown',
+      message: e?.message ?? String(e ?? 'unknown'),
+    };
+  }
+
+  // Stage 3: invite-code lookup doc. Failure here means the workspace
+  // and owner-member doc both exist, but no one can join — the owner
+  // can rotate the code later, so this is recoverable. Still surface
+  // so the caller can decide whether to celebrate or retry.
+  try {
     await setDoc(doc(fb.db, 'workspaceInvites', inviteCode), {
       inviteCode,
       wsId,
       createdAt: nowIso,
     });
-    return workspace;
-  } catch {
-    return null;
+  } catch (e: any) {
+    console.error('[createWorkspace] invite-doc write failed:', e);
+    return {
+      ok: false,
+      stage: 'invite-doc',
+      code: e?.code ?? 'unknown',
+      message: e?.message ?? String(e ?? 'unknown'),
+    };
   }
+
+  return { ok: true, workspace };
 }
 
 /* ── Join ────────────────────────────────────────────────────────────── */

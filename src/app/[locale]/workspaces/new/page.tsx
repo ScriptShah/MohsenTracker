@@ -49,7 +49,7 @@ function NewWorkspace() {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
-    const ws = await createWorkspace({
+    const result = await createWorkspace({
       mode,
       title: title.trim(),
       icon: icon || '🤝',
@@ -57,11 +57,28 @@ function NewWorkspace() {
       ownerPhotoURL: photoURL,
     });
     setSubmitting(false);
-    if (!ws) {
-      setError(t('workspaces.join.errors.unknown'));
+    if (!result.ok) {
+      // Surface the actual failure instead of a generic toast. The
+      // stage tells us which write was rejected (workspace doc,
+      // member subdoc, or invite-code lookup); the code is a Firebase
+      // error code when present (e.g. 'permission-denied', 'unavailable').
+      // For 'member-doc' and 'invite-doc', the parent workspace was
+      // actually created — we still bail so the user knows something
+      // partial happened, rather than silently navigating to a doc
+      // that's missing its member/invite half.
+      const reason =
+        result.code === 'permission-denied'
+          ? t('workspaces.new.errors.permissionDenied')
+          : result.code === 'unavailable'
+          ? t('workspaces.new.errors.unavailable')
+          : t('workspaces.new.errors.detailed', {
+              stage: result.stage,
+              code: result.code,
+            });
+      setError(reason);
       return;
     }
-    router.replace(`/workspaces/detail?id=${ws.id}`);
+    router.replace(`/workspaces/detail?id=${result.workspace.id}`);
   };
 
   if (!signedIn) {

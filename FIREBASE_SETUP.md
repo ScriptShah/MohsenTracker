@@ -77,6 +77,21 @@ UX (users pick whichever they prefer).
    (or just paste it from there).
 3. Click **Publish**.
 
+> ⚠️ **`firestore.rules` is NOT deployed automatically by Vercel.**
+> Vercel only deploys the Next.js app. The Firestore security rules
+> live in your Firebase project and are completely separate. **Every
+> time `firestore.rules` changes in the repo, you have to re-publish
+> the new contents** via this same console page — otherwise new
+> features (workspaces, activity-feed events, etc.) will silently fail
+> with `permission-denied`. The most common symptom is "I added a new
+> feature that touches Firestore and it works locally but fails in
+> production" — the answer is almost always "re-publish the rules."
+>
+> If you'd rather automate this, install the Firebase CLI
+> (`npm i -g firebase-tools`), run `firebase login` once, then
+> `firebase deploy --only firestore:rules` whenever the file changes.
+> A GitHub Action could call this on every merge to main.
+
 ### 7. Verify
 
 Restart the dev server (`npm run dev`) and open the home screen. Then:
