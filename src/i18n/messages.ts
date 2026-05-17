@@ -16,6 +16,7 @@ export const namespaces = [
   'books',
   'cargoSlip',
   'categories',
+  'cloudSync',
   'common',
   'compound',
   'debts',

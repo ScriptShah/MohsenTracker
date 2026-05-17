@@ -1,0 +1,8 @@
+{
+  "emptyWarning": {
+    "title": "This account has no cloud data",
+    "body": "If you've used MohsenTracker before on another device with this email, you may have signed in there using a different method (Google vs email/password create separate Firebase accounts even with the same email). Open Profile → Cloud sync controls to compare the uid on each device.",
+    "openDiagnostic": "Open diagnostic",
+    "dismiss": "Got it"
+  }
+}
