@@ -9,6 +9,7 @@ import { ArrowBack } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useNumberFormatter } from '@/lib/format';
+import { EndAutophagySheet } from '@/components/EndAutophagySheet';
 import type { AutophagyFast } from '@/domain/types';
 
 const TARGET_OPTIONS = [16, 18, 20, 24, 36];
@@ -59,7 +60,7 @@ function Autophagy() {
   }, [history]);
 
   const [target, setTarget] = useState<number>(16);
-  const [notes, setNotes] = useState('');
+  const [showEndSheet, setShowEndSheet] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -75,15 +76,10 @@ function Autophagy() {
       {active ? (
         <ActiveFastCard
           fast={active}
-          onEnd={() => {
-            endAutophagyFast(active.id, notes.trim() || undefined);
-            setNotes('');
-          }}
+          onEnd={() => setShowEndSheet(true)}
           onCancel={() => {
             if (confirm(t('autophagy.cancelConfirm'))) cancelAutophagyFast(active.id);
           }}
-          notes={notes}
-          setNotes={setNotes}
         />
       ) : (
         <Card className="space-y-3">
@@ -160,6 +156,16 @@ function Autophagy() {
           </ul>
         </div>
       )}
+
+      {showEndSheet && active && (
+        <EndAutophagySheet
+          onCancel={() => setShowEndSheet(false)}
+          onConfirm={(notes) => {
+            endAutophagyFast(active.id, notes);
+            setShowEndSheet(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -168,14 +174,10 @@ function ActiveFastCard({
   fast,
   onEnd,
   onCancel,
-  notes,
-  setNotes,
 }: {
   fast: AutophagyFast;
   onEnd: () => void;
   onCancel: () => void;
-  notes: string;
-  setNotes: (v: string) => void;
 }) {
   const t = useTranslations();
   const fmt = useNumberFormatter();
@@ -243,17 +245,6 @@ function ActiveFastCard({
           )}
         </div>
       </div>
-
-      <label className="block space-y-1">
-        <span className="text-xs text-ink-600">{t('autophagy.notesLabel')}</span>
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder={t('autophagy.notesPlaceholder')}
-          maxLength={200}
-          className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
-        />
-      </label>
 
       <div className="flex items-center justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>

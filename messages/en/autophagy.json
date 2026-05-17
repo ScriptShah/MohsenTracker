@@ -11,17 +11,18 @@
   "target": "Target: {hours} hours",
   "remaining": "{hours}h {minutes}m to target",
   "targetReached": "Target reached — keep going or end it whenever",
-  "notesLabel": "How are you feeling?",
-  "notesPlaceholder": "Energy, hunger, mood…",
   "end": "End fast",
   "cancel": "Discard",
   "cancelConfirm": "Discard this fast without saving?",
   "historyTitle": "History",
   "deleteConfirm": "Delete this fast?",
-  "notesLabelInline": "Reflection",
-  "statsTitle": "Your results",
-  "statsTotal": "Fasts logged",
-  "statsLongest": "Longest fast",
-  "statsAverage": "Avg duration",
-  "statsReached": "Hit target"
+  "endSheet": {
+    "title": "How are you feeling?",
+    "body": "Before you close this fast, take a moment. Energy, hunger, mood, clarity — what's actually going on right now? This goes into your history so you can spot patterns over time.",
+    "feelingLabel": "Your reflection",
+    "feelingPlaceholder": "Sharper than usual, hungry but steady, calmer in the head…",
+    "confirm": "Save & end fast",
+    "endWithout": "End without notes",
+    "cancel": "Keep fasting"
+  }
 }

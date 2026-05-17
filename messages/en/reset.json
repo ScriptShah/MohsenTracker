@@ -103,6 +103,17 @@
   "abandon": "End reset",
   "confirmAbandon": "End this reset early? Your lifetime clean days stay with you.",
   "confirmDelete": "Remove this reset from history?",
+  "addReflection": "+ Add reflection",
+  "editReflection": "Edit reflection",
+  "completionSheet": {
+    "eyebrow": "Reset complete",
+    "title": "You closed the loop on {target}.",
+    "body": "Before this fades, capture what's different. What changed in your body, your attention, your mood? What surprised you? Future-you will read this and remember why it was worth it.",
+    "reflectionLabel": "What changed?",
+    "reflectionPlaceholder": "Sleep got deeper around day 5. Sharper in the mornings. The pull is still there but smaller…",
+    "save": "Save reflection",
+    "skip": "Skip for now"
+  },
   "relapse": {
     "button": "I relapsed",
     "title": "It's okay. Try again.",
