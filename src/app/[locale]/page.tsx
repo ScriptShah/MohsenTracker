@@ -357,6 +357,7 @@ function Home() {
         </div>
         <Link
           href="/habits/new"
+          data-tutorial="add-habit"
           className="tap-44 flex items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-4 py-3 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
         >
           + {t('home.addHabit')}

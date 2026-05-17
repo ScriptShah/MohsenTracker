@@ -1,6 +1,7 @@
 {
-  "skip": "Skip",
+  "skip": "Skip tour",
   "next": "Next",
+  "open": "Open",
   "start": "Got it",
   "step": "Step {n} of {total}",
   "steps": {
@@ -16,13 +17,33 @@
       "title": "Tap to log a habit",
       "body": "One tap on a habit's circle marks it done. The list resets each morning. Tap the row itself for more options + the compound effect of that habit."
     },
+    "addHabit": {
+      "title": "Add a habit",
+      "body": "Build your own list. Pick from presets like Fajr, 10 pages, or 30-minute walk — or write your own. Bad habits get a built-in good-deed pairing."
+    },
     "workspaces": {
       "title": "Track together",
-      "body": "Habits you keep with a partner, family or small group land here. Each member logs their own tap; you can see who's done what today."
+      "body": "Habits you keep with a partner, family or small group land here. Each member logs their own tap; you can see who's done what today. Tap Open to set one up."
+    },
+    "categories": {
+      "title": "Categories",
+      "body": "Habits sorted by life area — Islamic, Health, Sport, Finance, Career, Growth, Relationships. Add your own. Tap a category for its full habit set."
+    },
+    "progress": {
+      "title": "Your progress",
+      "body": "Year heatmap, 14-day chart, per-habit streaks. The honest mirror of where consistency is and where it isn't."
     },
     "futureSelf": {
       "title": "Your future self",
-      "body": "Tap here for the person you're becoming — vision, streak fire, and the compound effects of every habit over a year and a decade."
+      "body": "The person you're becoming — vision, why, your overall streak fire, and the compound effects of every habit over a year and a decade."
+    },
+    "books": {
+      "title": "Your reading",
+      "body": "Books in progress, pages logged, the year-end review. If a habit is linked to books, every page logged here counts toward its daily total."
+    },
+    "profile": {
+      "title": "Profile + settings",
+      "body": "Edit your name, future-self vision, why. Switch language, theme, prayer city. Sign out. Replay this tour anytime from here."
     }
   }
 }
