@@ -105,10 +105,18 @@ interface AppState {
   addCategory: (input: { name: string; icon: string; color: string; key?: CategoryKey }) => Category;
   /** Patch fields on an existing category. */
   updateCategory: (id: string, patch: Partial<Category>) => void;
-  /** Soft delete: marks isActive=false + sets archivedAt. Habits are kept. */
+  /** Soft delete: marks isActive=false + sets archivedAt. Habits are kept.
+   *  Legacy path — retained so existing soft-archived data still restores;
+   *  new "Delete category" flows go through `deleteCategory` for hard
+   *  cascade delete. */
   archiveCategory: (id: string) => void;
   /** Restore a previously archived category. */
   restoreCategory: (id: string) => void;
+  /** Hard cascade delete: removes the category AND every habit in it (with
+   *  their logs, streaks, pending rewards, active punishments, and the
+   *  reading-habit pointer / linked books). Use this when the user clicks
+   *  Delete and confirms — it's irreversible. */
+  deleteCategory: (id: string) => void;
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
@@ -494,6 +502,21 @@ export const useAppStore = create<AppState>()(
             c.id === id ? { ...c, isActive: true, archivedAt: undefined } : c,
           ),
         })),
+
+      deleteCategory: (id) => {
+        // Cascade: each habit's deleteHabit already handles its own logs,
+        // streaks, pending rewards, active punishments, profile pointers,
+        // and orphaned books. Iterating here gives all of that for free.
+        // Snapshot the habit ids first so we don't mutate-while-iterating.
+        const habitIds = get()
+          .habits.filter((h) => h.categoryId === id)
+          .map((h) => h.id);
+        for (const habitId of habitIds) {
+          get().deleteHabit(habitId);
+        }
+        // Hard-remove the category record itself (not soft-archive).
+        set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }));
+      },
 
       addHabit: (input) => {
         const id = newId('habit');
