@@ -11,14 +11,24 @@ import { ClientGate } from '@/components/ClientGate';
 import { Avatar } from '@/components/Avatar';
 import { useAuth } from '@/lib/auth';
 import { useNumberFormatter } from '@/lib/format';
+import { useUnitLabel } from '@/lib/units';
 import {
+  createWorkspaceHabit,
   deleteWorkspace,
+  deleteWorkspaceHabit,
   leaveWorkspace,
   rotateInviteCode,
   subscribeWorkspace,
+  subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
+  updateWorkspaceHabit,
 } from '@/lib/workspaces';
-import type { Workspace, WorkspaceMember } from '@/domain/types';
+import type {
+  HabitType,
+  Workspace,
+  WorkspaceHabit,
+  WorkspaceMember,
+} from '@/domain/types';
 
 export default function WorkspaceDetailPage() {
   return (
@@ -211,6 +221,8 @@ function WorkspaceDetail() {
         </ul>
       </section>
 
+      <SharedHabitsSection wsId={workspace.id} isOwner={isOwner} />
+
       <Card className="space-y-2 border-leaf-200 bg-leaf-50">
         <p className="text-xs uppercase tracking-wide text-leaf-700">
           {t('workspaces.detail.invite.title')}
@@ -301,5 +313,317 @@ function BackLink() {
     >
       <ArrowBack /> {t('workspaces.detail.back')}
     </Link>
+  );
+}
+
+/* ─────────────────── Shared habits section (phase 2a) ────────────────── */
+
+/** The "Shared habits" panel that appears below the member list in the
+ *  workspace detail. Members see a read-only list; owners see an inline
+ *  "+ Add" CTA, plus per-row edit / delete affordances. The actual daily
+ *  logging UI (tap to complete from the home checklist) lands in phase 2b
+ *  — this PR only ships the CRUD surface so the owner can populate the
+ *  habit set first.
+ */
+function SharedHabitsSection({
+  wsId,
+  isOwner,
+}: {
+  wsId: string;
+  isOwner: boolean;
+}) {
+  const t = useTranslations();
+  const unitLabel = useUnitLabel();
+  const fmt = useNumberFormatter();
+  const [habits, setHabits] = useState<WorkspaceHabit[] | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeWorkspaceHabits(wsId, (h) => setHabits(h));
+    return unsub;
+  }, [wsId]);
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('workspaces.habits.title')}
+          </h2>
+          <p className="text-xs text-ink-500">
+            {isOwner
+              ? t('workspaces.habits.bodyOwner')
+              : t('workspaces.habits.bodyMember')}
+          </p>
+        </div>
+      </div>
+
+      {habits === null ? (
+        <p className="text-sm text-ink-500">
+          {t('workspaces.detail.loading')}
+        </p>
+      ) : habits.length === 0 ? (
+        <Card className="space-y-2 border-sand-200 bg-sand-50">
+          <p className="text-sm text-ink-700">
+            {isOwner
+              ? t('workspaces.habits.emptyOwner')
+              : t('workspaces.habits.emptyMember')}
+          </p>
+        </Card>
+      ) : (
+        <ul className="space-y-2">
+          {habits.map((h) =>
+            editingId === h.id ? (
+              <li key={h.id}>
+                <HabitForm
+                  initial={h}
+                  onCancel={() => setEditingId(null)}
+                  onSave={async (patch) => {
+                    await updateWorkspaceHabit(wsId, h.id, patch);
+                    setEditingId(null);
+                  }}
+                  onDelete={async () => {
+                    if (!confirm(t('workspaces.habits.deleteConfirm'))) return;
+                    await deleteWorkspaceHabit(wsId, h.id);
+                    setEditingId(null);
+                  }}
+                />
+              </li>
+            ) : (
+              <li
+                key={h.id}
+                className="flex items-center gap-3 rounded-xl border border-ink-200 bg-white px-3 py-2"
+              >
+                <span className="flex-1">
+                  <span className="block text-sm font-medium text-ink-900">
+                    {h.name}
+                  </span>
+                  <span className="numeral block text-[11px] text-ink-500">
+                    {summariseHabit(h, unitLabel, fmt, t)}
+                  </span>
+                </span>
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(h.id)}
+                    className="text-xs text-leaf-700 underline-offset-4 hover:underline"
+                  >
+                    {t('workspaces.habits.edit')}
+                  </button>
+                )}
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+
+      {isOwner && !adding && editingId === null && (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="tap-44 flex w-full items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-4 py-3 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
+        >
+          {t('workspaces.habits.add')}
+        </button>
+      )}
+
+      {isOwner && adding && (
+        <HabitForm
+          onCancel={() => setAdding(false)}
+          onSave={async (patch) => {
+            // patch from the form always supplies name/type/unit/target/limit
+            await createWorkspaceHabit(wsId, {
+              name: patch.name ?? '',
+              type: patch.type ?? 'good',
+              unit: patch.unit,
+              target: patch.target,
+              limit: patch.limit,
+              frequency: patch.frequency,
+            });
+            setAdding(false);
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
+/** One-line summary of a habit's shape for the read-only list row.
+ *  Mirrors the per-habit-row pattern from the home checklist so the
+ *  visual rhythm is consistent. */
+function summariseHabit(
+  h: WorkspaceHabit,
+  unitLabel: (u: string | undefined) => string,
+  fmt: (n: number) => string,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  if (h.type === 'good' && h.target !== undefined && h.unit) {
+    return `${fmt(h.target)} ${unitLabel(h.unit)} · ${t('workspaces.habits.typeGood')}`;
+  }
+  if (h.type === 'bad' && h.limit !== undefined && h.unit) {
+    return `≤ ${fmt(h.limit)} ${unitLabel(h.unit)} · ${t('workspaces.habits.typeBad')}`;
+  }
+  return h.type === 'good'
+    ? t('workspaces.habits.typeGood')
+    : t('workspaces.habits.typeBad');
+}
+
+/** Inline create / edit form for a workspace habit. Used in two modes:
+ *  no `initial` → creating; `initial` set → editing. Keeps the same
+ *  shape as the personal habit form (`/habits/new`) so the cognitive
+ *  load on the owner is minimal. Deliberately stays inline (not a
+ *  modal) so the user can see the rest of the workspace context. */
+function HabitForm({
+  initial,
+  onSave,
+  onCancel,
+  onDelete,
+}: {
+  initial?: WorkspaceHabit;
+  onSave: (
+    patch: Partial<Omit<WorkspaceHabit, 'id' | 'createdByUid' | 'createdAt'>>,
+  ) => void | Promise<void>;
+  onCancel: () => void;
+  onDelete?: () => void | Promise<void>;
+}) {
+  const t = useTranslations();
+  const [name, setName] = useState(initial?.name ?? '');
+  const [type, setType] = useState<HabitType>(initial?.type ?? 'good');
+  const [unit, setUnit] = useState(initial?.unit ?? '');
+  const [target, setTarget] = useState(
+    initial?.target !== undefined ? String(initial.target) : '',
+  );
+  const [limit, setLimit] = useState(
+    initial?.limit !== undefined ? String(initial.limit) : '',
+  );
+  const [busy, setBusy] = useState(false);
+  const canSubmit = name.trim().length > 0 && !busy;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setBusy(true);
+    await onSave({
+      name: name.trim(),
+      type,
+      unit: unit.trim() || undefined,
+      target: type === 'good' && target ? Number(target) : undefined,
+      limit: type === 'bad' && limit ? Number(limit) : undefined,
+    });
+    setBusy(false);
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="space-y-3 rounded-xl border border-leaf-200 bg-leaf-50 p-3"
+    >
+      <label className="block space-y-1">
+        <span className="block text-xs font-medium text-ink-700">
+          {t('workspaces.habits.nameLabel')}
+        </span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t('workspaces.habits.namePlaceholder')}
+          maxLength={60}
+          autoFocus
+          required
+          className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+        />
+      </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setType('good')}
+          className={`tap-44 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+            type === 'good'
+              ? 'border-leaf-500 bg-leaf-50 text-leaf-800'
+              : 'border-ink-200 bg-white text-ink-700'
+          }`}
+          aria-pressed={type === 'good'}
+        >
+          {t('workspaces.habits.typeGood')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setType('bad')}
+          className={`tap-44 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+            type === 'bad'
+              ? 'border-red-500 bg-red-50 text-red-800'
+              : 'border-ink-200 bg-white text-ink-700'
+          }`}
+          aria-pressed={type === 'bad'}
+        >
+          {t('workspaces.habits.typeBad')}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block space-y-1">
+          <span className="block text-xs font-medium text-ink-700">
+            {t('workspaces.habits.unitLabel')}
+          </span>
+          <input
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder={t('workspaces.habits.unitPlaceholder')}
+            maxLength={20}
+            className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+          />
+        </label>
+        <label className="block space-y-1">
+          <span className="block text-xs font-medium text-ink-700">
+            {type === 'good'
+              ? t('workspaces.habits.targetLabel')
+              : t('workspaces.habits.limitLabel')}
+          </span>
+          {type === 'good' ? (
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={100000}
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              className="numeral w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+            />
+          ) : (
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={100000}
+              value={limit}
+              onChange={(e) => setLimit(e.target.value)}
+              className="numeral w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+            />
+          )}
+        </label>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {onDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onDelete}
+            className="text-red-600 hover:bg-red-50"
+          >
+            {t('workspaces.habits.delete')}
+          </Button>
+        )}
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          {t('workspaces.habits.cancel')}
+        </Button>
+        <Button type="submit" disabled={!canSubmit}>
+          {initial
+            ? t('workspaces.habits.save')
+            : t('workspaces.habits.create')}
+        </Button>
+      </div>
+    </form>
   );
 }

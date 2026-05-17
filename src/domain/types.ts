@@ -455,3 +455,44 @@ export interface WorkspaceInvite {
   wsId: string;
   createdAt: string;
 }
+
+/** Lives at `workspaces/{wsId}/habits/{habitId}`. A habit definition
+ *  shared across every member of the workspace. Owner-only writes; all
+ *  members read. Same shape as the personal `Habit` interface, minus
+ *  the per-user fields (replacementHabitId / linksToBooks / isCritical
+ *  / positiveCargo / startRitual / endRitual / isTwoMinuteVersion) —
+ *  those belong to the user's personal habits, not a shared room. */
+export interface WorkspaceHabit {
+  id: string;
+  /** Free-text or preset name, chosen by the owner. */
+  name: string;
+  /** Good = build it (target). Bad = limit it (limit). Same semantics
+   *  as the personal Habit type. */
+  type: HabitType;
+  /** Optional unit label ("pages", "minutes", "glasses"). */
+  unit?: string;
+  /** For good habits: daily target. */
+  target?: number;
+  /** For bad habits: stay at or below this. */
+  limit?: number;
+  frequency: Frequency;
+  /** Denormalized at creation so the UI can show "added by Yasmin"
+   *  without a parallel members-subcollection lookup. */
+  createdByUid: string;
+  createdAt: string;
+}
+
+/** Lives at `workspaces/{wsId}/logs/{uid}/days/{date}`. One doc per
+ *  member per day, holding that member's per-habit values for the
+ *  workspace's shared habits. Members write only their own logs;
+ *  every other member can read them (read gated on workspace
+ *  membership). Streaks/fire stay individual — these logs only feed
+ *  the cross-member visibility widgets, not the user's overall fire. */
+export interface WorkspaceDayLog {
+  /** YYYY-MM-DD. */
+  date: string;
+  /** Map keyed by `WorkspaceHabit.id`. Same per-habit shape as the
+   *  personal `HabitLog`: a value (count/pages/etc.) plus a completed
+   *  boolean for non-numeric habits. */
+  entries: Record<string, { value: number; completed: boolean }>;
+}
