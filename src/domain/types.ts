@@ -269,6 +269,10 @@ export interface DopamineReset {
   lifetimeCleanDays: number;
   relapses: ResetRelapse[];
   checkIns: Record<string, ResetCheckIn>;
+  /** Optional free-text reflection captured when the reset completes — what
+   *  changed, what they learned, what's different now. Surfaced in the
+   *  history list so the user can look back on the result of each reset. */
+  completionReflection?: string;
   createdAt: string;
 }
 

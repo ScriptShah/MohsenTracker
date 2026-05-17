@@ -191,7 +191,10 @@ interface AppState {
     date?: string,
   ) => void;
   logResetRelapse: (id: string, reflection?: string) => void;
-  completeReset: (id: string) => void;
+  completeReset: (id: string, reflection?: string) => void;
+  /** Update the completion reflection on an already-completed reset (used
+   *  when the user adds or edits the reflection from the history list). */
+  setResetCompletionReflection: (id: string, reflection: string | undefined) => void;
   abandonReset: (id: string) => void;
   deleteReset: (id: string) => void;
 
@@ -1168,8 +1171,9 @@ export const useAppStore = create<AppState>()(
         playSound('lowTone');
       },
 
-      completeReset: (id) => {
+      completeReset: (id, reflection) => {
         const now = new Date().toISOString();
+        const trimmed = reflection?.trim();
         set((s) => ({
           resets: s.resets.map((r) =>
             r.id === id
@@ -1177,6 +1181,8 @@ export const useAppStore = create<AppState>()(
                   ...r,
                   status: 'completed' as const,
                   completedAt: now,
+                  completionReflection:
+                    trimmed && trimmed.length > 0 ? trimmed : r.completionReflection,
                   lifetimeCleanDays:
                     r.lifetimeCleanDays +
                     (differenceInCalendarDays(
@@ -1189,6 +1195,21 @@ export const useAppStore = create<AppState>()(
           ),
         }));
         playSound('flourish');
+      },
+
+      setResetCompletionReflection: (id, reflection) => {
+        const trimmed = reflection?.trim();
+        set((s) => ({
+          resets: s.resets.map((r) =>
+            r.id === id
+              ? {
+                  ...r,
+                  completionReflection:
+                    trimmed && trimmed.length > 0 ? trimmed : undefined,
+                }
+              : r,
+          ),
+        }));
       },
 
       abandonReset: (id) => {
