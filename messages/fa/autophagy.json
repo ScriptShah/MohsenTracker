@@ -14,6 +14,12 @@
   "end": "تمام‌کردنِ روزه",
   "cancel": "صرفِ‌نظر",
   "cancelConfirm": "این روزه بدون ذخیره دور انداخته شود؟",
+  "statsTitle": "آمار",
+  "statsTotal": "روزه‌ها",
+  "statsLongest": "بلندترین",
+  "statsAverage": "میانگین",
+  "statsReached": "به هدف رسیده",
+  "notesLabelInline": "حس",
   "historyTitle": "تاریخچه",
   "deleteConfirm": "این روزه حذف شود؟",
   "endSheet": {

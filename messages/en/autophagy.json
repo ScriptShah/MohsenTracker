@@ -14,6 +14,12 @@
   "end": "End fast",
   "cancel": "Discard",
   "cancelConfirm": "Discard this fast without saving?",
+  "statsTitle": "Stats",
+  "statsTotal": "Fasts",
+  "statsLongest": "Longest",
+  "statsAverage": "Average",
+  "statsReached": "Hit target",
+  "notesLabelInline": "Feeling",
   "historyTitle": "History",
   "deleteConfirm": "Delete this fast?",
   "endSheet": {
