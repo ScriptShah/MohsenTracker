@@ -55,7 +55,7 @@ function CategoryDetail() {
   const id = useSearchParams().get('id') ?? '';
   const category = useAppStore((s) => s.categories.find((c) => c.id === id));
   const habits = useAppStore((s) => s.habits.filter((h) => h.categoryId === id));
-  const archiveCategory = useAppStore((s) => s.archiveCategory);
+  const deleteCategory = useAppStore((s) => s.deleteCategory);
   const updateCategory = useAppStore((s) => s.updateCategory);
   const [editing, setEditing] = useState(false);
 
@@ -69,18 +69,19 @@ function CategoryDetail() {
     );
   }
 
-  // Spec §5.10: archive is soft — sets `archivedAt` + `isActive=false` so the
-  // category disappears from the list but the habits + their logs survive.
-  // The habits keep their categoryId pointing at the now-archived category;
-  // home checklist still shows them. We warn the user in the confirm text so
-  // they know what will happen.
-  const onArchive = () => {
+  // Hard cascade delete (irreversible): drops the category AND every habit
+  // inside it along with their logs, streaks, and any pending rewards or
+  // active punishments tied to those habits. The confirm dialog spells out
+  // the habit count so the user knows what they're erasing — the warning
+  // text differs from the no-habit case so a careless tap on an empty
+  // category doesn't read like a panic message.
+  const onDelete = () => {
     const msg =
       habits.length > 0
-        ? t('categories.archiveConfirmWithHabits', { n: fmt(habits.length) })
-        : t('categories.archiveConfirm');
+        ? t('categories.deleteConfirmWithHabits', { n: fmt(habits.length) })
+        : t('categories.deleteConfirmEmpty');
     if (!confirm(msg)) return;
-    archiveCategory(category.id);
+    deleteCategory(category.id);
     router.replace('/categories');
   };
 
@@ -295,10 +296,10 @@ function CategoryDetail() {
         <Button
           type="button"
           variant="ghost"
-          onClick={onArchive}
-          className="text-red-600 hover:bg-red-50"
+          onClick={onDelete}
+          className="border border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50"
         >
-          {t('categories.archive')}
+          {t('categories.delete')}
         </Button>
       </div>
     </div>
