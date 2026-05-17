@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-  type Timestamp,
-} from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firebaseEnabled, getFirebase } from './firebase';
 import { useAppStore } from './store';
 
@@ -115,128 +109,12 @@ export async function pushSnapshot(uid: string): Promise<void> {
   }
 }
 
-/* ── Cloud sync diagnostics + manual controls ─────────────────────── */
-
-/** A read-only peek at the user's cloud snapshot metadata WITHOUT
- *  applying it to the local store. Used by the Profile diagnostics
- *  card to show the user "your cloud version was last written at X by
- *  uid Y" so cross-device mismatches become obvious. */
-export interface CloudSnapshotInfo {
-  exists: boolean;
-  updatedAt: Date | null;
-  /** Whether the cloud doc has a `state` payload. A doc without one
-   *  is corrupted / half-written. */
-  hasState: boolean;
-  /** A rough sense of how much data is in the cloud snapshot — counts
-   *  the user's habits, books, logs (days). Gives the user a way to
-   *  see at a glance "the cloud has 7 habits, this device has 12 —
-   *  so this device is the more recent one." */
-  counts: {
-    habits: number;
-    books: number;
-    logDays: number;
-    workspaces: number;
-  };
-  /** Error code from Firebase if the read failed. */
-  errorCode?: string;
-}
-
-export async function peekCloudSnapshot(
-  uid: string,
-): Promise<CloudSnapshotInfo> {
-  const empty: CloudSnapshotInfo = {
-    exists: false,
-    updatedAt: null,
-    hasState: false,
-    counts: { habits: 0, books: 0, logDays: 0, workspaces: 0 },
-  };
-  if (!firebaseEnabled() || !uid) {
-    return { ...empty, errorCode: 'firebase-disabled' };
-  }
-  const fb = getFirebase();
-  if (!fb) return { ...empty, errorCode: 'firebase-init' };
-  try {
-    const ref = doc(fb.db, 'userSnapshots', uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return empty;
-    const data = snap.data() as
-      | {
-          updatedAt?: Timestamp;
-          state?: {
-            habits?: unknown[];
-            books?: unknown[];
-            logs?: Record<string, unknown>;
-            workspaces?: unknown[];
-          };
-        }
-      | undefined;
-    const state = data?.state ?? null;
-    return {
-      exists: true,
-      updatedAt: data?.updatedAt?.toDate() ?? null,
-      hasState: Boolean(state),
-      counts: {
-        habits: state?.habits?.length ?? 0,
-        books: state?.books?.length ?? 0,
-        logDays: state?.logs ? Object.keys(state.logs).length : 0,
-        // workspaces aren't part of the per-user snapshot — kept for
-        // future shape parity; always 0 today.
-        workspaces: 0,
-      },
-    };
-  } catch (e: any) {
-    return { ...empty, errorCode: e?.code ?? 'unknown' };
-  }
-}
-
-/** Manual pull, surfacing the result so the UI can confirm to the
- *  user what happened. Wraps `pullSnapshot` (which is also called
- *  automatically by CloudSync on sign-in) with an outer Promise so the
- *  Profile button can show "✓ Pulled" / "✗ Error". */
-export async function manualPull(uid: string): Promise<PullResult> {
-  return pullSnapshot(uid);
-}
-
-/** Manual push that returns a discriminated success/failure result.
- *  The default `pushSnapshot` swallows errors silently because the
- *  Firestore persistent cache retries — but on a manual button click
- *  the user needs to know whether their tap worked, so this variant
- *  surfaces the error code. */
-export async function manualPush(
-  uid: string,
-): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
-  if (!firebaseEnabled() || !uid) {
-    return {
-      ok: false,
-      code: 'firebase-disabled',
-      message: 'Firebase is not configured.',
-    };
-  }
-  const fb = getFirebase();
-  if (!fb) {
-    return {
-      ok: false,
-      code: 'firebase-init',
-      message: 'Firebase client unavailable.',
-    };
-  }
-  const profile = useAppStore.getState().profile;
-  if (profile && profile.cloudSyncUid !== uid) {
-    useAppStore.setState({ profile: { ...profile, cloudSyncUid: uid } });
-  }
-  try {
-    const ref = doc(fb.db, 'userSnapshots', uid);
-    await setDoc(ref, {
-      version: SNAPSHOT_VERSION,
-      state: snapshotState(),
-      updatedAt: serverTimestamp(),
-    });
-    return { ok: true };
-  } catch (e: any) {
-    return {
-      ok: false,
-      code: e?.code ?? 'unknown',
-      message: e?.message ?? String(e ?? 'unknown'),
-    };
-  }
-}
+/* The manual Pull / Push / peekCloudSnapshot helpers that previously
+ * lived here were removed when the Profile diagnostic and Cloud Sync
+ * Controls cards were unmounted — the destructive Pull (which
+ * replaces local data with whatever's in the cloud) caused a user
+ * data-loss incident. The automatic pull/push on sign-in above is
+ * still the canonical sync path. If a manual control surface is ever
+ * re-introduced, gate the destructive operations behind a typed
+ * confirmation (user has to type the workspace/account name to
+ * proceed), not just a single one-tap confirm dialog. */
