@@ -43,6 +43,22 @@ function Fasting() {
     return out.reverse();
   }, [fasting, today]);
 
+  /** Recent reflections journal — every saved daily note, newest first.
+   *  Until now the notes were saved on blur and never re-surfaced anywhere;
+   *  this gives the user a place to actually read what they wrote. Capped
+   *  at 30 most-recent entries so the list stays scannable. */
+  const recentReflections = useMemo(() => {
+    return Object.values(fasting)
+      .filter((log) => log.notes && log.notes.trim().length > 0)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .slice(0, 30)
+      .map((log) => ({
+        date: log.date,
+        notes: log.notes!.trim(),
+        count: PARTS.filter((p) => log.parts[p]).length,
+      }));
+  }, [fasting]);
+
   const todayCount = useMemo(() => {
     if (!todayLog) return 0;
     return PARTS.filter((p) => todayLog.parts[p]).length;
@@ -148,6 +164,42 @@ function Fasting() {
         </div>
         <p className="text-xs text-ink-500">{t('fasting.last7Legend')}</p>
       </Card>
+
+      {recentReflections.length > 0 && (
+        <Card className="space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-ink-800">
+              {t('fasting.reflectionsTitle')}
+            </h2>
+            <p className="text-xs text-ink-500">
+              {t('fasting.reflectionsBody')}
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {recentReflections.map((r) => (
+              <li
+                key={r.date}
+                className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50/40 px-3 py-2"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="numeral text-[11px] uppercase tracking-wide text-leaf-700">
+                    {r.date}
+                  </span>
+                  <span className="numeral text-[11px] text-ink-500">
+                    {t('fasting.todayCount', {
+                      done: fmt(r.count),
+                      total: fmt(PARTS.length),
+                    })}
+                  </span>
+                </div>
+                <p className="pt-1 text-sm leading-relaxed text-ink-800">
+                  {r.notes}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 }

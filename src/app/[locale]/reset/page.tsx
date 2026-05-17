@@ -83,6 +83,39 @@ function ResetView() {
         <StartReset onStart={(tier, target) => startReset(tier, target)} />
       )}
 
+      {stats && stats.totalStarted > 0 && (
+        <Card className="space-y-3 border-leaf-200 bg-leaf-50/40">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('reset.statsTitle')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat
+              label={t('reset.statsStarted')}
+              value={fmt(stats.totalStarted)}
+            />
+            <Stat
+              label={t('reset.statsCompleted')}
+              value={`${fmt(stats.totalCompleted)} / ${fmt(stats.totalStarted)}`}
+            />
+            <Stat
+              label={t('reset.statsLongest')}
+              value={`${fmt(stats.longestStreak)} ${t('reset.statsDaysShort')}`}
+            />
+            <Stat
+              label={t('reset.statsLifetime')}
+              value={`${fmt(stats.lifetimeCleanDays)} ${t('reset.statsDaysShort')}`}
+            />
+          </div>
+          {stats.totalRelapses > 0 && (
+            <p className="text-xs text-ink-500">
+              {t('reset.statsRelapsesNote', {
+                n: fmt(stats.totalRelapses),
+              })}
+            </p>
+          )}
+        </Card>
+      )}
+
       {past.length > 0 && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-ink-800">
@@ -536,6 +569,19 @@ function RelapseModal({
             {t('reset.relapse.confirm')}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink-200 bg-white px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-ink-500">
+        {label}
+      </div>
+      <div className="numeral pt-0.5 text-lg font-semibold text-ink-900">
+        {value}
       </div>
     </div>
   );
