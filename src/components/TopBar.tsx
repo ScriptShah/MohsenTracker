@@ -24,6 +24,7 @@ export function TopBar() {
         <Link
           href="/profile"
           aria-label={t('nav.profile')}
+          data-tutorial="profile"
           className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
         >
           <UserIcon className="h-5 w-5" />
@@ -67,6 +68,7 @@ function ThemeToggle() {
       onClick={cycle}
       aria-label={label}
       title={label}
+      data-tutorial="theme"
       className="tap-44 flex h-11 w-11 items-center justify-center rounded-full border border-ink-200 bg-white text-ink-600 hover:border-leaf-300 hover:text-leaf-600"
     >
       <Icon className="h-5 w-5" />

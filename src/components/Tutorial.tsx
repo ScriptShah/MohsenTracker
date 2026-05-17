@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
 import { Button } from './Button';
 
@@ -30,14 +31,30 @@ interface TutorialStep {
   preferred: 'above' | 'below';
   /** Translation key suffix → `tutorial.steps.{slug}.{title|body}`. */
   slug: string;
+  /** Optional in-app destination. When set, the tooltip gains an
+   *  **Open** button that navigates there and finishes the tutorial —
+   *  so the tour can actually take the user to the workspaces hub,
+   *  settings page, etc. instead of just describing them. */
+  href?: string;
 }
 
+/** Order matters: home elements first (so the user learns the daily
+ *  loop), then the bottom nav (so they learn navigation), then the
+ *  top-bar profile (so they know where settings + sign-out live).
+ *  Each step is independently optional — a missing target is skipped
+ *  silently, so e.g. the workspaces step is a no-op for users with no
+ *  workspaces section rendered yet. */
 const STEPS: TutorialStep[] = [
   { key: 'lives', preferred: 'below', slug: 'hearts' },
   { key: 'ring', preferred: 'below', slug: 'ring' },
   { key: 'checklist', preferred: 'above', slug: 'checklist' },
-  { key: 'workspaces', preferred: 'above', slug: 'workspaces' },
-  { key: 'nav-futureSelf', preferred: 'above', slug: 'futureSelf' },
+  { key: 'add-habit', preferred: 'above', slug: 'addHabit', href: '/habits/new' },
+  { key: 'workspaces', preferred: 'above', slug: 'workspaces', href: '/workspaces' },
+  { key: 'nav-categories', preferred: 'above', slug: 'categories', href: '/categories' },
+  { key: 'nav-progress', preferred: 'above', slug: 'progress', href: '/progress' },
+  { key: 'nav-futureSelf', preferred: 'above', slug: 'futureSelf', href: '/future-self' },
+  { key: 'nav-books', preferred: 'above', slug: 'books', href: '/books' },
+  { key: 'profile', preferred: 'below', slug: 'profile', href: '/profile' },
 ];
 
 const PAD = 8; // Padding around the target rect for the spotlight ring.
@@ -46,6 +63,7 @@ const TOOLTIP_MAX_WIDTH = 320;
 
 export function Tutorial() {
   const t = useTranslations();
+  const router = useRouter();
   const profile = useAppStore((s) => s.profile);
   const setProfile = useAppStore((s) => s.setProfile);
 
@@ -178,6 +196,18 @@ export function Tutorial() {
     setRawStepIdx(STEPS.indexOf(step) + 1);
   };
 
+  /** Navigate to the step's destination and finish the tour. Used by the
+   *  per-step Open button. We finish (rather than pause-and-resume) on
+   *  purpose: once the user has gone where the tour pointed them, the
+   *  best UX is to let them explore — re-popping a coach-mark inside an
+   *  unfamiliar screen would be jarring. They can always re-trigger the
+   *  tutorial from Profile if they want a refresh. */
+  const openHref = () => {
+    if (!step.href) return;
+    finish();
+    router.push(step.href as any);
+  };
+
   // Cutout pattern: an absolutely-positioned rectangle at the target's
   // bounds with a giant `box-shadow` extending outward. The shadow
   // covers the rest of the viewport in a dim colour while the cutout
@@ -271,12 +301,17 @@ export function Tutorial() {
               total: String(STEPS.length),
             })}
           </span>
+          {/* Tiny corner skip kept as a quick-out for power users, but
+              the bottom row now carries the primary Skip / Next / Open
+              actions in equal-weight buttons so the choice is obvious. */}
           <button
             type="button"
             onClick={finish}
-            className="text-xs font-medium text-ink-500 underline-offset-4 hover:text-ink-700 hover:underline"
+            className="text-xs font-medium text-ink-400 underline-offset-4 hover:text-ink-700 hover:underline"
+            aria-hidden
+            tabIndex={-1}
           >
-            {t('tutorial.skip')}
+            ✕
           </button>
         </div>
         <h2
@@ -288,7 +323,19 @@ export function Tutorial() {
         <p className="mt-1 text-sm leading-relaxed text-ink-600">
           {t(`tutorial.steps.${step.slug}.body` as any)}
         </p>
-        <div className="mt-4 flex items-center justify-end">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={finish}
+            className="tap-44 rounded-xl px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-100"
+          >
+            {t('tutorial.skip')}
+          </button>
+          {step.href && !isLast && (
+            <Button type="button" variant="ghost" onClick={openHref}>
+              {t('tutorial.open')}
+            </Button>
+          )}
           <Button type="button" onClick={next}>
             {isLast ? t('tutorial.start') : t('tutorial.next')}
           </Button>
