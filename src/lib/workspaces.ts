@@ -541,6 +541,29 @@ export function subscribeMyWorkspaceLog(
   };
 }
 
+/** Subscribe to any specific member's daily log for a workspace + date.
+ *  Used by the cross-member visibility widget on the home checklist —
+ *  one subscription per member per workspace. Firestore rules allow
+ *  reads when the requesting user is in the workspace's memberUids;
+ *  the same workspace `read` rule covers both `subscribeMyWorkspaceLog`
+ *  and this generalised version. */
+export function subscribeMemberWorkspaceLog(
+  wsId: string,
+  uid: string,
+  date: string,
+  cb: (log: WorkspaceDayLog | null) => void,
+): Unsubscribe {
+  if (!firebaseEnabled() || !wsId || !uid || !date) return () => {};
+  const fb = getFirebase();
+  if (!fb) return () => {};
+  return onSnapshot(
+    doc(fb.db, 'workspaces', wsId, 'logs', uid, 'days', date),
+    (snap) =>
+      cb(snap.exists() ? (snap.data() as WorkspaceDayLog) : null),
+    () => cb(null),
+  );
+}
+
 /* ── Membership ──────────────────────────────────────────────────────── */
 
 /** Removes the current user from a workspace they're a member of. The

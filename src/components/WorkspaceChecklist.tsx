@@ -6,18 +6,23 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
   setMyWorkspaceLog,
+  subscribeMemberWorkspaceLog,
   subscribeMyWorkspaceLog,
   subscribeMyWorkspaces,
   subscribeWorkspaceHabits,
+  subscribeWorkspaceMembers,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
+import { useAuth } from '@/lib/auth';
 import { useUnitLabel } from '@/lib/units';
 import { useNumberFormatter } from '@/lib/format';
 import { ChevronEnd } from './Chevron';
+import { Avatar } from './Avatar';
 import type {
   Workspace,
   WorkspaceDayLog,
   WorkspaceHabit,
+  WorkspaceMember,
 } from '@/domain/types';
 
 /** Top-level renderer mounted on the home page below the personal habit
@@ -62,10 +67,17 @@ function WorkspaceChecklist({ workspace }: { workspace: Workspace }) {
   const t = useTranslations();
   const fmt = useNumberFormatter();
   const unitLabel = useUnitLabel();
+  const auth = useAuth();
+  const myUid = auth.status === 'signed-in' ? auth.uid : null;
   const today = todayKey();
 
   const [habits, setHabits] = useState<WorkspaceHabit[] | null>(null);
-  const [log, setLog] = useState<WorkspaceDayLog | null>(null);
+  const [members, setMembers] = useState<WorkspaceMember[]>([]);
+  /** Per-member day log for today, keyed by uid. Includes own log too so
+   *  the cross-member widget renders a single uniform list. */
+  const [memberLogs, setMemberLogs] = useState<
+    Record<string, WorkspaceDayLog | null>
+  >({});
 
   useEffect(() => {
     const unsub = subscribeWorkspaceHabits(workspace.id, (list) =>
@@ -75,15 +87,58 @@ function WorkspaceChecklist({ workspace }: { workspace: Workspace }) {
   }, [workspace.id]);
 
   useEffect(() => {
-    const unsub = subscribeMyWorkspaceLog(workspace.id, today, (l) =>
-      setLog(l),
+    const unsub = subscribeWorkspaceMembers(workspace.id, (list) =>
+      setMembers(list),
     );
     return unsub;
-  }, [workspace.id, today]);
+  }, [workspace.id]);
+
+  /** Subscribe to every member's log for today. Re-subscribes when the
+   *  member list changes (someone joins or leaves). Keys depend on the
+   *  sorted+joined uid list so React identity tracks the set, not the
+   *  reference. */
+  const memberUidsKey = [...workspace.memberUids].sort().join(',');
+  useEffect(() => {
+    const uids = workspace.memberUids;
+    const unsubs = uids.map((uid) =>
+      subscribeMemberWorkspaceLog(workspace.id, uid, today, (log) => {
+        setMemberLogs((prev) => ({ ...prev, [uid]: log }));
+      }),
+    );
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace.id, memberUidsKey, today]);
 
   if (habits === null) {
     return null; // Silent while the first read lands.
   }
+
+  /** Build a "members in display order" array — owner first, then
+   *  joinedAt order, with the current user pulled to whichever side
+   *  the locale-driven layout prefers (we keep them in their natural
+   *  position so the avatar grid is stable across renders). */
+  const orderedMembers: WorkspaceMember[] = [...members].sort((a, b) => {
+    if (a.role === 'owner' && b.role !== 'owner') return -1;
+    if (b.role === 'owner' && a.role !== 'owner') return 1;
+    return (a.joinedAt ?? '').localeCompare(b.joinedAt ?? '');
+  });
+  // Fall-back for memberUids not yet in the subdoc list (rare race).
+  for (const uid of workspace.memberUids) {
+    if (!orderedMembers.some((m) => m.uid === uid)) {
+      orderedMembers.push({
+        uid,
+        displayName: uid.slice(0, 8),
+        joinedAt: '',
+        role: 'member',
+      });
+    }
+  }
+
+  // Mine for the tap target on the row (already subscribed via per-member
+  // logs map — pluck it out instead of running a parallel subscription).
+  const myLog = myUid ? memberLogs[myUid] ?? null : null;
 
   const memberCount = workspace.memberUids.length;
   const memberLine =
@@ -125,12 +180,16 @@ function WorkspaceChecklist({ workspace }: { workspace: Workspace }) {
             <li key={h.id}>
               <WorkspaceHabitRow
                 habit={h}
-                entry={log?.entries[h.id]}
+                entry={myLog?.entries[h.id]}
                 onToggle={(next) =>
                   void setMyWorkspaceLog(workspace.id, h.id, today, next)
                 }
                 unitLabel={unitLabel}
                 fmt={fmt}
+                mode={workspace.mode}
+                myUid={myUid}
+                members={orderedMembers}
+                memberLogs={memberLogs}
               />
             </li>
           ))}
@@ -154,12 +213,20 @@ function WorkspaceHabitRow({
   onToggle,
   unitLabel,
   fmt,
+  mode,
+  myUid,
+  members,
+  memberLogs,
 }: {
   habit: WorkspaceHabit;
   entry: { value: number; completed: boolean } | undefined;
   onToggle: (next: { value: number; completed: boolean }) => void;
   unitLabel: (u: string | undefined) => string;
   fmt: (n: number) => string;
+  mode: 'pair' | 'group';
+  myUid: string | null;
+  members: WorkspaceMember[];
+  memberLogs: Record<string, WorkspaceDayLog | null>;
 }) {
   const t = useTranslations();
   const done = entry?.completed === true;
@@ -216,6 +283,108 @@ function WorkspaceHabitRow({
           </span>
         )}
       </span>
+      <MemberGrid
+        habitId={habit.id}
+        mode={mode}
+        myUid={myUid}
+        members={members}
+        memberLogs={memberLogs}
+      />
+    </div>
+  );
+}
+
+/** Cross-member visibility — read-only view of every member's
+ *  completion state for ONE habit today. Pair workspaces render two
+ *  larger chips side-by-side; group workspaces render a compact
+ *  avatar row. Tooltip / aria-label on each avatar names the member +
+ *  their state so screen readers and hover-over both work.
+ *
+ *  The current user is included so the grid is uniform. The big tap
+ *  target on the left of the row is what they USE to toggle; this
+ *  grid is the consequence of that tap rendered alongside everyone
+ *  else's. Removing self from the grid would make pair mode (just one
+ *  avatar) feel lopsided.
+ */
+function MemberGrid({
+  habitId,
+  mode,
+  myUid,
+  members,
+  memberLogs,
+}: {
+  habitId: string;
+  mode: 'pair' | 'group';
+  myUid: string | null;
+  members: WorkspaceMember[];
+  memberLogs: Record<string, WorkspaceDayLog | null>;
+}) {
+  const t = useTranslations();
+  if (members.length === 0) return null;
+
+  const isPair = mode === 'pair' && members.length === 2;
+
+  return (
+    <div
+      className={clsx(
+        'flex shrink-0 items-center',
+        isPair ? 'gap-2' : 'gap-0.5',
+      )}
+    >
+      {members.map((m) => {
+        const log = memberLogs[m.uid];
+        const completed = log?.entries[habitId]?.completed === true;
+        const isMe = m.uid === myUid;
+        const label = t(
+          completed
+            ? 'workspaces.crossMember.done'
+            : 'workspaces.crossMember.notDone',
+          { name: isMe ? t('workspaces.crossMember.you') : m.displayName },
+        );
+        return (
+          <span
+            key={m.uid}
+            title={label}
+            aria-label={label}
+            className={clsx(
+              'relative inline-flex items-center justify-center',
+              isPair ? '' : '-ms-1 first:ms-0',
+            )}
+          >
+            <Avatar
+              name={m.displayName}
+              photoURL={m.photoURL}
+              size={isPair ? 'sm' : 'xs'}
+              className={clsx(
+                completed
+                  ? 'ring-2 ring-leaf-500 ring-offset-1'
+                  : 'opacity-50 grayscale',
+                isPair ? '' : 'ring-2 ring-white',
+              )}
+            />
+            {completed && (
+              <span
+                aria-hidden
+                className="absolute -bottom-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-leaf-600 text-white"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  className="h-2.5 w-2.5"
+                >
+                  <path
+                    d="M5 12l5 5L20 7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }
