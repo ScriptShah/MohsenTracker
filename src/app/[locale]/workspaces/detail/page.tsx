@@ -22,17 +22,22 @@ import {
   deleteWorkspaceHabit,
   leaveWorkspace,
   rotateInviteCode,
+  setMyWorkspaceLog,
+  subscribeMemberWorkspaceLog,
   subscribeWorkspace,
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
   updateWorkspaceHabit,
 } from '@/lib/workspaces';
+import { todayKey } from '@/lib/dates';
 import type {
   HabitType,
   Workspace,
+  WorkspaceDayLog,
   WorkspaceHabit,
   WorkspaceMember,
 } from '@/domain/types';
+import clsx from 'clsx';
 
 export default function WorkspaceDetailPage() {
   return (
@@ -231,6 +236,14 @@ function WorkspaceDetail() {
             ))}
         </ul>
       </section>
+
+      {workspace.mode === 'pair' && (
+        <PairTodaySection
+          workspace={workspace}
+          members={members}
+          myUid={currentUid}
+        />
+      )}
 
       <SharedHabitsSection wsId={workspace.id} isOwner={isOwner} />
 
@@ -644,5 +657,275 @@ function HabitForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/* ────────────────── Pair-mode "Today together" section ───────────────── */
+
+/** Pair-specialised view of today's shared habits. Renders only when
+ *  `workspace.mode === 'pair'`. Stacked layout per decision #4: each
+ *  habit shows YOU on top, your partner below (or just one of you if
+ *  the second member hasn't joined yet). Tap your row to toggle your
+ *  own completion; your partner's row is read-only.
+ *
+ *  Why this lives on the detail page and not the home checklist:
+ *  the home gets the compact "side-by-side avatars" view (phase 3).
+ *  This is the deeper view — bigger rows, names visible, easier to
+ *  scan for "did we both do it" with morning eyes.
+ */
+function PairTodaySection({
+  workspace,
+  members,
+  myUid,
+}: {
+  workspace: Workspace;
+  members: WorkspaceMember[];
+  myUid: string | null;
+}) {
+  const t = useTranslations();
+  const unitLabel = useUnitLabel();
+  const fmt = useNumberFormatter();
+  const today = todayKey();
+
+  const [habits, setHabits] = useState<WorkspaceHabit[] | null>(null);
+  const [memberLogs, setMemberLogs] = useState<
+    Record<string, WorkspaceDayLog | null>
+  >({});
+
+  useEffect(() => {
+    const unsub = subscribeWorkspaceHabits(workspace.id, (h) => setHabits(h));
+    return unsub;
+  }, [workspace.id]);
+
+  const memberUidsKey = [...workspace.memberUids].sort().join(',');
+  useEffect(() => {
+    const uids = workspace.memberUids;
+    const unsubs = uids.map((uid) =>
+      subscribeMemberWorkspaceLog(workspace.id, uid, today, (log) =>
+        setMemberLogs((prev) => ({ ...prev, [uid]: log })),
+      ),
+    );
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace.id, memberUidsKey, today]);
+
+  if (habits === null) return null;
+  if (habits.length === 0) return null;
+
+  // Order: me first, then the other member(s). Pair mode caps at 2, but
+  // the same code handles a 1-member workspace gracefully.
+  const ordered: WorkspaceMember[] = [];
+  if (myUid) {
+    const me = members.find((m) => m.uid === myUid);
+    if (me) ordered.push(me);
+  }
+  for (const m of members) {
+    if (m.uid !== myUid) ordered.push(m);
+  }
+  // Race fallback for memberUids without a subdoc yet.
+  for (const uid of workspace.memberUids) {
+    if (!ordered.some((m) => m.uid === uid)) {
+      ordered.push({
+        uid,
+        displayName: uid.slice(0, 8),
+        joinedAt: '',
+        role: 'member',
+      });
+    }
+  }
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('workspaces.pairToday.title')}
+        </h2>
+        <p className="text-xs text-ink-500">
+          {t('workspaces.pairToday.body')}
+        </p>
+      </div>
+
+      <ul className="space-y-3">
+        {habits.map((h) => (
+          <li key={h.id}>
+            <PairTodayHabitCard
+              workspace={workspace}
+              habit={h}
+              members={ordered}
+              memberLogs={memberLogs}
+              myUid={myUid}
+              unitLabel={unitLabel}
+              fmt={fmt}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** One habit card in the pair "Today together" section. Heading shows
+ *  the habit + its target/limit; below, two stacked rows — yours
+ *  (tappable) and your partner's (read-only). */
+function PairTodayHabitCard({
+  workspace,
+  habit,
+  members,
+  memberLogs,
+  myUid,
+  unitLabel,
+  fmt,
+}: {
+  workspace: Workspace;
+  habit: WorkspaceHabit;
+  members: WorkspaceMember[];
+  memberLogs: Record<string, WorkspaceDayLog | null>;
+  myUid: string | null;
+  unitLabel: (u: string | undefined) => string;
+  fmt: (n: number) => string;
+}) {
+  const t = useTranslations();
+  const today = todayKey();
+
+  return (
+    <Card className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-semibold text-ink-900">{habit.name}</span>
+        {habit.unit && (habit.target !== undefined || habit.limit !== undefined) && (
+          <span className="numeral text-[11px] text-ink-500">
+            {habit.type === 'good' && habit.target !== undefined
+              ? `${fmt(habit.target)} ${unitLabel(habit.unit)}`
+              : habit.limit !== undefined
+              ? `≤ ${fmt(habit.limit)} ${unitLabel(habit.unit)}`
+              : ''}
+          </span>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        {members.map((m) => {
+          const log = memberLogs[m.uid];
+          const done = log?.entries[habit.id]?.completed === true;
+          const isMe = m.uid === myUid;
+          return (
+            <PairMemberRow
+              key={m.uid}
+              member={m}
+              done={done}
+              isMe={isMe}
+              onToggle={
+                isMe
+                  ? () => {
+                      const nextCompleted = !done;
+                      let value: number;
+                      if (habit.type === 'good' && habit.target !== undefined) {
+                        value = nextCompleted ? habit.target : 0;
+                      } else if (habit.type === 'bad') {
+                        value = nextCompleted
+                          ? habit.limit ?? 0
+                          : (habit.limit ?? 0) + 1;
+                      } else {
+                        value = nextCompleted ? 1 : 0;
+                      }
+                      void setMyWorkspaceLog(workspace.id, habit.id, today, {
+                        value,
+                        completed: nextCompleted,
+                      });
+                    }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/** Single stacked row inside a PairTodayHabitCard. Yours is a tap target;
+ *  your partner's is read-only. The visual treatment matches the home
+ *  cross-member avatar (full colour + ✓ when done, grayscale at half
+ *  opacity when not) but at the larger pair size with names visible. */
+function PairMemberRow({
+  member,
+  done,
+  isMe,
+  onToggle,
+}: {
+  member: WorkspaceMember;
+  done: boolean;
+  isMe: boolean;
+  onToggle?: () => void;
+}) {
+  const t = useTranslations();
+  const labelKey = done ? 'workspaces.pairToday.doneAria' : 'workspaces.pairToday.notDoneAria';
+  const ariaLabel = t(labelKey, {
+    name: isMe ? t('workspaces.crossMember.you') : member.displayName,
+  });
+  const className = clsx(
+    'flex w-full items-center gap-3 rounded-xl border px-3 py-2 transition',
+    done
+      ? 'border-leaf-500 bg-leaf-50'
+      : 'border-ink-200 bg-white',
+    isMe && !done && 'hover:border-ink-300',
+  );
+
+  const content = (
+    <>
+      <Avatar
+        name={member.displayName}
+        photoURL={member.photoURL}
+        size="sm"
+        className={clsx(!done && 'opacity-60 grayscale')}
+      />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-800">
+        {isMe ? t('workspaces.crossMember.you') : member.displayName}
+      </span>
+      <span
+        className={clsx(
+          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
+          done
+            ? 'border-leaf-600 bg-leaf-600 text-white'
+            : 'border-ink-300 bg-white',
+        )}
+        aria-hidden
+      >
+        {done && (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            className="h-4 w-4"
+          >
+            <path
+              d="M5 12l5 5L20 7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </span>
+    </>
+  );
+
+  if (onToggle) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={done}
+        aria-label={ariaLabel}
+        className={clsx('tap-44', className)}
+      >
+        {content}
+      </button>
+    );
+  }
+  return (
+    <div className={className} aria-label={ariaLabel} title={ariaLabel}>
+      {content}
+    </div>
   );
 }
