@@ -21,6 +21,7 @@ import { isRamadanModeActive, ramadanPhase } from '@/lib/hijri';
 import { IftarCountdown } from '@/components/IftarCountdown';
 import { AngerProtocol } from '@/components/AngerProtocol';
 import { WorkspacesHomeSection } from '@/components/WorkspaceChecklist';
+import { useWorkspacesTodayProgress } from '@/lib/useWorkspacesProgress';
 import { LevelUpCard } from '@/components/LevelUpCard';
 import { eligibleLevelUps } from '@/lib/twoMinute';
 import { getFireTrack } from '@/lib/streakFire';
@@ -116,10 +117,19 @@ function Home() {
     return { habit, line };
   }, [dailyHabits, t, fmt, allLogs]);
 
+  // Shared-habit contributions from every workspace the user belongs
+  // to. Includes only THIS USER's completions per decision #3 (fire /
+  // ring / lives stay individual). Returns { total: 0, done: 0 } until
+  // the subscriptions land, so the ring stays at its personal-only
+  // value during the first paint instead of flashing to 0%.
+  const wsProgress = useWorkspacesTodayProgress();
+
   if (!profile) return null;
 
-  const total = dailyHabits.length;
-  const done = summary?.completedCount ?? 0;
+  const personalTotal = dailyHabits.length;
+  const personalDone = summary?.completedCount ?? 0;
+  const total = personalTotal + wsProgress.total;
+  const done = personalDone + wsProgress.done;
   const rate = total === 0 ? 0 : done / total;
 
   return (
