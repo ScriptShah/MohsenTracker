@@ -7,7 +7,17 @@ import { useAppStore } from './store';
 const SNAPSHOT_VERSION = 1;
 
 /** Fields of the Zustand state we replicate to the cloud. Action functions
- *  and ephemeral UI flags are excluded by listing only data shapes here. */
+ *  and ephemeral UI flags are excluded by listing only data shapes here.
+ *
+ *  IMPORTANT: when adding a new top-level data slice to AppState, add it
+ *  here too. The list is intentionally hand-written rather than derived
+ *  from AppState so action methods don't leak through; the trade-off is
+ *  that new slices have to be added in two places. Modules whose data was
+ *  silently dropped in the past because of this gap: debts, savings,
+ *  spiritualFasting, autophagyFasts — added in v14/v15 and missed for
+ *  multiple releases until #45. If you add another slice, also update
+ *  applySnapshot's typing and the §6 list in PROJECT_STATE.md.
+ */
 function snapshotState() {
   const s = useAppStore.getState();
   return {
@@ -25,6 +35,10 @@ function snapshotState() {
     books: s.books,
     resets: s.resets,
     ramadan: s.ramadan,
+    debts: s.debts,
+    savings: s.savings,
+    spiritualFasting: s.spiritualFasting,
+    autophagyFasts: s.autophagyFasts,
   };
 }
 
