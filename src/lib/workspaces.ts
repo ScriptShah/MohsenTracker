@@ -345,6 +345,43 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
     const wsSnap = await getDoc(doc(fb.db, 'workspaces', wsId));
     if (!wsSnap.exists()) return true;
     const ws = wsSnap.data() as Workspace;
+
+    // Cascade order matters. Rules on every subcollection (`members`,
+    // `habits`, `logs/{uid}/days/*`) check the parent workspace doc to
+    // confirm owner / membership. Once the parent doc is gone those
+    // checks fail (`get()` returns null), so the subdocs become
+    // orphaned forever. We MUST clean every subtree before deleting
+    // the parent.
+
+    // 1. Shared habit definitions.
+    try {
+      const habitsSnap = await getDocs(
+        collection(fb.db, 'workspaces', wsId, 'habits'),
+      );
+      await Promise.all(habitsSnap.docs.map((d) => deleteDoc(d.ref)));
+    } catch {
+      /* swallow */
+    }
+
+    // 2. Per-member day-log subtrees. One day-doc per member per date,
+    // nested under `logs/{uid}/days/{date}`. Owner-of-workspace can
+    // delete other members' logs (rule expanded in this PR).
+    try {
+      for (const memberUid of ws.memberUids) {
+        try {
+          const daysSnap = await getDocs(
+            collection(fb.db, 'workspaces', wsId, 'logs', memberUid, 'days'),
+          );
+          await Promise.all(daysSnap.docs.map((d) => deleteDoc(d.ref)));
+        } catch {
+          /* swallow — per-member cleanup is best-effort */
+        }
+      }
+    } catch {
+      /* swallow */
+    }
+
+    // 3. Member subdocs.
     try {
       const membersSnap = await getDocs(
         collection(fb.db, 'workspaces', wsId, 'members'),
@@ -353,6 +390,8 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
     } catch {
       /* swallow */
     }
+
+    // 4. Invite-code lookup doc.
     if (ws.inviteCode) {
       try {
         await deleteDoc(doc(fb.db, 'workspaceInvites', ws.inviteCode));
@@ -360,6 +399,8 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
         /* swallow */
       }
     }
+
+    // 5. Finally, the workspace doc itself.
     await deleteDoc(doc(fb.db, 'workspaces', wsId));
     return true;
   } catch {
