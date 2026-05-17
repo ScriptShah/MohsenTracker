@@ -9,6 +9,7 @@ import { ArrowBack } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useNumberFormatter } from '@/lib/format';
+import { EndAutophagySheet } from '@/components/EndAutophagySheet';
 import type { AutophagyFast } from '@/domain/types';
 
 const TARGET_OPTIONS = [16, 18, 20, 24, 36];
@@ -39,8 +40,27 @@ function Autophagy() {
     [fasts],
   );
 
+  /** Aggregate stats across the user's complete history. Surfaced as a
+   *  small panel so the user sees their results, not just the latest fast. */
+  const stats = useMemo(() => {
+    if (history.length === 0) return null;
+    const durations = history.map((f) => {
+      const ms = new Date(f.endedAt!).getTime() - new Date(f.startedAt).getTime();
+      return ms / (60 * 60 * 1000); // hours
+    });
+    const total = history.length;
+    const totalHours = durations.reduce((a, b) => a + b, 0);
+    const longestHours = Math.max(...durations);
+    const avgHours = totalHours / total;
+    const reached = history.filter((f, i) => {
+      const target = f.targetHours ?? 0;
+      return target > 0 && durations[i] >= target;
+    }).length;
+    return { total, longestHours, avgHours, reached };
+  }, [history]);
+
   const [target, setTarget] = useState<number>(16);
-  const [notes, setNotes] = useState('');
+  const [showEndSheet, setShowEndSheet] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -56,15 +76,10 @@ function Autophagy() {
       {active ? (
         <ActiveFastCard
           fast={active}
-          onEnd={() => {
-            endAutophagyFast(active.id, notes.trim() || undefined);
-            setNotes('');
-          }}
+          onEnd={() => setShowEndSheet(true)}
           onCancel={() => {
             if (confirm(t('autophagy.cancelConfirm'))) cancelAutophagyFast(active.id);
           }}
-          notes={notes}
-          setNotes={setNotes}
         />
       ) : (
         <Card className="space-y-3">
@@ -96,6 +111,32 @@ function Autophagy() {
         </Card>
       )}
 
+      {stats && (
+        <Card className="space-y-3 border-leaf-200 bg-leaf-50/40">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('autophagy.statsTitle')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat
+              label={t('autophagy.statsTotal')}
+              value={fmt(stats.total)}
+            />
+            <Stat
+              label={t('autophagy.statsLongest')}
+              value={`${fmt(Math.round(stats.longestHours * 10) / 10)}h`}
+            />
+            <Stat
+              label={t('autophagy.statsAverage')}
+              value={`${fmt(Math.round(stats.avgHours * 10) / 10)}h`}
+            />
+            <Stat
+              label={t('autophagy.statsReached')}
+              value={`${fmt(stats.reached)} / ${fmt(stats.total)}`}
+            />
+          </div>
+        </Card>
+      )}
+
       {history.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-ink-800">
@@ -115,6 +156,16 @@ function Autophagy() {
           </ul>
         </div>
       )}
+
+      {showEndSheet && active && (
+        <EndAutophagySheet
+          onCancel={() => setShowEndSheet(false)}
+          onConfirm={(notes) => {
+            endAutophagyFast(active.id, notes);
+            setShowEndSheet(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -123,14 +174,10 @@ function ActiveFastCard({
   fast,
   onEnd,
   onCancel,
-  notes,
-  setNotes,
 }: {
   fast: AutophagyFast;
   onEnd: () => void;
   onCancel: () => void;
-  notes: string;
-  setNotes: (v: string) => void;
 }) {
   const t = useTranslations();
   const fmt = useNumberFormatter();
@@ -199,17 +246,6 @@ function ActiveFastCard({
         </div>
       </div>
 
-      <label className="block space-y-1">
-        <span className="text-xs text-ink-600">{t('autophagy.notesLabel')}</span>
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder={t('autophagy.notesPlaceholder')}
-          maxLength={200}
-          className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
-        />
-      </label>
-
       <div className="flex items-center justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {t('autophagy.cancel')}
@@ -261,7 +297,14 @@ function HistoryRow({
         </span>
       </div>
       {fast.notes && (
-        <p className="pt-1 text-xs text-ink-600">{fast.notes}</p>
+        <div className="mt-2 rounded-xl border-s-2 border-leaf-400 bg-white/80 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-leaf-700">
+            {t('autophagy.notesLabelInline')}
+          </p>
+          <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
+            {fast.notes}
+          </p>
+        </div>
       )}
       <div className="mt-2 flex">
         <button
@@ -273,5 +316,18 @@ function HistoryRow({
         </button>
       </div>
     </Card>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink-200 bg-white px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-ink-500">
+        {label}
+      </div>
+      <div className="numeral pt-0.5 text-lg font-semibold text-ink-900">
+        {value}
+      </div>
+    </div>
   );
 }

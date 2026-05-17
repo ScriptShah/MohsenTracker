@@ -18,6 +18,7 @@ import {
   type ReplacementBucket,
 } from '@/lib/reset';
 import { todayKey } from '@/lib/dates';
+import { ResetCompletionSheet } from '@/components/ResetCompletionSheet';
 import type { DopamineReset, ResetTier } from '@/domain/types';
 
 export default function ResetPage() {
@@ -36,45 +37,30 @@ function ResetView() {
   const logCheckIn = useAppStore((s) => s.logResetCheckIn);
   const logRelapse = useAppStore((s) => s.logResetRelapse);
   const completeReset = useAppStore((s) => s.completeReset);
+  const setCompletionReflection = useAppStore(
+    (s) => s.setResetCompletionReflection,
+  );
   const abandonReset = useAppStore((s) => s.abandonReset);
   const deleteReset = useAppStore((s) => s.deleteReset);
 
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
-  /** Every relapse across every reset, newest first. The same data is
-   *  already saved per-reset (with the trigger reflection placeholder
-   *  "What was the trigger?") — this aggregates it so the user can see
-   *  in ONE place what's broken them historically. Patterns hide in
-   *  plain sight when you read them all together. */
-  const allRelapses = useMemo(() => {
-    const out: Array<{
-      at: string;
-      target: string;
-      resetId: string;
-      daysCleanBefore: number;
-      reflection?: string;
-    }> = [];
-    for (const r of resets) {
-      for (const rel of r.relapses) {
-        out.push({
-          at: rel.at,
-          target: r.target,
-          resetId: r.id,
-          daysCleanBefore: rel.daysCleanBefore,
-          reflection: rel.reflection,
-        });
-      }
-    }
-    return out.sort((a, b) => (a.at < b.at ? 1 : -1));
-  }, [resets]);
-
-  // Auto-complete: when an active reset reaches its target days, flip status.
+  // When the active reset reaches its target, surface a completion sheet
+  // instead of silently flipping the status. The user gets a chance to
+  // capture a reflection on what changed; the sheet's Skip + Save both
+  // complete the reset, but only Save persists text.
+  const [completingId, setCompletingId] = useState<string | null>(null);
   useEffect(() => {
     if (active && reachedTarget(active)) {
-      completeReset(active.id);
+      setCompletingId(active.id);
     }
-  }, [active, completeReset]);
+  }, [active]);
+
+  // Editing the completion reflection on an already-completed past reset.
+  const [editingPastId, setEditingPastId] = useState<string | null>(null);
+  const editingPast = past.find((r) => r.id === editingPastId);
+  const completingReset = active && active.id === completingId ? active : null;
 
   return (
     <div className="space-y-5">
@@ -97,45 +83,37 @@ function ResetView() {
         <StartReset onStart={(tier, target) => startReset(tier, target)} />
       )}
 
-      {allRelapses.length > 0 && (
-        <section className="space-y-2">
-          <div>
-            <h2 className="text-sm font-semibold text-ink-800">
-              {t('reset.triggersTitle')}
-            </h2>
-            <p className="text-xs text-ink-500">
-              {t('reset.triggersBody')}
-            </p>
+      {stats && stats.totalStarted > 0 && (
+        <Card className="space-y-3 border-leaf-200 bg-leaf-50/40">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('reset.statsTitle')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat
+              label={t('reset.statsStarted')}
+              value={fmt(stats.totalStarted)}
+            />
+            <Stat
+              label={t('reset.statsCompleted')}
+              value={`${fmt(stats.totalCompleted)} / ${fmt(stats.totalStarted)}`}
+            />
+            <Stat
+              label={t('reset.statsLongest')}
+              value={`${fmt(stats.longestStreak)} ${t('reset.statsDaysShort')}`}
+            />
+            <Stat
+              label={t('reset.statsLifetime')}
+              value={`${fmt(stats.lifetimeCleanDays)} ${t('reset.statsDaysShort')}`}
+            />
           </div>
-          <ul className="space-y-2">
-            {allRelapses.map((r, i) => (
-              <li
-                key={`${r.resetId}-${i}`}
-                className="rounded-xl border-s-2 border-red-400 bg-red-50/40 px-3 py-2"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="numeral text-[11px] uppercase tracking-wide text-red-700">
-                    {r.at.slice(0, 10)} · {r.target}
-                  </span>
-                  <span className="numeral text-[11px] text-ink-500">
-                    {r.daysCleanBefore === 1
-                      ? t('reset.triggersDaysOne')
-                      : t('reset.triggersDays', { n: fmt(r.daysCleanBefore) })}
-                  </span>
-                </div>
-                {r.reflection ? (
-                  <p className="pt-1 text-sm leading-relaxed text-ink-800">
-                    {r.reflection}
-                  </p>
-                ) : (
-                  <p className="pt-1 text-xs italic text-ink-400">
-                    {t('reset.triggersNoText')}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+          {stats.totalRelapses > 0 && (
+            <p className="text-xs text-ink-500">
+              {t('reset.statsRelapsesNote', {
+                n: fmt(stats.totalRelapses),
+              })}
+            </p>
+          )}
+        </Card>
       )}
 
       {past.length > 0 && (
@@ -167,20 +145,67 @@ function ResetView() {
                         : t('reset.lifetime', { n: fmt(r.lifetimeCleanDays) })}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="text-xs text-red-600 hover:underline"
-                    onClick={() => {
-                      if (confirm(t('reset.confirmDelete'))) deleteReset(r.id);
-                    }}
-                  >
-                    {t('common.delete')}
-                  </button>
+                  {r.completionReflection && (
+                    <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 px-3 py-2 text-sm leading-relaxed italic text-ink-700">
+                      {r.completionReflection}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    {r.status === 'completed' ? (
+                      <button
+                        type="button"
+                        className="text-xs text-leaf-700 underline-offset-4 hover:underline"
+                        onClick={() => setEditingPastId(r.id)}
+                      >
+                        {r.completionReflection
+                          ? t('reset.editReflection')
+                          : t('reset.addReflection')}
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => {
+                        if (confirm(t('reset.confirmDelete'))) deleteReset(r.id);
+                      }}
+                    >
+                      {t('common.delete')}
+                    </button>
+                  </div>
                 </Card>
               </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {completingReset && (
+        <ResetCompletionSheet
+          target={completingReset.target}
+          initialReflection={completingReset.completionReflection}
+          onConfirm={(reflection) => {
+            completeReset(completingReset.id, reflection);
+            setCompletingId(null);
+          }}
+          onSkip={() => {
+            completeReset(completingReset.id);
+            setCompletingId(null);
+          }}
+        />
+      )}
+
+      {editingPast && (
+        <ResetCompletionSheet
+          target={editingPast.target}
+          initialReflection={editingPast.completionReflection}
+          onConfirm={(reflection) => {
+            setCompletionReflection(editingPast.id, reflection);
+            setEditingPastId(null);
+          }}
+          onSkip={() => setEditingPastId(null)}
+        />
       )}
     </div>
   );
@@ -544,6 +569,19 @@ function RelapseModal({
             {t('reset.relapse.confirm')}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink-200 bg-white px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-ink-500">
+        {label}
+      </div>
+      <div className="numeral pt-0.5 text-lg font-semibold text-ink-900">
+        {value}
       </div>
     </div>
   );
