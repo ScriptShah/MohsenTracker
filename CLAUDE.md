@@ -641,17 +641,26 @@ MohsenTracker/
   shown on the detail page. **Not in codebase.**
 
 ### Tests
-- **Vitest infra wired; one suite shipped.** `vitest` is a devDep,
-  `vitest.config.ts` sets `environment: 'node'` and the `@/` alias,
-  `npm run test` runs every `src/**/*.test.ts` file. The first suite
-  is `src/lib/__tests__/overallStreak.test.ts` — 20 tests over
-  `dayQualifies` (critical-set vs fallback paths, target / limit
-  semantics, createdAt gating) and `recomputeOverallStreak` (today
-  partial, back-walk gap breaks, longest >= current, future-date
-  masking, 100-day migration case). Every other module remains
-  untested; the highest-value follow-ups are `streaks.ts` (per-habit
-  walk, mirrors overallStreak) and `restart.ts` (lives recompute on
-  launch, critical for the 3-hearts UI).
+- **Vitest infra wired; three suites shipped (55 tests total).**
+  `vitest` is a devDep, `vitest.config.ts` sets `environment: 'node'`
+  and the `@/` alias, `npm run test` runs every `src/**/*.test.ts`
+  file. Suites:
+  - `overallStreak.test.ts` (20) — `dayQualifies` (critical-set vs
+    fallback paths, target / limit semantics, createdAt gating) and
+    `recomputeOverallStreak` (today partial, back-walk gap breaks,
+    longest >= current, future-date masking, 100-day migration case).
+  - `streaks.test.ts` (17) — `isLogSuccessful` (good w/wo target,
+    bad with limit + completed flag, target=0 edge, limit=0 default)
+    and `recomputeStreak` (today partial, gaps, prevLongest preserved
+    vs overridden, target/limit semantics in walks).
+  - `restart.test.ts` (18) — `computeStrikes` (no-habits early
+    return, missing-summary-as-strike, exclude-today, 3-day recovery
+    rule, lastRestartAt as exclusive floor, earliestHabit floor, cap
+    at 3 / clamp to 0, exactly-50% boundary) + `shouldOfferRestart`
+    (threshold + 7-day cooldown).
+  Next priority targets: `safety.ts` (punishment validator),
+  `compound.ts` (yearly/decade projections), `hijri.ts` (Ramadan
+  phase math).
 
 ### Encryption of Sensitive Fields
 - Architectural Constraint #9 in this file says encrypt
@@ -729,10 +738,10 @@ recompute deterministically).
 7. **`onboardingComplete: false` users with a stale local profile
    can land on a category-pick step they already saw** — onboarding
    doesn't deeply validate state on resume.
-8. **Minimal test coverage.** `overallStreak.ts` is now covered (20
-   tests), but every other module still ships without verification.
-   `streaks.ts` and `restart.ts` are the most-load-bearing untested
-   files left.
+8. **Partial test coverage.** `overallStreak.ts`, `streaks.ts`, and
+   `restart.ts` are covered (55 tests across 3 suites). Everything
+   else still ships without verification; `safety.ts` and `hijri.ts`
+   are the highest-stakes untested files left.
 9. **3 pre-existing lint warnings** — `<img>` instead of `<Image>`
    in `BookCover.tsx` + `books/new/page.tsx`, missing `useEffect`
    dep in `books/[id]/page.tsx` (legacy redirect shim).
@@ -843,9 +852,10 @@ Beyond those, in rough order:
   are done; the rest still reads as literal translation.
 - **Splash text finalization** — 4 of 5 quotes are still rejected
   drafts.
-- **Test coverage** — `vitest` is wired and `overallStreak.ts` is
-  covered. Next targets: `streaks.ts` (per-habit walk), `restart.ts`
-  (lives recompute), `safety.ts` (punishment validator).
+- **Test coverage** — `vitest` is wired; `overallStreak.ts`,
+  `streaks.ts`, and `restart.ts` are covered (55 tests). Next
+  targets: `safety.ts` (punishment validator), `compound.ts` (yearly
+  projections), `hijri.ts` (Ramadan phase math).
 - **Per-doc Firestore writes (spec §8 schema)** — cures
   last-writer-wins. Large.
 - **Encryption of sensitive fields** — debts + savings make this
