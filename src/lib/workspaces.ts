@@ -18,7 +18,11 @@ import {
 import { firebaseEnabled, getFirebase } from './firebase';
 import { currentUidPromise } from './livecounts';
 import type {
+  Frequency,
+  HabitType,
   Workspace,
+  WorkspaceDayLog,
+  WorkspaceHabit,
   WorkspaceMember,
   WorkspaceMode,
 } from '@/domain/types';
@@ -364,6 +368,180 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
 }
 
 /* ── Leave ───────────────────────────────────────────────────────────── */
+
+/* ── Shared habits (phase 2a) ────────────────────────────────────────── */
+
+export interface CreateWorkspaceHabitInput {
+  name: string;
+  type: HabitType;
+  unit?: string;
+  target?: number;
+  limit?: number;
+  frequency?: Frequency;
+}
+
+/** Owner-only: create a habit shared with every workspace member. The
+ *  Firestore rule on `workspaces/{wsId}/habits/*` enforces the owner
+ *  check server-side; this client function returns null when the rule
+ *  rejects (so a member's optimistic UI doesn't appear to succeed). */
+export async function createWorkspaceHabit(
+  wsId: string,
+  input: CreateWorkspaceHabitInput,
+): Promise<WorkspaceHabit | null> {
+  if (!firebaseEnabled() || !wsId) return null;
+  const uid = await currentUidPromise();
+  if (!uid) return null;
+  const fb = getFirebase();
+  if (!fb) return null;
+
+  const habitId = `wsh_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  const habit: WorkspaceHabit = {
+    id: habitId,
+    name: input.name.trim(),
+    type: input.type,
+    unit: input.unit?.trim() || undefined,
+    target: input.target,
+    limit: input.limit,
+    frequency: input.frequency ?? 'daily',
+    createdByUid: uid,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    await setDoc(
+      doc(fb.db, 'workspaces', wsId, 'habits', habitId),
+      habit,
+    );
+    return habit;
+  } catch {
+    return null;
+  }
+}
+
+/** Owner-only: patch a habit's editable fields. Pass undefined for a
+ *  field to clear it (e.g. switching a good habit from target=10 to
+ *  target=undefined for an open-ended one). */
+export async function updateWorkspaceHabit(
+  wsId: string,
+  habitId: string,
+  patch: Partial<Omit<WorkspaceHabit, 'id' | 'createdByUid' | 'createdAt'>>,
+): Promise<boolean> {
+  if (!firebaseEnabled() || !wsId || !habitId) return false;
+  const fb = getFirebase();
+  if (!fb) return false;
+  try {
+    await updateDoc(doc(fb.db, 'workspaces', wsId, 'habits', habitId), patch);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Owner-only: remove a habit from the workspace. Per-member logs for
+ *  that habit are NOT cleaned up here — they sit in each member's day
+ *  doc as orphans and would be ignored by the UI (which only renders
+ *  entries whose habit still exists). Cleanup-on-delete could land
+ *  later if storage volume becomes a concern. */
+export async function deleteWorkspaceHabit(
+  wsId: string,
+  habitId: string,
+): Promise<boolean> {
+  if (!firebaseEnabled() || !wsId || !habitId) return false;
+  const fb = getFirebase();
+  if (!fb) return false;
+  try {
+    await deleteDoc(doc(fb.db, 'workspaces', wsId, 'habits', habitId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Subscribe to the workspace's shared habit definitions. Sorted by
+ *  creation time (oldest first) so the order stays stable across
+ *  members. */
+export function subscribeWorkspaceHabits(
+  wsId: string,
+  cb: (habits: WorkspaceHabit[]) => void,
+): Unsubscribe {
+  if (!firebaseEnabled() || !wsId) return () => {};
+  const fb = getFirebase();
+  if (!fb) return () => {};
+  return onSnapshot(
+    collection(fb.db, 'workspaces', wsId, 'habits'),
+    (snap) => {
+      const out: WorkspaceHabit[] = [];
+      snap.forEach((d) => out.push(d.data() as WorkspaceHabit));
+      out.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      cb(out);
+    },
+    () => cb([]),
+  );
+}
+
+/* ── Per-member daily logs (phase 2a scaffold) ───────────────────────── */
+
+/** Write the current user's log for a given workspace habit on a given
+ *  date. Used both for "tap to complete" (value defaults to target, or
+ *  1 if no target) and "set numeric value" flows. Phase 2a only ships
+ *  this helper for the upcoming UI; no rendering yet. */
+export async function setMyWorkspaceLog(
+  wsId: string,
+  habitId: string,
+  date: string,
+  entry: { value: number; completed: boolean },
+): Promise<boolean> {
+  if (!firebaseEnabled() || !wsId || !habitId || !date) return false;
+  const uid = await currentUidPromise();
+  if (!uid) return false;
+  const fb = getFirebase();
+  if (!fb) return false;
+  try {
+    await setDoc(
+      doc(fb.db, 'workspaces', wsId, 'logs', uid, 'days', date),
+      { date, entries: { [habitId]: entry } },
+      { merge: true },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Subscribe to the current user's own daily log for a workspace,
+ *  for a specific date. Used by the Today checklist to render the
+ *  user's own completion state for shared habits. */
+export function subscribeMyWorkspaceLog(
+  wsId: string,
+  date: string,
+  cb: (log: WorkspaceDayLog | null) => void,
+): Unsubscribe {
+  if (!firebaseEnabled() || !wsId || !date) return () => {};
+  const fb = getFirebase();
+  if (!fb) return () => {};
+  let firestoreUnsub: Unsubscribe | null = null;
+  const offAuth = fb.auth.onAuthStateChanged((user) => {
+    if (firestoreUnsub) {
+      firestoreUnsub();
+      firestoreUnsub = null;
+    }
+    if (!user) {
+      cb(null);
+      return;
+    }
+    firestoreUnsub = onSnapshot(
+      doc(fb.db, 'workspaces', wsId, 'logs', user.uid, 'days', date),
+      (snap) =>
+        cb(snap.exists() ? (snap.data() as WorkspaceDayLog) : null),
+      () => cb(null),
+    );
+  });
+  return () => {
+    offAuth();
+    if (firestoreUnsub) firestoreUnsub();
+  };
+}
+
+/* ── Membership ──────────────────────────────────────────────────────── */
 
 /** Removes the current user from a workspace they're a member of. The
  *  archive-vs-wipe choice for log history (decision #8) lands in a

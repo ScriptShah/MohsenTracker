@@ -113,6 +113,35 @@ service cloud.firestore {
           ).data.ownerUid
         );
       }
+
+      // Shared habit definitions (phase 2a). Members read; only the
+      // workspace owner can create / update / delete.
+      match /habits/{habitId} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+        allow create, update, delete: if request.auth != null
+          && request.auth.uid == get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.ownerUid;
+      }
+
+      // Per-member daily logs for the shared habits. Each member writes
+      // only their own logs; every member can read any other member's
+      // logs (that read is what makes the space "shared"). Read gate is
+      // workspace membership; write gate is "you can only write your own".
+      match /logs/{logUid}/days/{date} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+        allow write: if request.auth != null
+          && request.auth.uid == logUid
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+      }
     }
 
     // Public invite-code lookup. Any authenticated user can read (so a

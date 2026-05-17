@@ -88,5 +88,27 @@
       "button": "Delete workspace",
       "confirm": "Delete this workspace for everyone? This can't be undone."
     }
+  },
+  "habits": {
+    "title": "Shared habits",
+    "bodyOwner": "Add habits everyone in this workspace tracks together. Each member logs their own completions; the list is shared.",
+    "bodyMember": "Habits everyone here tracks together. The owner edits the list; you log your own completions.",
+    "emptyOwner": "No shared habits yet — add the first one.",
+    "emptyMember": "The owner hasn't added any shared habits yet.",
+    "add": "+ Add a shared habit",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Remove this shared habit? Every member loses it from their checklist.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Add habit",
+    "nameLabel": "Habit name",
+    "namePlaceholder": "Fajr, 10 pages Quran, walk 30 minutes…",
+    "typeGood": "Good (build it)",
+    "typeBad": "Bad (limit it)",
+    "unitLabel": "Unit",
+    "unitPlaceholder": "pages, minutes, glasses…",
+    "targetLabel": "Daily target",
+    "limitLabel": "Daily limit"
   }
 }
