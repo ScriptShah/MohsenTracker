@@ -34,7 +34,7 @@
     "create": "Create workspace",
     "cancel": "Cancel",
     "errors": {
-      "permissionDenied": "The server rejected the write. This usually means your sign-in session expired — sign out and back in, then try again.",
+      "permissionDenied": "The server rejected the write (permission-denied). This almost always means the Firestore security rules in your Firebase console are out of date — the rules file in the repo was updated but never re-published. Open Firebase Console → Firestore Database → Rules, paste the contents of firestore.rules from the repo, click Publish, then try again. (Less likely: your sign-in session expired — sign out and back in to rule that out.)",
       "unavailable": "Couldn't reach the server. Check your connection and try again.",
       "detailed": "Couldn't create the workspace ({stage} failed: {code}). Check your connection and try again. If it keeps failing, the details above will help us diagnose it."
     }
