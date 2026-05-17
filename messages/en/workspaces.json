@@ -89,6 +89,19 @@
       "confirm": "Delete this workspace for everyone? This can't be undone."
     }
   },
+  "leaveSheet": {
+    "title": "Leave {title}?",
+    "body": "You'll stop seeing the shared habits. Choose what happens to the day-logs you've already written in this workspace.",
+    "choiceLabel": "Your history",
+    "archiveTitle": "Keep my history (archive)",
+    "archiveBody": "Your past day-logs stay in the workspace so other members can still see what you did while you were here. The least destructive choice.",
+    "wipeTitle": "Wipe my history",
+    "wipeBody": "Every day-log you wrote in this workspace is deleted. Other members will no longer see your contributions. Can't be undone.",
+    "cancel": "Cancel",
+    "confirmArchive": "Leave & keep history",
+    "confirmWipe": "Leave & wipe history",
+    "leaving": "Leaving…"
+  },
   "home": {
     "noHabitsYet": "No shared habits in this workspace yet."
   },

@@ -9,6 +9,10 @@ import { Button } from '@/components/Button';
 import { ArrowBack } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { Avatar } from '@/components/Avatar';
+import {
+  LeaveWorkspaceSheet,
+  type LeaveChoice,
+} from '@/components/LeaveWorkspaceSheet';
 import { useAuth } from '@/lib/auth';
 import { useNumberFormatter } from '@/lib/format';
 import { useUnitLabel } from '@/lib/units';
@@ -100,16 +104,23 @@ function WorkspaceDetail() {
     setBusy(null);
   };
 
-  const onLeave = async () => {
+  const [showLeaveSheet, setShowLeaveSheet] = useState(false);
+  const onLeave = () => {
     if (!workspace) return;
     if (isOwner) {
       alert(t('workspaces.detail.leave.ownerCant'));
       return;
     }
-    if (!confirm(t('workspaces.detail.leave.confirm'))) return;
+    setShowLeaveSheet(true);
+  };
+  const onLeaveConfirm = async (choice: LeaveChoice) => {
+    if (!workspace) return;
     setBusy('leave');
-    const ok = await leaveWorkspace(workspace.id);
+    const ok = await leaveWorkspace(workspace.id, {
+      wipeLogs: choice === 'wipe',
+    });
     setBusy(null);
+    setShowLeaveSheet(false);
     if (ok) router.replace('/workspaces');
   };
 
@@ -299,6 +310,14 @@ function WorkspaceDetail() {
             {t('workspaces.detail.delete.button')}
           </Button>
         </Card>
+      )}
+
+      {showLeaveSheet && (
+        <LeaveWorkspaceSheet
+          workspaceTitle={workspace.title}
+          onCancel={() => setShowLeaveSheet(false)}
+          onConfirm={onLeaveConfirm}
+        />
       )}
     </div>
   );

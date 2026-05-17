@@ -566,15 +566,52 @@ export function subscribeMemberWorkspaceLog(
 
 /* ── Membership ──────────────────────────────────────────────────────── */
 
-/** Removes the current user from a workspace they're a member of. The
- *  archive-vs-wipe choice for log history (decision #8) lands in a
- *  later phase — for v1a this is a straight membership removal. */
-export async function leaveWorkspace(wsId: string): Promise<boolean> {
+/** Best-effort: delete every day-log doc the current user has written
+ *  in this workspace. Firestore rules allow members to delete their own
+ *  log docs (`workspaces/{wsId}/logs/{uid}/days/*`). Used by the leave
+ *  flow's "wipe my history" path so a departing member can scrub their
+ *  contributions from the shared record. Failures fall through silently
+ *  — the leave operation itself doesn't depend on full cleanup
+ *  succeeding. */
+export async function wipeMyWorkspaceLogs(wsId: string): Promise<boolean> {
   if (!firebaseEnabled() || !wsId) return false;
   const uid = await currentUidPromise();
   if (!uid) return false;
   const fb = getFirebase();
   if (!fb) return false;
+  try {
+    const daysSnap = await getDocs(
+      collection(fb.db, 'workspaces', wsId, 'logs', uid, 'days'),
+    );
+    await Promise.all(daysSnap.docs.map((d) => deleteDoc(d.ref)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Decision #8: when a member leaves, they pick whether their day-logs
+ *  stay archived in the workspace for others to see ("archive") or get
+ *  wiped from the shared record entirely ("wipe"). Owners can't use
+ *  this path — they must delete the workspace or transfer ownership
+ *  (transfer lands later). */
+export async function leaveWorkspace(
+  wsId: string,
+  options: { wipeLogs?: boolean } = {},
+): Promise<boolean> {
+  if (!firebaseEnabled() || !wsId) return false;
+  const uid = await currentUidPromise();
+  if (!uid) return false;
+  const fb = getFirebase();
+  if (!fb) return false;
+
+  // Wipe first if requested. Rules require workspace membership for the
+  // delete, so this MUST happen before we remove ourselves from
+  // memberUids — once we're no longer a member, the rule denies it.
+  if (options.wipeLogs) {
+    await wipeMyWorkspaceLogs(wsId);
+  }
+
   const wsRef = doc(fb.db, 'workspaces', wsId);
   try {
     const result = await runTransaction(fb.db, async (tx) => {
