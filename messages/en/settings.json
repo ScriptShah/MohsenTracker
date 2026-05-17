@@ -80,6 +80,25 @@
   "replayTutorialTitle": "Replay feature tour",
   "replayTutorialHint": "Walk through the same coach-marks you saw on your first visit. Useful after a long break, or to share with someone new on this device.",
   "replayTutorial": "Replay the tour",
+  "diagnostics": {
+    "title": "Cloud sync health check",
+    "body": "If workspaces won't create, cloud sync seems stuck, or you're seeing different data on different devices, run this. It tries each cloud operation and tells you exactly which one is failing — usually because the Firestore security rules in the Firebase console are out of date.",
+    "run": "Run check",
+    "running": "Running…",
+    "runAgain": "Run again",
+    "skippedHint": "Skipped because an earlier check failed.",
+    "guidanceTitle": "What to do",
+    "guidanceBody": "If the workspaceEvent (or any workspace-* row) failed with permission-denied, your Firestore rules in the Firebase console are stale. Copy the full contents of firestore.rules from the repo, paste them into Firebase console → Firestore Database → Rules, click Publish, then run this check again. If a different probe failed, paste the error code here so we can diagnose it.",
+    "probes": {
+      "config": "Firebase config (env vars)",
+      "auth": "Signed in with a real account",
+      "userSnapshots": "Cloud sync write (userSnapshots)",
+      "workspaceCycle": "Workspace doc create",
+      "workspaceMember": "Workspace member subdoc",
+      "workspaceInvite": "Invite code lookup",
+      "workspaceEvent": "Activity-feed event (newest rule)"
+    }
+  },
   "resetProgressTitle": "Reset progress",
   "resetProgressHint": "Wipes every habit, log, streak, reward and book on this device and re-runs onboarding. Your sign-in stays — only the local data resets.",
   "resetProgress": "Reset everything",
