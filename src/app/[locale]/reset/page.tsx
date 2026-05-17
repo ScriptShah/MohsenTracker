@@ -18,6 +18,7 @@ import {
   type ReplacementBucket,
 } from '@/lib/reset';
 import { todayKey } from '@/lib/dates';
+import { ResetCompletionSheet } from '@/components/ResetCompletionSheet';
 import type { DopamineReset, ResetTier } from '@/domain/types';
 
 export default function ResetPage() {
@@ -36,18 +37,30 @@ function ResetView() {
   const logCheckIn = useAppStore((s) => s.logResetCheckIn);
   const logRelapse = useAppStore((s) => s.logResetRelapse);
   const completeReset = useAppStore((s) => s.completeReset);
+  const setCompletionReflection = useAppStore(
+    (s) => s.setResetCompletionReflection,
+  );
   const abandonReset = useAppStore((s) => s.abandonReset);
   const deleteReset = useAppStore((s) => s.deleteReset);
 
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
-  // Auto-complete: when an active reset reaches its target days, flip status.
+  // When the active reset reaches its target, surface a completion sheet
+  // instead of silently flipping the status. The user gets a chance to
+  // capture a reflection on what changed; the sheet's Skip + Save both
+  // complete the reset, but only Save persists text.
+  const [completingId, setCompletingId] = useState<string | null>(null);
   useEffect(() => {
     if (active && reachedTarget(active)) {
-      completeReset(active.id);
+      setCompletingId(active.id);
     }
-  }, [active, completeReset]);
+  }, [active]);
+
+  // Editing the completion reflection on an already-completed past reset.
+  const [editingPastId, setEditingPastId] = useState<string | null>(null);
+  const editingPast = past.find((r) => r.id === editingPastId);
+  const completingReset = active && active.id === completingId ? active : null;
 
   return (
     <div className="space-y-5">
@@ -99,20 +112,67 @@ function ResetView() {
                         : t('reset.lifetime', { n: fmt(r.lifetimeCleanDays) })}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="text-xs text-red-600 hover:underline"
-                    onClick={() => {
-                      if (confirm(t('reset.confirmDelete'))) deleteReset(r.id);
-                    }}
-                  >
-                    {t('common.delete')}
-                  </button>
+                  {r.completionReflection && (
+                    <div className="rounded-xl border-s-2 border-leaf-400 bg-leaf-50 px-3 py-2 text-sm leading-relaxed italic text-ink-700">
+                      {r.completionReflection}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    {r.status === 'completed' ? (
+                      <button
+                        type="button"
+                        className="text-xs text-leaf-700 underline-offset-4 hover:underline"
+                        onClick={() => setEditingPastId(r.id)}
+                      >
+                        {r.completionReflection
+                          ? t('reset.editReflection')
+                          : t('reset.addReflection')}
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    <button
+                      type="button"
+                      className="text-xs text-red-600 hover:underline"
+                      onClick={() => {
+                        if (confirm(t('reset.confirmDelete'))) deleteReset(r.id);
+                      }}
+                    >
+                      {t('common.delete')}
+                    </button>
+                  </div>
                 </Card>
               </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {completingReset && (
+        <ResetCompletionSheet
+          target={completingReset.target}
+          initialReflection={completingReset.completionReflection}
+          onConfirm={(reflection) => {
+            completeReset(completingReset.id, reflection);
+            setCompletingId(null);
+          }}
+          onSkip={() => {
+            completeReset(completingReset.id);
+            setCompletingId(null);
+          }}
+        />
+      )}
+
+      {editingPast && (
+        <ResetCompletionSheet
+          target={editingPast.target}
+          initialReflection={editingPast.completionReflection}
+          onConfirm={(reflection) => {
+            setCompletionReflection(editingPast.id, reflection);
+            setEditingPastId(null);
+          }}
+          onSkip={() => setEditingPastId(null)}
+        />
       )}
     </div>
   );
