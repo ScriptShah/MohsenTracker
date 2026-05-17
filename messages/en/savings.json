@@ -1,0 +1,20 @@
+{
+  "title": "Savings",
+  "intro": "Log deposits and withdrawals. Small, consistent saving compounds — the year-end number is built one entry at a time.",
+  "categoryCardTitle": "Savings ledger",
+  "categoryCardBody": "Track every deposit and withdrawal and watch the running total grow.",
+  "balance": "Balance",
+  "last30": "Last 30 days",
+  "yearlyPace": "At this pace: {value} a year",
+  "yearlyDrain": "At this pace: {value} drained a year",
+  "addTitle": "Add an entry",
+  "deposit": "Deposit",
+  "withdrawal": "Withdrawal",
+  "amountLabel": "Amount",
+  "dateLabel": "Date",
+  "noteLabel": "Note",
+  "notePlaceholder": "What's this for?",
+  "addSubmit": "Add",
+  "empty": "No entries yet. Add your first deposit above.",
+  "deleteConfirm": "Delete this entry?"
+}

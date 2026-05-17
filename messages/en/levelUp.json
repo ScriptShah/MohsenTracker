@@ -1,0 +1,9 @@
+{
+  "eyebrow": "Ready to level up?",
+  "title": "{days}-day streak on {habit}. The habit is wired in.",
+  "body": "You started small on purpose. Thirty days in, you can scale up — or stay where you are. The habit is what matters.",
+  "scaleUpTo": "Scale up to",
+  "targetLine": "{value} {unit} a day",
+  "cta": "Level up",
+  "stay": "Stay at this size"
+}

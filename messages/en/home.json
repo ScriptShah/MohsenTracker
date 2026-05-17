@@ -1,0 +1,20 @@
+{
+  "greetingMorning": "Good morning, {name}",
+  "greetingDay": "Hello, {name}",
+  "greetingEvening": "Good evening, {name}",
+  "todaysHabits": "Today's habits",
+  "completed": "{done} of {total} done",
+  "noHabits": "You haven't added any habits yet.",
+  "addHabit": "Add a habit",
+  "futureSelfReminder": "You're becoming",
+  "compoundOfDay": "Compound effect",
+  "startStreak": "Start your streak today.",
+  "streakDays": "{days} day streak",
+  "streakDaysOne": "1 day streak",
+  "liveCount": "{n} doing this today",
+  "allDone": "All habits done for today. Beautiful work.",
+  "showDone": "Show done ({n})",
+  "hideDone": "Hide done ({n})",
+  "livesAria": "{remaining} of {total} lives remaining",
+  "livesCaption": "Below 50% loses a heart · 3 days above 50% earns one back"
+}
