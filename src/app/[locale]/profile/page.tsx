@@ -13,6 +13,7 @@ import { useAuth, deleteAccount, emailUsername, signOutUser } from '@/lib/auth';
 import { firebaseEnabled } from '@/lib/firebase';
 import { SignInForm } from '@/components/SignInForm';
 import { FirebaseDiagnostics } from '@/components/FirebaseDiagnostics';
+import { CloudSyncControls } from '@/components/CloudSyncControls';
 import type {
   CalendarPreference,
   ConsequenceSensitivity,
@@ -401,6 +402,8 @@ function Profile() {
 
       <DiagnosticsCard />
 
+      <CloudSyncControlsCard />
+
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-ink-800">
           {t('settings.resetProgressTitle')}
@@ -462,6 +465,16 @@ function DiagnosticsCard() {
   if (!firebaseEnabled()) return null;
   if (auth.status !== 'signed-in' || auth.isAnonymous) return null;
   return <FirebaseDiagnostics />;
+}
+
+/** Same gate as DiagnosticsCard. The CloudSyncControls component reads
+ *  Firestore on mount, so we must not render it for guests or
+ *  unconfigured installs. */
+function CloudSyncControlsCard() {
+  const auth = useAuth();
+  if (!firebaseEnabled()) return null;
+  if (auth.status !== 'signed-in' || auth.isAnonymous) return null;
+  return <CloudSyncControls />;
 }
 
 function DeleteAccountCard() {
