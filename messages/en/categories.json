@@ -11,6 +11,12 @@
   "habitsCount": "{n} habits",
   "habitsCountOne": "1 habit",
   "noHabitsInCategory": "No habits here yet.",
+  "archive": "Delete category",
+  "archiveConfirm": "Delete this category? It will be archived — your data is preserved and you can restore it later.",
+  "archiveConfirmWithHabits": "Delete this category? Its {n} habit(s) will keep showing on your home checklist until you delete them — but the category disappears from this list. You can restore it later.",
+  "showArchived": "Show archived ({n})",
+  "hideArchived": "Hide archived ({n})",
+  "restore": "Restore",
   "names": {
     "islamic": "Islamic Practices",
     "health": "Health",

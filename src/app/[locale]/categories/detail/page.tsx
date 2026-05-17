@@ -3,13 +3,15 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
 import { ChevronEnd } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { projectCompound } from '@/lib/compound';
 import { useUnitLabel } from '@/lib/units';
+import { useNumberFormatter } from '@/lib/format';
 
 export default function CategoryDetailPage() {
   // See note on /books/detail — useSearchParams needs a Suspense boundary
@@ -25,10 +27,13 @@ export default function CategoryDetailPage() {
 
 function CategoryDetail() {
   const t = useTranslations();
+  const router = useRouter();
   const unitLabel = useUnitLabel();
+  const fmt = useNumberFormatter();
   const id = useSearchParams().get('id') ?? '';
   const category = useAppStore((s) => s.categories.find((c) => c.id === id));
   const habits = useAppStore((s) => s.habits.filter((h) => h.categoryId === id));
+  const archiveCategory = useAppStore((s) => s.archiveCategory);
 
   if (!category) {
     return (
@@ -39,6 +44,21 @@ function CategoryDetail() {
       </div>
     );
   }
+
+  // Spec §5.10: archive is soft — sets `archivedAt` + `isActive=false` so the
+  // category disappears from the list but the habits + their logs survive.
+  // The habits keep their categoryId pointing at the now-archived category;
+  // home checklist still shows them. We warn the user in the confirm text so
+  // they know what will happen.
+  const onArchive = () => {
+    const msg =
+      habits.length > 0
+        ? t('categories.archiveConfirmWithHabits', { n: fmt(habits.length) })
+        : t('categories.archiveConfirm');
+    if (!confirm(msg)) return;
+    archiveCategory(category.id);
+    router.replace('/categories');
+  };
 
   return (
     <div className="space-y-4">
@@ -225,6 +245,17 @@ function CategoryDetail() {
       >
         + {t('categories.addHabit')}
       </Link>
+
+      <div className="pt-2">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onArchive}
+          className="text-red-600 hover:bg-red-50"
+        >
+          {t('categories.archive')}
+        </Button>
+      </div>
     </div>
   );
 }
