@@ -1,0 +1,81 @@
+{
+  "title": "Ramadan",
+  "monthName": "Ramadan",
+  "shawwalName": "Shawwal",
+  "phase": {
+    "off": "Outside Ramadan",
+    "pre": "Sha'ban — preparing",
+    "active": "Ramadan",
+    "lastTen": "Last ten nights",
+    "shawwal": "Shawwal"
+  },
+  "dayOf": "Day {n} of Ramadan",
+  "dayOfShawwal": "Shawwal day {n}",
+  "preBanner": {
+    "title": "Ramadan in {n} days",
+    "titleOne": "Ramadan tomorrow",
+    "body": "Two weeks to prepare. Practice Mondays and Thursdays fasting, ease into Quran reading, settle the things you'd want behind you when the month begins."
+  },
+  "lastTenBanner": {
+    "title": "Last ten nights",
+    "body": "Tahajjud, Quran, dua, sadaqah. Better than a thousand months is somewhere in here."
+  },
+  "shawwalBanner": {
+    "title": "Six fasts of Shawwal",
+    "body": "Whoever fasts Ramadan and follows it with six fasts in Shawwal — as if they fasted the whole year."
+  },
+  "openHub": "Open Ramadan",
+  "iftar": {
+    "title": "Iftar at {time}",
+    "passedTitle": "Iftar has passed",
+    "passedBody": "Eat slowly. Pray Maghrib.",
+    "note": "Time is your local Maghrib estimate — adjust below until the prayer-times API ships.",
+    "set": "Set Iftar time"
+  },
+  "trackers": {
+    "fasts": "Fasts completed",
+    "fastsHint": "Tap as you complete each day.",
+    "juz": "Quran juz read",
+    "juzHint": "Aim 1 per day = full Quran in the month.",
+    "taraweeh": "Taraweeh nights",
+    "sadaqah": "Sadaqah given",
+    "sadaqahAdd": "Add",
+    "sadaqahHint": "Currency-agnostic running total.",
+    "shawwalFasts": "Shawwal fasts (of 6)"
+  },
+  "prayers": {
+    "title": "Today's prayers",
+    "fajr": "Fajr",
+    "dhuhr": "Dhuhr",
+    "asr": "Asr",
+    "maghrib": "Maghrib",
+    "isha": "Isha",
+    "taraweeh": "Taraweeh",
+    "tahajjud": "Tahajjud"
+  },
+  "lastTenSection": {
+    "title": "Laylat al-Qadr nights",
+    "body": "Mark each odd night you stayed up worshipping. Better than a thousand months.",
+    "duaTitle": "Special dua",
+    "duaArabic": "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+    "duaTranslit": "Allahumma innaka 'afuwwun tuhibbul 'afwa fa'fu 'anni",
+    "duaTranslation": "O Allah, You are Pardoning, You love to pardon, so pardon me.",
+    "duaSource": "Reported in Sunan al-Tirmidhi 3513 and Sunan Ibn Majah 3850 — taught by the Prophet ﷺ to Aisha (R)"
+  },
+  "preSection": {
+    "title": "Prep before Ramadan",
+    "items": {
+      "fastMondaysThursdays": "Fast on Mondays and Thursdays",
+      "increaseQuran": "Read a few extra pages of Quran daily",
+      "reduceScreens": "Cut screens by an hour",
+      "settleDebts": "Settle debts and ask forgiveness from those you've wronged",
+      "stockKitchen": "Stock the kitchen with simple, healthy iftar foods",
+      "setRamadanGoals": "Set 2–3 goals you want to leave Ramadan with"
+    }
+  },
+  "homeShifted": {
+    "title": "Ramadan dashboard",
+    "body": "Other categories are still in Categories, just out of the way for the month."
+  },
+  "noActiveBody": "Ramadan mode auto-activates on the first of Ramadan. You can force it on from Profile → Theme to preview."
+}

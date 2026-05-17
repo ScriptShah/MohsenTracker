@@ -1,0 +1,20 @@
+{
+  "greetingMorning": "صبح به‌خیر، {name}",
+  "greetingDay": "سلام، {name}",
+  "greetingEvening": "عصر به‌خیر، {name}",
+  "todaysHabits": "عادت‌های امروز",
+  "completed": "{done} از {total} انجام شد",
+  "noHabits": "هنوز عادتی اضافه نکرده‌ای.",
+  "addHabit": "افزودن عادت",
+  "futureSelfReminder": "تو در حال تبدیل شدن به این هستی",
+  "compoundOfDay": "اثر مرکّب",
+  "startStreak": "امروز زنجیره‌ات را شروع کن.",
+  "streakDays": "زنجیرهٔ {days} روزه",
+  "streakDaysOne": "زنجیرهٔ ۱ روزه",
+  "liveCount": "{n} نفر امروز در حالِ انجام این هستند",
+  "allDone": "همهٔ عادت‌های امروز انجام شد. عالی.",
+  "showDone": "نمایشِ انجام‌شده‌ها ({n})",
+  "hideDone": "مخفی‌کردنِ انجام‌شده‌ها ({n})",
+  "livesAria": "{remaining} از {total} جان باقی مانده",
+  "livesCaption": "زیر ۵۰٪ یک قلب می‌گیرد · ۳ روز بالای ۵۰٪ یکی برمی‌گرداند"
+}

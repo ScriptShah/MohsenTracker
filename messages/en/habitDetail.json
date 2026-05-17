@@ -1,0 +1,73 @@
+{
+  "ifYouKeep": "If you keep this up…",
+  "paceLabel": "Projecting from your pace: {avg} {unit}/day",
+  "paceLabelNoUnit": "Projecting from your pace: {avg}/day",
+  "dailyTarget": "{value} {unit} / day",
+  "dailyLimit": "≤ {value} {unit} / day",
+  "atStake": "What's at stake if you stop",
+  "showLoss": "Show me the loss",
+  "showGain": "Show me the gain",
+  "reversalLabel": "How to reverse it, starting today",
+  "hadithLabel": "From the tradition",
+  "currentStreak": "Current streak",
+  "noStreakYet": "Start today.",
+  "deleteHabit": "Delete habit",
+  "criticalToggle": "Critical habit",
+  "criticalHint": "Missing this triggers your punishment.",
+  "replacement": {
+    "replaceWith": "Replace it with",
+    "replacementFor": "Replacement for",
+    "body": "When the urge hits, do this instead.",
+    "openLink": "Open"
+  },
+  "cargo": {
+    "title": "Your cargo",
+    "body": "If you slip, do this good deed right after.",
+    "verseArabic": "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ",
+    "verseTranslation": "Indeed, good deeds erase bad deeds.",
+    "verseSource": "Qur'an 11:114",
+    "emptyTitle": "Pair this with a good deed",
+    "emptyBody": "Set a small good deed to do right after a slip. The Prophet ﷺ said: \"Follow a bad deed with a good one and it will wipe it out.\"",
+    "editLabel": "Cargo",
+    "editPlaceholder": "Give two dollars in charity, pray two rak'ahs…",
+    "edit": "Edit",
+    "set": "Set cargo",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear"
+  },
+  "bracketing": {
+    "title": "Bracket the habit",
+    "body": "Same opening, same closing — every time. The repeated bookends train your brain to flip into this habit on cue and flip out cleanly when it's done.",
+    "startTitle": "Before",
+    "endTitle": "After",
+    "emptyTitle": "Bracket this habit",
+    "emptyBody": "Pair a tiny opening and closing ritual with this habit. The same two-second moves before and after train the brain to flip into this habit on cue.",
+    "set": "Set rituals",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear both",
+    "startPlaceholder": "Phone in another room, water on the desk…",
+    "endPlaceholder": "Close the laptop, jot one line about what you did…",
+    "startLabel": "Before",
+    "endLabel": "After"
+  },
+  "muted": {
+    "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
+    "recentRelapse": "Paused after a relapse — be gentle with yourself today.",
+    "lowMood": "Paused after a low check-in. Come back when you're steadier."
+  },
+  "books": {
+    "title": "Your books",
+    "subtitle": "Pages you log here count toward this habit's streak.",
+    "noActive": "No books in progress yet.",
+    "addBook": "Add a book",
+    "logPlaceholder": "Pages today",
+    "logSave": "Log",
+    "openBook": "Open",
+    "connectTitle": "Connect this habit to your books",
+    "connectBody": "Pages you log on any book will count toward this habit's daily total.",
+    "connect": "Connect to books"
+  }
+}
