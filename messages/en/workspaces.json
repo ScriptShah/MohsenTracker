@@ -97,6 +97,12 @@
     "done": "{name} — done today",
     "notDone": "{name} — not yet today"
   },
+  "pairToday": {
+    "title": "Today together",
+    "body": "Tap your own row to log it. Your partner's check fills in when they tap on their side.",
+    "doneAria": "{name} — done today",
+    "notDoneAria": "{name} — not yet today"
+  },
   "habits": {
     "title": "Shared habits",
     "bodyOwner": "Add habits everyone in this workspace tracks together. Each member logs their own completions; the list is shared.",
