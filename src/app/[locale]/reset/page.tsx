@@ -46,6 +46,34 @@ function ResetView() {
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
+  /** Aggregate stats across every reset the user has ever started.
+   *  Surfaces the user's results so the page is never just "the current
+   *  reset and forget about the rest." This useMemo was lost in a merge
+   *  during PR #29 — the JSX referencing it shipped, the declaration
+   *  didn't, and `/reset` has been throwing a ReferenceError since. */
+  const stats = useMemo(() => {
+    if (resets.length === 0) return null;
+    const totalStarted = resets.length;
+    const totalCompleted = resets.filter((r) => r.status === 'completed').length;
+    const totalRelapses = resets.reduce((sum, r) => sum + r.relapses.length, 0);
+    const lifetimeCleanDays = resets.reduce(
+      (sum, r) => sum + r.lifetimeCleanDays,
+      0,
+    );
+    const longestStreak = resets.reduce((max, r) => {
+      // Best clean streak for this reset = max of lifetime and current.
+      const streak = Math.max(r.lifetimeCleanDays, currentDay(r));
+      return Math.max(max, streak);
+    }, 0);
+    return {
+      totalStarted,
+      totalCompleted,
+      totalRelapses,
+      lifetimeCleanDays,
+      longestStreak,
+    };
+  }, [resets]);
+
   // When the active reset reaches its target, surface a completion sheet
   // instead of silently flipping the status. The user gets a chance to
   // capture a reflection on what changed; the sheet's Skip + Save both

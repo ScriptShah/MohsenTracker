@@ -29,9 +29,19 @@ export function CloudSync() {
       const restored = await pullSnapshot(auth.uid);
       if (cancelled) return;
       pulledRef.current = true;
-      // First sign-in for this user — no cloud snapshot yet — so push the
-      // current local state up so the next sign-in / device finds it.
+      // First sign-in for this user — no cloud snapshot yet. Two cases:
+      //   1. The local data belongs to this same user (e.g. they used the
+      //      app as a guest, or this is their first device): push it up
+      //      so it becomes their cloud starting point.
+      //   2. The local data is stamped with a DIFFERENT uid — a previous
+      //      account on this shared device. Pushing it would contaminate
+      //      the new user's cloud with someone else's habits. Wipe local
+      //      first, then push an empty starting state.
       if (!restored) {
+        const localUid = useAppStore.getState().profile?.cloudSyncUid;
+        if (localUid && localUid !== auth.uid) {
+          useAppStore.getState().reset();
+        }
         void pushSnapshot(auth.uid);
       }
     })();
