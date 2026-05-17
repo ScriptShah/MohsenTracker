@@ -39,6 +39,25 @@ function Autophagy() {
     [fasts],
   );
 
+  /** Aggregate stats across the user's complete history. Surfaced as a
+   *  small panel so the user sees their results, not just the latest fast. */
+  const stats = useMemo(() => {
+    if (history.length === 0) return null;
+    const durations = history.map((f) => {
+      const ms = new Date(f.endedAt!).getTime() - new Date(f.startedAt).getTime();
+      return ms / (60 * 60 * 1000); // hours
+    });
+    const total = history.length;
+    const totalHours = durations.reduce((a, b) => a + b, 0);
+    const longestHours = Math.max(...durations);
+    const avgHours = totalHours / total;
+    const reached = history.filter((f, i) => {
+      const target = f.targetHours ?? 0;
+      return target > 0 && durations[i] >= target;
+    }).length;
+    return { total, longestHours, avgHours, reached };
+  }, [history]);
+
   const [target, setTarget] = useState<number>(16);
   const [notes, setNotes] = useState('');
 
@@ -92,6 +111,32 @@ function Autophagy() {
             <Button type="button" onClick={() => startAutophagyFast(target)}>
               {t('autophagy.startSubmit', { hours: fmt(target) })}
             </Button>
+          </div>
+        </Card>
+      )}
+
+      {stats && (
+        <Card className="space-y-3 border-leaf-200 bg-leaf-50/40">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('autophagy.statsTitle')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat
+              label={t('autophagy.statsTotal')}
+              value={fmt(stats.total)}
+            />
+            <Stat
+              label={t('autophagy.statsLongest')}
+              value={`${fmt(Math.round(stats.longestHours * 10) / 10)}h`}
+            />
+            <Stat
+              label={t('autophagy.statsAverage')}
+              value={`${fmt(Math.round(stats.avgHours * 10) / 10)}h`}
+            />
+            <Stat
+              label={t('autophagy.statsReached')}
+              value={`${fmt(stats.reached)} / ${fmt(stats.total)}`}
+            />
           </div>
         </Card>
       )}
@@ -261,7 +306,14 @@ function HistoryRow({
         </span>
       </div>
       {fast.notes && (
-        <p className="pt-1 text-xs text-ink-600">{fast.notes}</p>
+        <div className="mt-2 rounded-xl border-s-2 border-leaf-400 bg-white/80 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-leaf-700">
+            {t('autophagy.notesLabelInline')}
+          </p>
+          <p className="pt-0.5 text-sm leading-relaxed text-ink-800">
+            {fast.notes}
+          </p>
+        </div>
       )}
       <div className="mt-2 flex">
         <button
@@ -273,5 +325,18 @@ function HistoryRow({
         </button>
       </div>
     </Card>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink-200 bg-white px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-ink-500">
+        {label}
+      </div>
+      <div className="numeral pt-0.5 text-lg font-semibold text-ink-900">
+        {value}
+      </div>
+    </div>
   );
 }

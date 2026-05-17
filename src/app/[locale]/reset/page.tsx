@@ -42,6 +42,32 @@ function ResetView() {
   const active = resets.find((r) => r.status === 'active');
   const past = resets.filter((r) => r.status !== 'active');
 
+  /** Aggregate stats across every reset the user has ever started. Surfaces
+   *  the user's results so the page is never just "the current reset and
+   *  forget about the rest." */
+  const stats = useMemo(() => {
+    if (resets.length === 0) return null;
+    const totalStarted = resets.length;
+    const totalCompleted = resets.filter((r) => r.status === 'completed').length;
+    const totalRelapses = resets.reduce((sum, r) => sum + r.relapses.length, 0);
+    const lifetimeCleanDays = resets.reduce(
+      (sum, r) => sum + r.lifetimeCleanDays,
+      0,
+    );
+    const longestStreak = resets.reduce((max, r) => {
+      // Best clean streak for this reset = max of lifetime and current.
+      const streak = Math.max(r.lifetimeCleanDays, currentDay(r));
+      return Math.max(max, streak);
+    }, 0);
+    return {
+      totalStarted,
+      totalCompleted,
+      totalRelapses,
+      lifetimeCleanDays,
+      longestStreak,
+    };
+  }, [resets]);
+
   // Auto-complete: when an active reset reaches its target days, flip status.
   useEffect(() => {
     if (active && reachedTarget(active)) {
@@ -68,6 +94,39 @@ function ResetView() {
         />
       ) : (
         <StartReset onStart={(tier, target) => startReset(tier, target)} />
+      )}
+
+      {stats && stats.totalStarted > 0 && (
+        <Card className="space-y-3 border-leaf-200 bg-leaf-50/40">
+          <h2 className="text-sm font-semibold text-ink-800">
+            {t('reset.statsTitle')}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat
+              label={t('reset.statsStarted')}
+              value={fmt(stats.totalStarted)}
+            />
+            <Stat
+              label={t('reset.statsCompleted')}
+              value={`${fmt(stats.totalCompleted)} / ${fmt(stats.totalStarted)}`}
+            />
+            <Stat
+              label={t('reset.statsLongest')}
+              value={`${fmt(stats.longestStreak)} ${t('reset.statsDaysShort')}`}
+            />
+            <Stat
+              label={t('reset.statsLifetime')}
+              value={`${fmt(stats.lifetimeCleanDays)} ${t('reset.statsDaysShort')}`}
+            />
+          </div>
+          {stats.totalRelapses > 0 && (
+            <p className="text-xs text-ink-500">
+              {t('reset.statsRelapsesNote', {
+                n: fmt(stats.totalRelapses),
+              })}
+            </p>
+          )}
+        </Card>
       )}
 
       {past.length > 0 && (
@@ -476,6 +535,19 @@ function RelapseModal({
             {t('reset.relapse.confirm')}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-ink-200 bg-white px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-ink-500">
+        {label}
+      </div>
+      <div className="numeral pt-0.5 text-lg font-semibold text-ink-900">
+        {value}
       </div>
     </div>
   );
