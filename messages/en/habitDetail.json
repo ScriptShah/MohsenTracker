@@ -53,6 +53,19 @@
     "startLabel": "Before",
     "endLabel": "After"
   },
+  "stack": {
+    "title": "Stack onto a routine",
+    "body": "Atomic Habits' habit-stacking: anchor a new habit to a routine you already never miss. The existing routine becomes the cue.",
+    "fieldLabel": "Your stacking sentence",
+    "placeholder": "After I pour my morning coffee, I will read one page.",
+    "emptyTitle": "Stack onto an existing routine",
+    "emptyBody": "Write a single sentence: \"After I [routine I already do], I will [this habit].\" The routine becomes your reminder — no notification needed.",
+    "set": "Write the sentence",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear"
+  },
   "muted": {
     "activeReset": "Consequence messaging is paused while you're in a dopamine reset.",
     "recentRelapse": "Paused after a relapse — be gentle with yourself today.",

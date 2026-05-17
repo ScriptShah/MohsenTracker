@@ -41,6 +41,7 @@ function NewHabit() {
   const [positiveCargo, setPositiveCargo] = useState('');
   const [startRitual, setStartRitual] = useState('');
   const [endRitual, setEndRitual] = useState('');
+  const [habitStack, setHabitStack] = useState('');
 
   const canSubmit = name.trim().length > 0 && categoryId.length > 0;
 
@@ -70,6 +71,7 @@ function NewHabit() {
       positiveCargo: type === 'bad' && positiveCargo.trim() ? positiveCargo.trim() : undefined,
       startRitual: startRitual.trim() || undefined,
       endRitual: endRitual.trim() || undefined,
+      habitStack: habitStack.trim() || undefined,
       frequency: 'daily',
     });
 
@@ -201,6 +203,16 @@ function NewHabit() {
             onChange={(e) => setEndRitual(e.target.value)}
             placeholder={t('habit.endRitualPlaceholder')}
             maxLength={140}
+            className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
+          />
+        </Field>
+
+        <Field label={t('habit.habitStackLabel')} hint={t('habit.habitStackHint')}>
+          <input
+            value={habitStack}
+            onChange={(e) => setHabitStack(e.target.value)}
+            placeholder={t('habit.habitStackPlaceholder')}
+            maxLength={200}
             className="w-full rounded-xl border border-ink-200 px-3 py-2 outline-none focus:border-leaf-500"
           />
         </Field>
