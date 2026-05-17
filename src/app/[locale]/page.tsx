@@ -141,7 +141,7 @@ function Home() {
           <h1 className="text-xl font-semibold">
             {t(greeting as any, { name: profile.name })}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-tutorial="lives">
             {ramadanOn ? (
               <p className="numeral text-sm text-leaf-700">
                 ☪ {t('ramadan.dayOf', { n: fmt(phase.dayOfRamadan ?? 1) })}
@@ -153,7 +153,9 @@ function Home() {
           </div>
           <p className="text-xs text-ink-500">{t('home.livesCaption')}</p>
         </div>
-        <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
+        <div data-tutorial="ring">
+          <CompletionRing value={rate} size={72} stroke={8} label={t('common.today')} />
+        </div>
       </header>
 
       {offerRestart && (
@@ -350,7 +352,9 @@ function Home() {
             {t('home.completed', { done, total })}
           </span>
         </div>
-        <HabitChecklist habits={dailyHabits} />
+        <div data-tutorial="checklist">
+          <HabitChecklist habits={dailyHabits} />
+        </div>
         <Link
           href="/habits/new"
           className="tap-44 flex items-center justify-center rounded-xl border-2 border-dashed border-ink-300 px-4 py-3 text-sm text-ink-600 hover:border-leaf-400 hover:text-leaf-700"
@@ -359,7 +363,9 @@ function Home() {
         </Link>
       </section>
 
-      <WorkspacesHomeSection />
+      <div data-tutorial="workspaces">
+        <WorkspacesHomeSection />
+      </div>
 
       {showAnger && <AngerProtocol onClose={() => setShowAnger(false)} />}
     </div>

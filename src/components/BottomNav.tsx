@@ -40,6 +40,7 @@ export function BottomNav() {
             <li key={href} className="flex-1">
               <Link
                 href={href}
+                data-tutorial={`nav-${key}`}
                 className={clsx(
                   'tap-44 flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium',
                   active ? 'text-leaf-600' : 'text-ink-500',

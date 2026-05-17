@@ -1,28 +1,28 @@
 {
   "skip": "Skip",
-  "back": "Back",
   "next": "Next",
-  "start": "Let's start",
-  "slides": {
-    "checklist": {
-      "title": "Tap a habit to log it",
-      "body": "Your daily list is one tap per habit. Resets each morning. The completion ring at the top fills as you go."
-    },
+  "start": "Got it",
+  "step": "Step {n} of {total}",
+  "steps": {
     "hearts": {
-      "title": "Three hearts a fortnight",
-      "body": "Each day under 50% completion costs a heart. Three consecutive days at 50% or more earns one back. Lose all three and the app nudges you to restart smaller."
+      "title": "Your three hearts",
+      "body": "Each day below 50% completion costs one heart. Three consecutive days at 50% or more earns one back. Lose all three and the app nudges you to restart smaller."
     },
-    "futureSelf": {
-      "title": "Your future self is real",
-      "body": "Every habit you keep is a vote for who you're becoming. Future Self shows the person you're growing into — plus the compound effect of each habit over a year and a decade."
+    "ring": {
+      "title": "Today's progress",
+      "body": "This ring fills as you log habits. It includes any shared habits from your workspaces too — your own completions count, your partners' don't."
+    },
+    "checklist": {
+      "title": "Tap to log a habit",
+      "body": "One tap on a habit's circle marks it done. The list resets each morning. Tap the row itself for more options + the compound effect of that habit."
     },
     "workspaces": {
-      "title": "Track together, when you want",
-      "body": "Create a workspace to share habits with a partner, family, or small group. Everyone sees the same list; each person logs their own. Optional — your personal habits stay private by default."
+      "title": "Track together",
+      "body": "Habits you keep with a partner, family or small group land here. Each member logs their own tap; you can see who's done what today."
     },
-    "explore": {
-      "title": "Make it yours",
-      "body": "Categories, books, dopamine resets, fasting timers, the anger protocol — explore from the menu when you're ready. Nothing's required. The app waits for you."
+    "futureSelf": {
+      "title": "Your future self",
+      "body": "Tap here for the person you're becoming — vision, streak fire, and the compound effects of every habit over a year and a decade."
     }
   }
 }
