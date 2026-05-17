@@ -12,7 +12,7 @@ import {
   signOut as fbSignOut,
   type User,
 } from 'firebase/auth';
-import { collection, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { firebaseEnabled, getFirebase } from './firebase';
 
 export type AuthState =
@@ -165,6 +165,15 @@ export async function deleteAccount(): Promise<AuthResult> {
       const ticksRef = collection(fb.db, 'habitTicks', user.uid, 'days');
       const ticks = await getDocs(ticksRef);
       await Promise.all(ticks.docs.map((d) => deleteDoc(d.ref)));
+    } catch {
+      /* swallow */
+    }
+    // Best-effort wipe of the user's full-state snapshot. Without this the
+    // snapshot doc stays orphaned in Firestore (no one can read it after
+    // the auth user is gone, since the rules require uid match, but the
+    // data sits there indefinitely).
+    try {
+      await deleteDoc(doc(fb.db, 'userSnapshots', user.uid));
     } catch {
       /* swallow */
     }
