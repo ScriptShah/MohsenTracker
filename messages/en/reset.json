@@ -4,6 +4,8 @@
   "active": "Active reset",
   "noActive": "No active reset right now.",
   "history": "Past resets",
+  "liveCountStarted": "{n} people started a reset today alongside you",
+  "liveCountStartedOne": "1 other person started a reset today",
   "statsTitle": "Your results",
   "statsStarted": "Resets started",
   "statsCompleted": "Completed",

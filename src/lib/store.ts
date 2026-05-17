@@ -36,6 +36,11 @@ import { dateKey, nextDayKey, previousDayKey, todayKey } from './dates';
 import { isLogSuccessful, recomputeStreak } from './streaks';
 import { validatePunishment, type SafetyResult } from './safety';
 import { tickHabit } from './livecounts';
+import {
+  tickAutophagyComplete,
+  tickAutophagyStart,
+  tickResetStart,
+} from './activityCounts';
 import { playSound } from './sounds';
 import { getFireTier, highestCelebratedTier } from './streakFire';
 import { recomputeOverallStreak } from './overallStreak';
@@ -1074,6 +1079,10 @@ export const useAppStore = create<AppState>()(
         };
         set((s) => ({ autophagyFasts: [fast, ...s.autophagyFasts] }));
         playSound('softUp');
+        // Best-effort: count the user as one of today's fast-starters.
+        // Public aggregate so /autophagy can show "N people started a fast
+        // today alongside you". Per-day-per-user dedupe inside the lib.
+        void tickAutophagyStart();
         return fast;
       },
 
@@ -1090,6 +1099,8 @@ export const useAppStore = create<AppState>()(
           ),
         }));
         playSound('flourish');
+        // Best-effort: count the user as one of today's completed fasts.
+        void tickAutophagyComplete();
       },
 
       cancelAutophagyFast: (id) =>
@@ -1126,6 +1137,9 @@ export const useAppStore = create<AppState>()(
           createdAt: now,
         };
         set((s) => ({ resets: [reset, ...s.resets] }));
+        // Best-effort: count the user as one of today's new resetters.
+        // Public aggregate for the "N people started a reset today" line.
+        void tickResetStart();
         return reset;
       },
 

@@ -9,6 +9,7 @@ import { ArrowBack } from '@/components/Chevron';
 import { ClientGate } from '@/components/ClientGate';
 import { useAppStore } from '@/lib/store';
 import { useNumberFormatter } from '@/lib/format';
+import { useAutophagyLiveCounts } from '@/lib/useActivityCounts';
 import { EndAutophagySheet } from '@/components/EndAutophagySheet';
 import type { AutophagyFast } from '@/domain/types';
 
@@ -72,6 +73,8 @@ function Autophagy() {
       </Link>
       <h1 className="text-2xl font-semibold">{t('autophagy.title')}</h1>
       <p className="text-sm text-ink-600">{t('autophagy.intro')}</p>
+
+      <LiveCountLine />
 
       {active ? (
         <ActiveFastCard
@@ -329,5 +332,40 @@ function Stat({ label, value }: { label: string; value: string }) {
         {value}
       </div>
     </div>
+  );
+}
+
+/** Soft "you're not alone" line — today's public count of people who started
+ *  (and completed) a fast. Hides itself when the counts are zero or the
+ *  user is signed out, so the page doesn't show a stale "0 people" line. */
+function LiveCountLine() {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const counts = useAutophagyLiveCounts();
+  const started = counts.started ?? 0;
+  const completed = counts.completed ?? 0;
+  if (started === 0 && completed === 0) return null;
+
+  return (
+    <p className="numeral rounded-xl border border-leaf-200 bg-leaf-50/60 px-3 py-2 text-sm text-leaf-800">
+      🌱{' '}
+      {started > 0 && (
+        <span>
+          {started === 1
+            ? t('autophagy.liveCountStartedOne')
+            : t('autophagy.liveCountStarted', { n: fmt(started) })}
+        </span>
+      )}
+      {started > 0 && completed > 0 && (
+        <span className="text-leaf-700"> · </span>
+      )}
+      {completed > 0 && (
+        <span>
+          {completed === 1
+            ? t('autophagy.liveCountCompletedOne')
+            : t('autophagy.liveCountCompleted', { n: fmt(completed) })}
+        </span>
+      )}
+    </p>
   );
 }

@@ -22,6 +22,10 @@
   "notesLabelInline": "Feeling",
   "historyTitle": "History",
   "deleteConfirm": "Delete this fast?",
+  "liveCountStarted": "{n} people started a fast today alongside you",
+  "liveCountStartedOne": "1 other person started a fast today",
+  "liveCountCompleted": "{n} completed",
+  "liveCountCompletedOne": "1 completed",
   "endSheet": {
     "title": "How are you feeling?",
     "body": "Before you close this fast, take a moment. Energy, hunger, mood, clarity — what's actually going on right now? This goes into your history so you can spot patterns over time.",
