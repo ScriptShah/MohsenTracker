@@ -396,3 +396,62 @@ export interface Debt {
    *  user has a history; the UI moves settled debts into a collapsed list. */
   settledAt?: string;
 }
+
+/* ── Workspaces (shared habit spaces) ──────────────────────────────────── */
+
+/** Pair = exactly 2 members (buddy / spouse). Group = 3 to maxMembers
+ *  (family, study circle, team). Same data shape under the hood — only
+ *  `mode` and `maxMembers` differ; the UX framing per mode differs. */
+export type WorkspaceMode = 'pair' | 'group';
+
+/** Member roles inside a workspace. Owner can edit shared habits, rotate
+ *  the invite code, and remove members. Members can only manage their own
+ *  daily logs and their own membership (leave / share toggles). */
+export type WorkspaceRole = 'owner' | 'member';
+
+/** Lives at `workspaces/{id}` in Firestore. The local Zustand store also
+ *  caches a copy under the user's snapshot so workspace info is available
+ *  offline; the Firestore doc is the source of truth. */
+export interface Workspace {
+  id: string;
+  mode: WorkspaceMode;
+  /** Free-text label the owner picked at creation. */
+  title: string;
+  /** Single-emoji icon, used in lists and the home-screen badge. */
+  icon: string;
+  /** Firebase uid of the creator — has owner permissions. */
+  ownerUid: string;
+  /** Every current member's Firebase uid, including the owner. Kept on the
+   *  parent doc (not only in the subcollection) so Firestore rules can
+   *  verify membership without a cross-doc `get()`. Capped at maxMembers. */
+  memberUids: string[];
+  /** 2 for pair, 10 for group (v1). Hard ceiling enforced both client-side
+   *  and in Firestore rules. */
+  maxMembers: number;
+  /** Short, rotatable, random alphanumeric. The invite URL is
+   *  `/workspaces/join?code=…`. Rotating clears old links. Resolved via
+   *  the public `workspaceInvites/{code}` lookup doc. */
+  inviteCode: string;
+  createdAt: string;
+}
+
+/** Lives at `workspaces/{wsId}/members/{uid}`. Holds the denormalized
+ *  display info so the member list doesn't need a parallel auth-server
+ *  lookup. Each member writes their own member doc; the owner can delete
+ *  any member doc (kick). */
+export interface WorkspaceMember {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+  joinedAt: string;
+  role: WorkspaceRole;
+}
+
+/** Lives at `workspaceInvites/{inviteCode}`. Public-read so a new device
+ *  visiting an invite link can resolve the code → wsId before requesting
+ *  the workspace doc itself. Created/rotated by the owner. */
+export interface WorkspaceInvite {
+  inviteCode: string;
+  wsId: string;
+  createdAt: string;
+}
