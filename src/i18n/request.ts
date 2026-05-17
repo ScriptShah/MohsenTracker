@@ -1,5 +1,6 @@
 import { getRequestConfig } from 'next-intl/server';
 import { defaultLocale, locales, type Locale } from './config';
+import { loadMessages } from './messages';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   // next-intl 3.22+ deprecated the `locale` arg in favour of
@@ -13,6 +14,6 @@ export default getRequestConfig(async ({ requestLocale }) => {
   }
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: await loadMessages(locale as Locale),
   };
 });
