@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
@@ -30,9 +30,13 @@ function sliceForSensitivity(
 }
 
 export default function HabitDetailPage() {
+  // See note on /books/detail — useSearchParams needs a Suspense boundary
+  // in Next.js 14 to avoid bailing the whole route to client rendering.
   return (
     <ClientGate>
-      <HabitDetail />
+      <Suspense fallback={null}>
+        <HabitDetail />
+      </Suspense>
     </ClientGate>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/routing';
@@ -21,9 +21,17 @@ import {
 import { todayKey } from '@/lib/dates';
 
 export default function BookDetailPage() {
+  // Next.js 14: `useSearchParams()` inside <BookDetail /> needs a Suspense
+  // boundary, otherwise the entire route bails out to client-side rendering
+  // and the user sees an empty page until JS hydrates. The fallback is
+  // intentionally empty — ClientGate already handles the SSR-vs-hydrated
+  // gate above, and the actual page content renders the moment the search
+  // params are available.
   return (
     <ClientGate>
-      <BookDetail />
+      <Suspense fallback={null}>
+        <BookDetail />
+      </Suspense>
     </ClientGate>
   );
 }
@@ -53,12 +61,18 @@ function BookDetail() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  // Hydrate today's input from existing log.
+  // Hydrate today's input from the existing log — but ONLY when the user
+  // lands on a new book. Re-running on every `book` mutation would clobber
+  // whatever the user is currently typing into the input the moment they
+  // hit Log (logBookPages mutates book.pagesByDate, which would otherwise
+  // bounce the input back to the just-saved value mid-edit). The deliberate
+  // narrow dependency is the point of the suppression on the dep array.
   useEffect(() => {
     if (book) {
       const v = book.pagesByDate[todayKey()];
       setToday(v ? String(v) : '');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book?.id]);
 
   if (!book) {

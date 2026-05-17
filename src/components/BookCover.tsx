@@ -31,7 +31,12 @@ function gradientFor(title: string): string {
 
 export function BookCover({ book, size = 'md', className }: Props) {
   if (book.coverImage) {
+    // next/image doesn't help here: cover images are pre-resized JPEG
+    // data URLs (~240px wide, see Book.coverImage in domain/types.ts), so
+    // there's no remote fetch to optimize and no responsive variants to
+    // generate. Using next/image would just add a hydration step + flicker.
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={book.coverImage}
         alt={book.title}

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
@@ -11,9 +12,13 @@ import { projectCompound } from '@/lib/compound';
 import { useUnitLabel } from '@/lib/units';
 
 export default function CategoryDetailPage() {
+  // See note on /books/detail — useSearchParams needs a Suspense boundary
+  // in Next.js 14 to avoid bailing the whole route to client rendering.
   return (
     <ClientGate>
-      <CategoryDetail />
+      <Suspense fallback={null}>
+        <CategoryDetail />
+      </Suspense>
     </ClientGate>
   );
 }
