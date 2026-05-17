@@ -25,6 +25,7 @@ import {
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
   subscribeWorkspace,
+  subscribeWorkspaceEvents,
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
   updateWorkspaceHabit,
@@ -34,6 +35,7 @@ import type {
   HabitType,
   Workspace,
   WorkspaceDayLog,
+  WorkspaceEvent,
   WorkspaceHabit,
   WorkspaceMember,
 } from '@/domain/types';
@@ -246,6 +248,8 @@ function WorkspaceDetail() {
       )}
 
       <SharedHabitsSection wsId={workspace.id} isOwner={isOwner} />
+
+      <ActivitySection wsId={workspace.id} />
 
       <Card className="space-y-2 border-leaf-200 bg-leaf-50">
         <p className="text-xs uppercase tracking-wide text-leaf-700">
@@ -928,4 +932,149 @@ function PairMemberRow({
       {content}
     </div>
   );
+}
+
+/* ─────────────────── Activity feed (Recent activity) ─────────────────── */
+
+/** Subscribes to the workspace's events subcollection and renders a
+ *  compact "Recent activity" panel — newest first, capped to the last 10
+ *  events. Deliberately read-only: this is a "what happened" log, not a
+ *  conversation. Empty state is friendly because brand-new workspaces
+ *  will have one event ("you joined") but a member visiting an old
+ *  workspace might see a long history that pre-dates them. */
+function ActivitySection({ wsId }: { wsId: string }) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const [events, setEvents] = useState<WorkspaceEvent[] | null>(null);
+
+  useEffect(() => {
+    // Cap at 10 — anything older isn't worth rendering on a small phone
+    // screen, and pulling the whole subcollection per workspace open is
+    // wasteful as the feed grows.
+    const unsub = subscribeWorkspaceEvents(wsId, (list) => setEvents(list), 10);
+    return unsub;
+  }, [wsId]);
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('workspaces.activity.title')}
+        </h2>
+        <p className="text-xs text-ink-500">
+          {t('workspaces.activity.body')}
+        </p>
+      </div>
+
+      {events === null ? (
+        <p className="text-sm text-ink-500">
+          {t('workspaces.detail.loading')}
+        </p>
+      ) : events.length === 0 ? (
+        <Card className="border-sand-200 bg-sand-50">
+          <p className="text-sm text-ink-700">
+            {t('workspaces.activity.empty')}
+          </p>
+        </Card>
+      ) : (
+        <ul className="space-y-2">
+          {events.map((evt) => (
+            <li
+              key={evt.id}
+              className="flex items-start gap-3 rounded-xl border border-ink-200 bg-white px-3 py-2"
+            >
+              <span className="mt-0.5 text-base" aria-hidden>
+                {iconForEvent(evt.type)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-ink-800">{labelForEvent(evt, t)}</p>
+                <p className="numeral text-[11px] text-ink-500">
+                  {relativeTime(evt.at, t, fmt)}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** One-character glyph per event type. Kept inline (no icon component
+ *  per type) because the set is tiny and unlikely to grow much. */
+function iconForEvent(type: WorkspaceEvent['type']): string {
+  switch (type) {
+    case 'member-joined':
+      return '👋';
+    case 'member-left':
+      return '👋';
+    case 'habit-added':
+      return '＋';
+    default:
+      return '·';
+  }
+}
+
+/** Render the localised sentence for an event. Habit-added falls back
+ *  to the no-name variant when the meta payload is missing (older
+ *  events written before the meta field landed, or a race where the
+ *  habit name was empty at write time). */
+function labelForEvent(
+  evt: WorkspaceEvent,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  const name = evt.actorName || '—';
+  switch (evt.type) {
+    case 'member-joined':
+      return t('workspaces.activity.memberJoined', { name });
+    case 'member-left':
+      return t('workspaces.activity.memberLeft', { name });
+    case 'habit-added': {
+      const habit = evt.meta?.habitName?.trim();
+      return habit
+        ? t('workspaces.activity.habitAdded', { name, habit })
+        : t('workspaces.activity.habitAddedNoName', { name });
+    }
+    default:
+      return name;
+  }
+}
+
+/** Pure relative-time formatter. Keeps everything in the user's current
+ *  locale via the injected number formatter so Persian numerals render
+ *  correctly inside the bucketed strings. Falls through to "Xd ago" for
+ *  anything older than a week is good enough — this panel only ever
+ *  shows the most recent 10 events, so the oldest is rarely very old. */
+function relativeTime(
+  iso: string,
+  t: ReturnType<typeof useTranslations>,
+  fmt: (n: number) => string,
+): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMs = Date.now() - then;
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+
+  if (diffMs < minute) return t('workspaces.activity.justNow');
+  if (diffMs < hour) {
+    return t('workspaces.activity.minutesAgo', {
+      n: fmt(Math.floor(diffMs / minute)),
+    });
+  }
+  if (diffMs < day) {
+    return t('workspaces.activity.hoursAgo', {
+      n: fmt(Math.floor(diffMs / hour)),
+    });
+  }
+  if (diffMs < week) {
+    return t('workspaces.activity.daysAgo', {
+      n: fmt(Math.floor(diffMs / day)),
+    });
+  }
+  return t('workspaces.activity.weeksAgo', {
+    n: fmt(Math.floor(diffMs / week)),
+  });
 }

@@ -461,6 +461,43 @@ export interface WorkspaceInvite {
   createdAt: string;
 }
 
+/** The kinds of in-workspace activity we surface in the "Recent activity"
+ *  feed. Deliberately small set — only events with a clear human-readable
+ *  story ("X joined", "Y added a habit"). NOT a generic audit log. */
+export type WorkspaceEventType =
+  | 'member-joined'
+  | 'member-left'
+  | 'habit-added';
+
+/** Lives at `workspaces/{wsId}/events/{eventId}`. Append-only, member-
+ *  visible feed of who-did-what inside the workspace. Each event is
+ *  written by the actor themselves (rules check `actorUid === auth.uid`)
+ *  except `member-left`, which is also writable by the workspace owner
+ *  so cascade-delete can clean the feed alongside the rest of the
+ *  subcollections. Reads are gated on workspace membership. */
+export interface WorkspaceEvent {
+  id: string;
+  type: WorkspaceEventType;
+  /** Uid of the user the event is *about*. For member-joined / left this
+   *  is the joining/leaving member; for habit-added this is the owner
+   *  who added the habit. */
+  actorUid: string;
+  /** Denormalized display name at the moment the event was written, so
+   *  the feed reads naturally even after the member has since left and
+   *  their member-subdoc is gone. */
+  actorName: string;
+  /** ISO timestamp the event happened (client clock). Used for sort
+   *  order and the "X minutes ago" rendering. */
+  at: string;
+  /** Event-specific payload. Kept as a discriminated map so we can add
+   *  fields per type without changing the doc shape. Right now only
+   *  `habit-added` uses it (carries the habit name for "Yasmin added
+   *  '10 pages of Quran'"). */
+  meta?: {
+    habitName?: string;
+  };
+}
+
 /** Lives at `workspaces/{wsId}/habits/{habitId}`. A habit definition
  *  shared across every member of the workspace. Owner-only writes; all
  *  members read. Same shape as the personal `Habit` interface, minus

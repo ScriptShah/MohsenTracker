@@ -137,5 +137,19 @@
     "unitPlaceholder": "pages, minutes, glasses…",
     "targetLabel": "Daily target",
     "limitLabel": "Daily limit"
+  },
+  "activity": {
+    "title": "Recent activity",
+    "body": "Who joined, who left, and what habits were added — newest first.",
+    "empty": "Nothing has happened here yet. Joins, leaves and new shared habits will show up in this list.",
+    "memberJoined": "{name} joined",
+    "memberLeft": "{name} left",
+    "habitAdded": "{name} added “{habit}”",
+    "habitAddedNoName": "{name} added a shared habit",
+    "justNow": "just now",
+    "minutesAgo": "{n}m ago",
+    "hoursAgo": "{n}h ago",
+    "daysAgo": "{n}d ago",
+    "weeksAgo": "{n}w ago"
   }
 }

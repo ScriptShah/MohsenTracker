@@ -164,6 +164,26 @@ service cloud.firestore {
           ).data.ownerUid
         );
       }
+
+      // Activity-feed events ("X joined", "Y added a habit"). Reads are
+      // gated on workspace membership. Creates require only that the
+      // writer is the event's actor (so a member-left event can fire
+      // even after the user removed themselves from memberUids; the
+      // workspace membership check at create-time would deny that).
+      // No updates — events are append-only. Owner can delete any
+      // event (cascade-on-delete-workspace).
+      match /events/{eventId} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.actorUid;
+        allow delete: if request.auth != null
+          && request.auth.uid == get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.ownerUid;
+      }
     }
 
     // Public invite-code lookup. Any authenticated user can read (so a

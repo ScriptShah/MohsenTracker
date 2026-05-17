@@ -22,6 +22,8 @@ import type {
   HabitType,
   Workspace,
   WorkspaceDayLog,
+  WorkspaceEvent,
+  WorkspaceEventType,
   WorkspaceHabit,
   WorkspaceMember,
   WorkspaceMode,
@@ -216,6 +218,13 @@ export async function joinWorkspace(
     } catch {
       /* swallow */
     }
+    // Activity feed — best-effort, runs after the actual join succeeded
+    // so a feed-write failure never blocks the join.
+    await writeWorkspaceEvent(wsId, {
+      type: 'member-joined',
+      actorUid: uid,
+      actorName: display.displayName,
+    });
     return result;
   } catch {
     return { ok: false, error: 'unknown' };
@@ -391,6 +400,20 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
       /* swallow */
     }
 
+    // 3b. Activity-feed events. Same cascade reasoning as the other
+    // subcollections — orphaned events would be invisible (the read
+    // rule needs the parent workspace's memberUids check) but they'd
+    // sit in Firestore wasting storage. Owner can delete any event
+    // doc per the rule.
+    try {
+      const eventsSnap = await getDocs(
+        collection(fb.db, 'workspaces', wsId, 'events'),
+      );
+      await Promise.all(eventsSnap.docs.map((e) => deleteDoc(e.ref)));
+    } catch {
+      /* swallow */
+    }
+
     // 4. Invite-code lookup doc.
     if (ws.inviteCode) {
       try {
@@ -452,6 +475,18 @@ export async function createWorkspaceHabit(
       doc(fb.db, 'workspaces', wsId, 'habits', habitId),
       habit,
     );
+    // Activity feed entry — runs after the habit doc is committed so a
+    // feed-write failure can't masquerade as a habit-create failure.
+    const ownerName =
+      fb.auth.currentUser?.displayName?.trim() ||
+      fb.auth.currentUser?.email?.split('@')[0] ||
+      'Owner';
+    await writeWorkspaceEvent(wsId, {
+      type: 'habit-added',
+      actorUid: uid,
+      actorName: ownerName,
+      meta: { habitName: habit.name },
+    });
     return habit;
   } catch {
     return null;
@@ -646,6 +681,15 @@ export async function leaveWorkspace(
   const fb = getFirebase();
   if (!fb) return false;
 
+  // Capture display name BEFORE removing the member doc so the activity
+  // event has something readable. Falls back to a generic label if Auth
+  // hasn't populated displayName (anonymous accounts won't have one,
+  // though those are blocked from workspaces upstream).
+  const leaverName =
+    fb.auth.currentUser?.displayName?.trim() ||
+    fb.auth.currentUser?.email?.split('@')[0] ||
+    'A member';
+
   // Wipe first if requested. Rules require workspace membership for the
   // delete, so this MUST happen before we remove ourselves from
   // memberUids — once we're no longer a member, the rule denies it.
@@ -671,6 +715,15 @@ export async function leaveWorkspace(
       return true;
     });
     if (!result) return false;
+    // Activity feed — write the leave event BEFORE deleting the member
+    // subdoc. The event-write rule allows actor === auth.uid; the user
+    // is still authenticated, so this is permitted even though they're
+    // no longer in memberUids.
+    await writeWorkspaceEvent(wsId, {
+      type: 'member-left',
+      actorUid: uid,
+      actorName: leaverName,
+    });
     try {
       await deleteDoc(doc(fb.db, 'workspaces', wsId, 'members', uid));
     } catch {
@@ -680,4 +733,67 @@ export async function leaveWorkspace(
   } catch {
     return false;
   }
+}
+
+/* ── Activity feed (events) ──────────────────────────────────────────── */
+
+/** Append-only event log at `workspaces/{wsId}/events/{eventId}`. Used
+ *  by the "Recent activity" panel on the workspace detail page so members
+ *  see a small human-readable history (who joined, who left, what habits
+ *  the owner added) without the heavy ceremony of a full audit trail.
+ *
+ *  Writes are best-effort. A failure shouldn't undo the underlying action
+ *  (joining, leaving, adding a habit) — the activity feed is a nice-to-
+ *  have, not a system of record. Each call swallows its own error. */
+export async function writeWorkspaceEvent(
+  wsId: string,
+  input: {
+    type: WorkspaceEventType;
+    actorUid: string;
+    actorName: string;
+    meta?: WorkspaceEvent['meta'];
+  },
+): Promise<void> {
+  if (!firebaseEnabled() || !wsId) return;
+  const fb = getFirebase();
+  if (!fb) return;
+  const eventId = `evt_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  const event: WorkspaceEvent = {
+    id: eventId,
+    type: input.type,
+    actorUid: input.actorUid,
+    actorName: input.actorName,
+    at: new Date().toISOString(),
+    ...(input.meta ? { meta: input.meta } : {}),
+  };
+  try {
+    await setDoc(doc(fb.db, 'workspaces', wsId, 'events', eventId), event);
+  } catch {
+    /* swallow — feed is best-effort */
+  }
+}
+
+/** Subscribe to the workspace's activity feed. Returns the newest-first
+ *  list, capped to `limit` events (default 20). The cap is client-side
+ *  for simplicity — the collection is small enough in practice that
+ *  pulling everything and slicing is fine for v1. */
+export function subscribeWorkspaceEvents(
+  wsId: string,
+  cb: (events: WorkspaceEvent[]) => void,
+  limit = 20,
+): Unsubscribe {
+  if (!firebaseEnabled() || !wsId) return () => {};
+  const fb = getFirebase();
+  if (!fb) return () => {};
+  return onSnapshot(
+    collection(fb.db, 'workspaces', wsId, 'events'),
+    (snap) => {
+      const out: WorkspaceEvent[] = [];
+      snap.forEach((d) => out.push(d.data() as WorkspaceEvent));
+      // Newest first. ISO strings sort lexicographically in time order.
+      out.sort((a, b) => (a.at < b.at ? 1 : -1));
+      cb(out.slice(0, limit));
+    },
+    () => cb([]),
+  );
 }
