@@ -40,6 +40,7 @@ export const namespaces = [
   'splash',
   'streakFire',
   'units',
+  'workspaces',
 ] as const;
 
 export type Namespace = (typeof namespaces)[number];

@@ -369,6 +369,23 @@ function Profile() {
         </Card>
       </Link>
 
+      <Link href="/workspaces" className="block">
+        <Card className="flex items-center gap-3 hover:border-leaf-400">
+          <span className="text-2xl" aria-hidden>
+            🤝
+          </span>
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-ink-800">
+              {t('workspaces.settingsLink')}
+            </div>
+            <div className="text-xs text-ink-500">
+              {t('workspaces.settingsLinkHint')}
+            </div>
+          </div>
+          <ChevronEnd className="h-4 w-4 text-ink-300" />
+        </Card>
+      </Link>
+
       <Card className="space-y-3">
         <h2 className="text-sm font-semibold text-ink-800">
           {t('settings.dataSection')}
