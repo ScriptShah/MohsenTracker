@@ -39,6 +39,7 @@ export const namespaces = [
   'settings',
   'splash',
   'streakFire',
+  'tutorial',
   'units',
   'workspaces',
 ] as const;

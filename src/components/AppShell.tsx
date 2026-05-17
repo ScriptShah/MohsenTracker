@@ -5,6 +5,7 @@ import { ThemeApplier } from './ThemeApplier';
 import { CloudSync } from './CloudSync';
 import { SoundUnlock } from './SoundUnlock';
 import { SplashScreen } from './SplashScreen';
+import { Tutorial } from './Tutorial';
 import { AuthLayout } from './AuthLayout';
 import { PublicLayout } from './PublicLayout';
 
@@ -21,6 +22,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SoundUnlock />
       <SplashScreen />
       {gated ? <PublicLayout /> : <AuthLayout>{children}</AuthLayout>}
+      {/* First-run feature tour. Self-gates on profile state; renders
+          nothing until splash finishes and the user has completed
+          onboarding. Lives outside AuthLayout so it appears for any
+          signed-in user, regardless of which page they land on first. */}
+      {!gated && <Tutorial />}
     </>
   );
 }

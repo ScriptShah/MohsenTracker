@@ -1,0 +1,28 @@
+{
+  "skip": "Skip",
+  "back": "Back",
+  "next": "Next",
+  "start": "Let's start",
+  "slides": {
+    "checklist": {
+      "title": "Tap a habit to log it",
+      "body": "Your daily list is one tap per habit. Resets each morning. The completion ring at the top fills as you go."
+    },
+    "hearts": {
+      "title": "Three hearts a fortnight",
+      "body": "Each day under 50% completion costs a heart. Three consecutive days at 50% or more earns one back. Lose all three and the app nudges you to restart smaller."
+    },
+    "futureSelf": {
+      "title": "Your future self is real",
+      "body": "Every habit you keep is a vote for who you're becoming. Future Self shows the person you're growing into — plus the compound effect of each habit over a year and a decade."
+    },
+    "workspaces": {
+      "title": "Track together, when you want",
+      "body": "Create a workspace to share habits with a partner, family, or small group. Everyone sees the same list; each person logs their own. Optional — your personal habits stay private by default."
+    },
+    "explore": {
+      "title": "Make it yours",
+      "body": "Categories, books, dopamine resets, fasting timers, the anger protocol — explore from the menu when you're ready. Nothing's required. The app waits for you."
+    }
+  }
+}
