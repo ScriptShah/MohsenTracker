@@ -131,16 +131,38 @@ service cloud.firestore {
       // only their own logs; every member can read any other member's
       // logs (that read is what makes the space "shared"). Read gate is
       // workspace membership; write gate is "you can only write your own".
+      // Delete gate has an additional owner exception so the cascade
+      // inside deleteWorkspace can clean every member's logs before
+      // removing the parent.
       match /logs/{logUid}/days/{date} {
         allow read: if request.auth != null
           && request.auth.uid in get(
             /databases/$(database)/documents/workspaces/$(wsId)
           ).data.memberUids;
-        allow write: if request.auth != null
+
+        // Create / update: still self-only.
+        allow create, update: if request.auth != null
           && request.auth.uid == logUid
           && request.auth.uid in get(
             /databases/$(database)/documents/workspaces/$(wsId)
           ).data.memberUids;
+
+        // Delete: the doc's own uid (used by the "wipe my history"
+        // leave path), OR the workspace owner (cascade-on-workspace-
+        // delete). Owner can already destroy the whole workspace, so
+        // letting them delete individual member logs is a smaller
+        // power than what they already have.
+        allow delete: if request.auth != null && (
+          (
+            request.auth.uid == logUid
+            && request.auth.uid in get(
+              /databases/$(database)/documents/workspaces/$(wsId)
+            ).data.memberUids
+          )
+          || request.auth.uid == get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.ownerUid
+        );
       }
     }
 
