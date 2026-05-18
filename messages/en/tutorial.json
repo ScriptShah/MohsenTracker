@@ -21,6 +21,14 @@
       "title": "Add a habit",
       "body": "Build your own list. Pick from presets like Fajr, 10 pages, or 30-minute walk — or write your own. Bad habits get a built-in good-deed pairing."
     },
+    "rewards": {
+      "title": "Rewards and punishments",
+      "body": "Pick a small reward for hitting daily 100% and a 7-day streak, and a punishment (like a small charity donation) for missing a critical habit. The carrot and the stick — both are how this app keeps you honest."
+    },
+    "reset": {
+      "title": "Dopamine reset",
+      "body": "Pause a bad habit for 24 hours, 7 days, 30 days, or 90 days. Track stages, daily check-ins, and replacement activities to rebuild your baseline so good habits feel rewarding again."
+    },
     "workspaces": {
       "title": "Track together",
       "body": "Habits you keep with a partner, family or small group land here. Each member logs their own tap; you can see who's done what today. Tap Open to set one up."
@@ -44,6 +52,10 @@
     "profile": {
       "title": "Profile + settings",
       "body": "Edit your name, future-self vision, why. Switch language, theme, prayer city. Sign out. Replay this tour anytime from here."
+    },
+    "moreFeatures": {
+      "title": "A few more to explore",
+      "body": "Rewards and punishments, Ramadan mode (auto-on during Ramadan), spiritual fasting, autophagy timer, debts and savings ledgers, the dopamine reset hub, and the restart-smaller flow when life gets in the way. Nothing forced — everything optional. Open Categories or Profile to find them when you want."
     }
   }
 }

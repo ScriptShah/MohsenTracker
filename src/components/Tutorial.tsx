@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useAppStore } from '@/lib/store';
@@ -24,10 +24,14 @@ import { Button } from './Button';
  */
 
 interface TutorialStep {
-  /** Matches a `data-tutorial="…"` attribute somewhere in the DOM. */
-  key: string;
+  /** Matches a `data-tutorial="…"` attribute somewhere in the DOM, or
+   *  `null` for a no-target step that renders as a centered modal-style
+   *  tooltip (no spotlight). Use the targetless form for catch-all
+   *  steps like "more features" that don't point at a single DOM node. */
+  key: string | null;
   /** Where to place the tooltip relative to the target. Falls back to
-   *  the opposite side if the chosen side has no room on screen. */
+   *  the opposite side if the chosen side has no room on screen. Ignored
+   *  for `key: null` steps (always centered). */
   preferred: 'above' | 'below';
   /** Translation key suffix → `tutorial.steps.{slug}.{title|body}`. */
   slug: string;
@@ -49,12 +53,23 @@ const STEPS: TutorialStep[] = [
   { key: 'ring', preferred: 'below', slug: 'ring' },
   { key: 'checklist', preferred: 'above', slug: 'checklist' },
   { key: 'add-habit', preferred: 'above', slug: 'addHabit', href: '/habits/new' },
+  // The 'rewards' card on Home only renders for users who haven't
+  // configured rewards/punishments yet — for returning users this step
+  // skips silently, and the dedicated 'moreFeatures' no-target step at
+  // the end picks up the slack (mentions rewards + punishments + reset
+  // in one shot).
+  { key: 'rewards', preferred: 'above', slug: 'rewards', href: '/rewards' },
+  { key: 'reset', preferred: 'above', slug: 'reset', href: '/reset' },
   { key: 'workspaces', preferred: 'above', slug: 'workspaces', href: '/workspaces' },
   { key: 'nav-categories', preferred: 'above', slug: 'categories', href: '/categories' },
   { key: 'nav-progress', preferred: 'above', slug: 'progress', href: '/progress' },
   { key: 'nav-futureSelf', preferred: 'above', slug: 'futureSelf', href: '/future-self' },
   { key: 'nav-books', preferred: 'above', slug: 'books', href: '/books' },
   { key: 'profile', preferred: 'below', slug: 'profile', href: '/profile' },
+  // No-target safety net: covers rewards / punishments / reset for
+  // returning users whose targeted steps skipped above. Rendered as a
+  // centered modal-style tooltip with no spotlight.
+  { key: null, preferred: 'below', slug: 'moreFeatures' },
 ];
 
 const PAD = 8; // Padding around the target rect for the spotlight ring.
@@ -85,8 +100,62 @@ export function Tutorial() {
    *  become valid spotlight targets immediately. */
   const [target, setTarget] = useState<{
     step: TutorialStep;
-    bounds: DOMRect;
+    /** Cutout bounds. `null` for no-target steps that render the
+     *  tooltip as a centered modal with no spotlight. */
+    bounds: DOMRect | null;
   } | null>(null);
+
+  /** After the tooltip first paints we measure its actual height and
+   *  nudge it upward if it overlaps the spotlight cutout (the
+   *  pre-render math uses a fixed height guess, which routinely
+   *  underestimates and caused tooltips to cover nav items on the
+   *  user-reported bug). Stores an absolute Y to override the
+   *  computed `tooltipTop` after first render. */
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const [tooltipTopOverride, setTooltipTopOverride] = useState<number | null>(
+    null,
+  );
+  // Reset the override whenever the target changes — the old override
+  // was for the previous step and would be wrong for the new one.
+  useEffect(() => {
+    setTooltipTopOverride(null);
+  }, [target?.step.key]);
+
+  /** After the tooltip mounts (or its content changes), check whether
+   *  its actual rendered rect overlaps the spotlight cutout. If it does,
+   *  push it up enough that the bottom edge sits TOOLTIP_MARGIN above
+   *  the cutout's top — that's the right answer for nav-item targets
+   *  at the bottom of the screen, which was the reported failure mode.
+   *  Only adjusts when the target is below the tooltip; for targets
+   *  above the tooltip (e.g. the lives/ring at the top of Home), no
+   *  correction is needed because the tooltip starts below them. */
+  useLayoutEffect(() => {
+    if (!target?.bounds) return;
+    const el = tooltipRef.current;
+    if (!el) return;
+    const tooltipRect = el.getBoundingClientRect();
+    const cutoutTop = target.bounds.top - PAD;
+    const cutoutBottom = target.bounds.bottom + PAD;
+    // Tooltip is supposed to be ABOVE the cutout (target is below
+    // tooltip) — check the cutout-top boundary.
+    if (
+      tooltipRect.top < cutoutTop &&
+      tooltipRect.bottom > cutoutTop - TOOLTIP_MARGIN
+    ) {
+      const newTop = Math.max(16, cutoutTop - TOOLTIP_MARGIN - tooltipRect.height);
+      if (newTop !== tooltipTopOverride) setTooltipTopOverride(newTop);
+      return;
+    }
+    // Tooltip is supposed to be BELOW the cutout — check the
+    // cutout-bottom boundary.
+    if (
+      tooltipRect.bottom > cutoutBottom &&
+      tooltipRect.top < cutoutBottom + TOOLTIP_MARGIN
+    ) {
+      const newTop = cutoutBottom + TOOLTIP_MARGIN;
+      if (newTop !== tooltipTopOverride) setTooltipTopOverride(newTop);
+    }
+  }, [target, tooltipTopOverride]);
 
   useLayoutEffect(() => {
     if (!mounted) return;
@@ -101,6 +170,14 @@ export function Tutorial() {
     function measure() {
       for (let i = rawStepIdx; i < STEPS.length; i++) {
         const step = STEPS[i]!;
+        // No-target step: render immediately with no bounds. The
+        // tooltip renders as a centered modal in the no-bounds branch
+        // below. Used as a catch-all for features that don't have a
+        // single DOM target on Home.
+        if (step.key === null) {
+          setTarget({ step, bounds: null });
+          return;
+        }
         const el = document.querySelector<HTMLElement>(
           `[data-tutorial="${step.key}"]`,
         );
@@ -213,51 +290,67 @@ export function Tutorial() {
   // covers the rest of the viewport in a dim colour while the cutout
   // itself stays transparent, so the highlighted element shows through
   // at full opacity. Adding `ring-4 ring-leaf-400` on the same div
-  // gives the spotlight its glowing border.
-  const cutoutStyle: React.CSSProperties = {
-    top: bounds.top - PAD,
-    left: bounds.left - PAD,
-    width: bounds.width + PAD * 2,
-    height: bounds.height + PAD * 2,
-    boxShadow: '0 0 0 100vmax rgba(15, 23, 42, 0.7)',
-  };
+  // gives the spotlight its glowing border. Skipped entirely for
+  // no-target steps where `bounds === null` (full backdrop dim).
+  const cutoutStyle: React.CSSProperties | null = bounds
+    ? {
+        top: bounds.top - PAD,
+        left: bounds.left - PAD,
+        width: bounds.width + PAD * 2,
+        height: bounds.height + PAD * 2,
+        boxShadow: '0 0 0 100vmax rgba(15, 23, 42, 0.7)',
+      }
+    : null;
 
-  // Tooltip placement: try preferred side, fall back to the other if
-  // there isn't enough room. Clamp horizontally so it doesn't run off
-  // the viewport on mobile.
+  // Tooltip placement. For targeted steps: try preferred side, fall
+  // back to the other if there isn't enough room. After the first
+  // paint, the post-render measurement below corrects for the actual
+  // tooltip height (the initial guess was overlapping nav items when
+  // the body text was long). For no-target steps: centered modal.
   const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
-  const tooltipHeightGuess = 180;
-  const roomBelow = vh - (bounds.bottom + TOOLTIP_MARGIN);
-  const roomAbove = bounds.top - TOOLTIP_MARGIN;
-  let side: 'above' | 'below' = step.preferred;
-  if (
-    side === 'below' &&
-    roomBelow < tooltipHeightGuess &&
-    roomAbove > roomBelow
-  ) {
-    side = 'above';
-  } else if (
-    side === 'above' &&
-    roomAbove < tooltipHeightGuess &&
-    roomBelow > roomAbove
-  ) {
-    side = 'below';
+  const tooltipHeightGuess = 240; // bumped from 180; long body + 3
+  // buttons routinely exceeds 200px on mobile
+  let tooltipTop: number;
+  let tooltipLeft: number;
+  if (bounds) {
+    const roomBelow = vh - (bounds.bottom + TOOLTIP_MARGIN);
+    const roomAbove = bounds.top - TOOLTIP_MARGIN;
+    let side: 'above' | 'below' = step.preferred;
+    if (
+      side === 'below' &&
+      roomBelow < tooltipHeightGuess &&
+      roomAbove > roomBelow
+    ) {
+      side = 'above';
+    } else if (
+      side === 'above' &&
+      roomAbove < tooltipHeightGuess &&
+      roomBelow > roomAbove
+    ) {
+      side = 'below';
+    }
+    tooltipTop =
+      side === 'below'
+        ? Math.min(
+            bounds.bottom + TOOLTIP_MARGIN,
+            vh - tooltipHeightGuess - 16,
+          )
+        : Math.max(16, bounds.top - tooltipHeightGuess - TOOLTIP_MARGIN);
+    tooltipLeft = Math.max(
+      16,
+      Math.min(
+        vw - TOOLTIP_MAX_WIDTH - 16,
+        bounds.left + bounds.width / 2 - TOOLTIP_MAX_WIDTH / 2,
+      ),
+    );
+  } else {
+    // Center the no-target modal.
+    tooltipTop = Math.max(16, vh / 2 - tooltipHeightGuess / 2);
+    tooltipLeft = Math.max(16, vw / 2 - TOOLTIP_MAX_WIDTH / 2);
   }
-  const tooltipTop =
-    side === 'below'
-      ? Math.min(
-          bounds.bottom + TOOLTIP_MARGIN,
-          vh - tooltipHeightGuess - 16,
-        )
-      : Math.max(16, bounds.top - tooltipHeightGuess - TOOLTIP_MARGIN);
-  const tooltipLeft = Math.max(
-    16,
-    Math.min(
-      vw - TOOLTIP_MAX_WIDTH - 16,
-      bounds.left + bounds.width / 2 - TOOLTIP_MAX_WIDTH / 2,
-    ),
-  );
+  // Apply the post-render correction if we've measured a real overlap.
+  const effectiveTop = tooltipTopOverride ?? tooltipTop;
 
   return (
     <div
@@ -275,19 +368,29 @@ export function Tutorial() {
     >
       {/* Spotlight cutout: dim everything except the target via a giant
           box-shadow extending outward from this transparent rectangle.
-          The highlighted element shows through at full opacity. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute rounded-2xl ring-4 ring-leaf-400 transition-all"
-        style={cutoutStyle}
-      />
+          The highlighted element shows through at full opacity. For
+          no-target steps, render a plain backdrop instead so the
+          centered modal still sits over a dimmed page. */}
+      {cutoutStyle ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute rounded-2xl ring-4 ring-leaf-400 transition-all"
+          style={cutoutStyle}
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-slate-900/70"
+        />
+      )}
 
       {/* Tooltip */}
       <div
+        ref={tooltipRef}
         data-tutorial-tooltip
         className="absolute rounded-2xl bg-white p-4 shadow-2xl"
         style={{
-          top: tooltipTop,
+          top: effectiveTop,
           left: tooltipLeft,
           maxWidth: TOOLTIP_MAX_WIDTH,
           width: 'calc(100vw - 32px)',

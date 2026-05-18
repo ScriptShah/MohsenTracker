@@ -254,7 +254,7 @@ function Home() {
       )}
 
       {rewardsCount === 0 && punishmentsCount === 0 && (
-        <Link href="/rewards" className="block">
+        <Link href="/rewards" className="block" data-tutorial="rewards">
           <Card className="border-sand-200 bg-sand-50">
             <p className="text-xs uppercase tracking-wide text-sand-600">
               {t('rewards.homeBannerTitle')}
@@ -270,7 +270,7 @@ function Home() {
       )}
 
       {activeReset ? (
-        <Link href="/reset" className="block">
+        <Link href="/reset" className="block" data-tutorial="reset">
           <Card className="border-leaf-200 bg-gradient-to-br from-leaf-50 to-white">
             <p className="text-xs uppercase tracking-wide text-leaf-700">
               {t('reset.homeActiveTitle')} · {activeReset.target}
@@ -287,7 +287,7 @@ function Home() {
           </Card>
         </Link>
       ) : (
-        <Link href="/reset" className="block">
+        <Link href="/reset" className="block" data-tutorial="reset">
           <Card className="border-sand-200 bg-sand-50">
             <p className="text-xs uppercase tracking-wide text-sand-600">
               {t('reset.homeStartCta')}
