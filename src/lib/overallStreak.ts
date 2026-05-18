@@ -98,3 +98,46 @@ export function recomputeOverallStreak(
   // longest >= current always.
   return { current, longest: Math.max(longest, current), lastQualifyingDate };
 }
+
+/** Status of TODAY relative to the streak rule. Surfaces the gap
+ *  between the home-completion-ring percentage (which uses done/total)
+ *  and the streak qualification rule (which requires every critical
+ *  habit done, OR — when none exist — at least one habit done). The
+ *  /future-self page uses this to render a one-line explainer so users
+ *  don't have to wonder why a 56%-complete day didn't bump their
+ *  streak.
+ *
+ *  Variants:
+ *    - 'no-habits'         : user has zero habits — nothing to do.
+ *    - 'qualified'         : today already counted.
+ *    - 'criticals-pending' : has criticals; not all done yet.
+ *    - 'any-pending'       : no criticals; no habit done yet today.
+ */
+export type TodayStreakStatus =
+  | { kind: 'no-habits' }
+  | { kind: 'qualified' }
+  | { kind: 'criticals-pending'; remaining: number; total: number }
+  | { kind: 'any-pending' };
+
+export function todayStreakStatus(
+  habits: Habit[],
+  todayLogs: Record<string, HabitLog>,
+  todayISO: string,
+): TodayStreakStatus {
+  const existing = habits.filter((h) => h.createdAt.slice(0, 10) <= todayISO);
+  if (existing.length === 0) return { kind: 'no-habits' };
+  const criticals = existing.filter((h) => h.isCritical === true);
+  if (criticals.length > 0) {
+    const done = criticals.filter((h) =>
+      isLogSuccessful(h, todayLogs[h.id]),
+    ).length;
+    if (done === criticals.length) return { kind: 'qualified' };
+    return {
+      kind: 'criticals-pending',
+      remaining: criticals.length - done,
+      total: criticals.length,
+    };
+  }
+  const anyDone = existing.some((h) => isLogSuccessful(h, todayLogs[h.id]));
+  return anyDone ? { kind: 'qualified' } : { kind: 'any-pending' };
+}

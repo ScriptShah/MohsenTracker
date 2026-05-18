@@ -20,6 +20,8 @@ import {
   getTierName,
   isDiamond,
 } from '@/lib/streakFire';
+import { todayStreakStatus } from '@/lib/overallStreak';
+import { todayKey } from '@/lib/dates';
 import { useNumberFormatter } from '@/lib/format';
 
 export default function FutureSelfPage() {
@@ -48,6 +50,17 @@ function FutureSelf() {
   const fireTierName = getTierName(fireTier);
   const fireDiamond = isDiamond(fireTier);
   const fireNext = getDaysToNextTier(fireCurrent);
+  /** "Today counted" vs "Today won't count yet because X" — surfaces
+   *  the gap between the home completion percentage (done/total) and
+   *  the streak rule (every critical done, OR if no criticals, at
+   *  least one habit done). The single most-common confusion is "I'm
+   *  at 56% on Home but my streak hasn't moved" — usually means a
+   *  critical habit isn't done yet. */
+  const todayISO = todayKey();
+  const streakStatus = useMemo(
+    () => todayStreakStatus(habits, logs[todayISO] ?? {}, todayISO),
+    [habits, logs, todayISO],
+  );
   const islamicCategoryId = useMemo(
     () => allCategories.find((c) => c.key === 'islamic')?.id,
     [allCategories],
@@ -193,6 +206,7 @@ function FutureSelf() {
                   {fireSentence}
                 </p>
               </div>
+              <TodayStatusLine status={streakStatus} fmt={fmt} t={t} />
               {fireDiamond ? (
                 <p className="text-xs font-medium uppercase tracking-wide text-leaf-700">
                   {t('streakFire.forgedForever')}
@@ -365,6 +379,48 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="block text-sm font-medium text-ink-700">{label}</span>
       {children}
     </label>
+  );
+}
+
+/** One-line status under the streak count clarifying whether TODAY
+ *  already counted toward the streak, or — if not — exactly what's
+ *  still needed for it to count. Without this, users hit the "I'm at
+ *  56% on Home but the streak hasn't moved" surprise: the home ring
+ *  uses done/total, but the streak rule requires every critical habit
+ *  done (or any habit, if no criticals exist). This collapses that
+ *  whole confusion into a single sentence. */
+function TodayStatusLine({
+  status,
+  fmt,
+  t,
+}: {
+  status: ReturnType<typeof todayStreakStatus>;
+  fmt: (n: number) => string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (status.kind === 'no-habits') return null;
+  if (status.kind === 'qualified') {
+    return (
+      <p className="rounded-full border border-leaf-300 bg-leaf-50 px-3 py-1 text-xs font-medium text-leaf-700">
+        {t('streakFire.today.qualified')}
+      </p>
+    );
+  }
+  if (status.kind === 'criticals-pending') {
+    return (
+      <p className="numeral rounded-full border border-sand-300 bg-sand-50 px-3 py-1 text-xs font-medium text-sand-700">
+        {t('streakFire.today.criticalsPending', {
+          remaining: fmt(status.remaining),
+          total: fmt(status.total),
+        })}
+      </p>
+    );
+  }
+  // any-pending
+  return (
+    <p className="rounded-full border border-sand-300 bg-sand-50 px-3 py-1 text-xs font-medium text-sand-700">
+      {t('streakFire.today.anyPending')}
+    </p>
   );
 }
 

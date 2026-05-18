@@ -11,6 +11,11 @@
   "daysUntilNext": "{days} days until {tierName}",
   "forgedForever": "Forged forever",
   "longestEver": "Longest ever: {n} days",
+  "today": {
+    "qualified": "✓ Today counted",
+    "criticalsPending": "Today will count when all critical habits are done ({remaining} of {total} left)",
+    "anyPending": "Today will count when you complete any habit"
+  },
   "diamondExtra": {
     "islamic": "One year of consistency. May this be the beginning, not the peak.",
     "universal": "One year of consistency. The first year is the hardest. Carry on."
