@@ -30,6 +30,7 @@ export const namespaces = [
   'narratives',
   'nav',
   'onboarding',
+  'pastDay',
   'presets',
   'progress',
   'ramadan',

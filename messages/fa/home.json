@@ -6,6 +6,7 @@
   "completed": "{done} از {total} انجام شد",
   "noHabits": "هنوز عادتی اضافه نکرده‌ای.",
   "addHabit": "افزودن عادت",
+  "logPastDay": "چیزی یادت رفت؟ روزِ گذشته را ثبت کن",
   "futureSelfReminder": "تو در حال تبدیل شدن به این هستی",
   "compoundOfDay": "اثر مرکّب",
   "startStreak": "امروز زنجیره‌ات را شروع کن.",

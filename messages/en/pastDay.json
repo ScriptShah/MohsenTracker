@@ -1,0 +1,11 @@
+{
+  "title": "Log a past day",
+  "yesterday": "Yesterday",
+  "daysAgo": "{n} days ago",
+  "prev": "Previous day",
+  "next": "Next day",
+  "datePicker": "Pick a date",
+  "close": "Close",
+  "empty": "No habits existed on this day — nothing to log here.",
+  "backToToday": "Back to today"
+}
