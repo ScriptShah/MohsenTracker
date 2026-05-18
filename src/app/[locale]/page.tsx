@@ -23,6 +23,7 @@ import { AngerProtocol } from '@/components/AngerProtocol';
 import { WorkspacesHomeSection } from '@/components/WorkspaceChecklist';
 import { useWorkspacesTodayProgress } from '@/lib/useWorkspacesProgress';
 import { LevelUpCard } from '@/components/LevelUpCard';
+import { PastDayLogger } from '@/components/PastDayLogger';
 import { eligibleLevelUps } from '@/lib/twoMinute';
 import { getFireTrack } from '@/lib/streakFire';
 
@@ -62,6 +63,7 @@ function Home() {
   const fmt = useNumberFormatter();
   const angerProtocolEnabled = profile?.angerProtocolEnabled === true;
   const [showAnger, setShowAnger] = useState(false);
+  const [showPastDay, setShowPastDay] = useState(false);
   const islamicCategoryId = useAppStore(
     (s) => s.categories.find((c) => c.key === 'islamic')?.id,
   );
@@ -362,6 +364,16 @@ function Home() {
         >
           + {t('home.addHabit')}
         </Link>
+        {dailyHabits.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowPastDay(true)}
+            className="tap-44 flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium text-ink-500 hover:bg-ink-50 hover:text-ink-700"
+          >
+            <span aria-hidden>↺</span>
+            {t('home.logPastDay')}
+          </button>
+        )}
       </section>
 
       <div data-tutorial="workspaces">
@@ -369,6 +381,7 @@ function Home() {
       </div>
 
       {showAnger && <AngerProtocol onClose={() => setShowAnger(false)} />}
+      {showPastDay && <PastDayLogger onClose={() => setShowPastDay(false)} />}
     </div>
   );
 }
