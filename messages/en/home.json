@@ -7,6 +7,7 @@
   "noHabits": "You haven't added any habits yet.",
   "addHabit": "Add a habit",
   "logPastDay": "Forgot something? Log a past day",
+  "dragHandle": "Drag {name} to reorder",
   "futureSelfReminder": "You're becoming",
   "compoundOfDay": "Compound effect",
   "startStreak": "Start your streak today.",

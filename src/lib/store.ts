@@ -119,6 +119,12 @@ interface AppState {
   deleteCategory: (id: string) => void;
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => Habit;
   deleteHabit: (habitId: string) => void;
+  /** Reorder habits by an explicit id sequence. The new order is the
+   *  given list, in order; any habits NOT included in `orderedIds`
+   *  (e.g. weekly habits invisible on the daily home checklist, or
+   *  habits added in another tab during a drag) are appended at the
+   *  end so nothing is silently dropped. */
+  reorderHabits: (orderedIds: string[]) => void;
   setHabitCritical: (habitId: string, isCritical: boolean) => void;
   setHabitPositiveCargo: (habitId: string, cargo: string | undefined) => void;
   /** Spec §24.1: save the opening + closing rituals for a habit. Either or
@@ -529,10 +535,34 @@ export const useAppStore = create<AppState>()(
           id,
           createdAt: new Date().toISOString(),
         };
+        // Append, NOT prepend — new habits land at the end of the
+        // user's existing order. That preserves whatever sequence the
+        // user has dragged their list into and avoids surprising
+        // them with a fresh entry jumping in at the top.
         set((s) => ({ habits: [...s.habits, habit] }));
         const today = todayKey();
         set((s) => ({ summaries: { ...s.summaries, [today]: recomputeSummary(get(), today) } }));
         return habit;
+      },
+
+      reorderHabits: (orderedIds) => {
+        set((s) => {
+          // Build the reordered prefix from the explicit id list,
+          // dropping any ids that no longer correspond to a habit
+          // (e.g. one was deleted mid-drag).
+          const byId = new Map(s.habits.map((h) => [h.id, h]));
+          const reordered: Habit[] = [];
+          for (const id of orderedIds) {
+            const h = byId.get(id);
+            if (h) reordered.push(h);
+          }
+          // Anything NOT in the explicit list (weekly habits, new
+          // additions during the drag) gets appended in its original
+          // relative order — no silent drops, no shuffling.
+          const seen = new Set(orderedIds);
+          const remaining = s.habits.filter((h) => !seen.has(h.id));
+          return { habits: [...reordered, ...remaining] };
+        });
       },
 
       deleteHabit: (habitId) => {
