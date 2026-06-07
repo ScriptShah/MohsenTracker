@@ -5,13 +5,13 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
-  nextWorkspaceEntry,
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
   subscribeMyWorkspaceLog,
   subscribeMyWorkspaces,
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
+  workspaceEntryFor,
   workspaceEntryStatus,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
@@ -235,39 +235,44 @@ function WorkspaceHabitRow({
   const status = workspaceEntryStatus(entry);
   const done = status === 'completed';
 
-  // Tap cycles pending → completed → failed → pending, same as the
-  // personal checklist. nextWorkspaceEntry returns a full entry (with an
-  // explicit status) so the Firestore merge-write can't leave a stale mark.
-  const handle = () => {
-    onToggle(nextWorkspaceEntry(status, habit));
-  };
+  // Two explicit buttons (✓ done / ✗ not done), mirroring the personal
+  // checklist. workspaceEntryFor returns a full entry (with an explicit
+  // status) so the Firestore merge-write can't leave a stale mark; tapping
+  // the active mark again clears it back to pending.
+  const onMark = (target: 'completed' | 'failed') =>
+    onToggle(workspaceEntryFor(target, status, habit));
 
   return (
     <div
       className={clsx(
-        'flex w-full items-center gap-3 rounded-xl border px-3 py-3 transition',
+        'flex w-full items-center gap-2 rounded-xl border px-3 py-3 transition',
         status === 'completed'
           ? 'border-leaf-500 bg-leaf-50'
           : status === 'failed'
           ? 'border-red-300 bg-red-50'
-          : 'border-ink-200 bg-white hover:border-ink-300',
+          : 'border-ink-200 bg-white',
       )}
     >
-      <button
-        type="button"
-        onClick={handle}
-        aria-pressed={status === 'completed'}
-        aria-label={`${habit.name} — ${t(
-          status === 'completed'
-            ? 'home.statusCompleted'
-            : status === 'failed'
-            ? 'home.statusFailed'
-            : 'home.statusPending',
-        )}`}
-        className="tap-44 -m-2 flex items-center justify-center p-2"
-      >
-        <Checkmark status={status} />
-      </button>
+      <span className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onMark('completed')}
+          aria-pressed={status === 'completed'}
+          aria-label={`${habit.name} — ${t('home.markDone')}`}
+          className="tap-44 flex items-center justify-center"
+        >
+          <MarkCircle kind="done" active={status === 'completed'} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMark('failed')}
+          aria-pressed={status === 'failed'}
+          aria-label={`${habit.name} — ${t('home.markFailed')}`}
+          className="tap-44 flex items-center justify-center"
+        >
+          <MarkCircle kind="fail" active={status === 'failed'} />
+        </button>
+      </span>
       <span className="flex-1">
         <span className={clsx('block font-medium', done && 'text-leaf-800')}>
           {habit.name}
@@ -322,7 +327,38 @@ function MemberGrid({
   memberLogs: Record<string, WorkspaceDayLog | null>;
 }) {
   const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const [expanded, setExpanded] = useState(false);
   if (members.length === 0) return null;
+
+  const doneCount = members.reduce(
+    (n, m) =>
+      workspaceEntryStatus(memberLogs[m.uid]?.entries[habitId]) === 'completed'
+        ? n + 1
+        : n,
+    0,
+  );
+
+  // Past 3 members the per-avatar grid gets noisy on the compact home row,
+  // so collapse to a single "X of N done" summary chip. Tapping it expands
+  // the full avatar grid for the curious; ≤3 always shows avatars.
+  const COLLAPSE_ABOVE = 3;
+  if (members.length > COLLAPSE_ABOVE && !expanded) {
+    const summary = t('workspaces.crossMember.memberSummary', {
+      done: fmt(doneCount),
+      total: fmt(members.length),
+    });
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        aria-label={summary}
+        className="numeral shrink-0 rounded-full bg-leaf-100 px-2.5 py-1 text-[11px] font-medium text-leaf-700 transition hover:bg-leaf-200"
+      >
+        {summary}
+      </button>
+    );
+  }
 
   const isPair = mode === 'pair' && members.length === 2;
 
@@ -391,38 +427,45 @@ function MemberGrid({
           </span>
         );
       })}
+      {members.length > COLLAPSE_ABOVE && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          aria-label={t('workspaces.crossMember.memberCollapse')}
+          className="ms-1 flex h-5 shrink-0 items-center rounded-full px-1.5 text-[11px] text-ink-400 transition hover:bg-ink-100 hover:text-ink-600"
+        >
+          ▾
+        </button>
+      )}
     </div>
   );
 }
 
-/** Tri-state mark mirroring the personal-checklist `Checkmark` so shared
- *  habits feel identical — ✓ completed (leaf), ✗ failed (red), — pending
- *  (grey outline). Kept local rather than imported from HabitChecklist to
- *  avoid pulling in unrelated personal-habit logic. */
-function Checkmark({ status }: { status: HabitLogStatus }) {
+/** One of the two action circles on a shared-habit row, mirroring the
+ *  personal-checklist `MarkCircle` so shared habits feel identical. The ✓
+ *  circle fills leaf-green when completed; the ✗ circle fills red when
+ *  marked failed. Inactive circles show a faint outline icon so each button
+ *  reads as "tap to mark done / not done." Kept local rather than imported
+ *  from HabitChecklist to avoid pulling in unrelated personal-habit logic. */
+function MarkCircle({ kind, active }: { kind: 'done' | 'fail'; active: boolean }) {
+  const isDone = kind === 'done';
   return (
     <span
       className={clsx(
         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition',
-        status === 'completed' && 'border-leaf-600 bg-leaf-600 text-white animate-pop',
-        status === 'failed' && 'border-red-500 bg-red-500 text-white animate-pop',
-        status === 'pending' && 'border-ink-300 bg-white text-ink-300',
+        active && isDone && 'border-leaf-600 bg-leaf-600 text-white animate-pop',
+        active && !isDone && 'border-red-500 bg-red-500 text-white animate-pop',
+        !active && 'border-ink-200 bg-white text-ink-300',
       )}
       aria-hidden
     >
-      {status === 'completed' && (
+      {isDone ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
           <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      )}
-      {status === 'failed' && (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
-          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-      {status === 'pending' && (
+      ) : (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
-          <path d="M6 12h12" strokeLinecap="round" />
+          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}
     </span>
