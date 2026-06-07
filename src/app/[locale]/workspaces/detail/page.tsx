@@ -21,7 +21,6 @@ import {
   deleteWorkspace,
   deleteWorkspaceHabit,
   leaveWorkspace,
-  nextWorkspaceEntry,
   rotateInviteCode,
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
@@ -30,6 +29,7 @@ import {
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
   updateWorkspaceHabit,
+  workspaceEntryFor,
   workspaceEntryStatus,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
@@ -820,17 +820,17 @@ function PairTodayHabitCard({
               member={m}
               status={status}
               isMe={isMe}
-              onToggle={
+              onMark={
                 isMe
-                  ? () => {
-                      // Cycle pending → completed → failed → pending,
-                      // writing a full entry (explicit status) so the
-                      // Firestore merge can't keep a stale mark.
+                  ? (target) => {
+                      // Explicit ✓/✗, writing a full entry (explicit
+                      // status) so the Firestore merge can't keep a stale
+                      // mark. Re-tapping the active mark clears it.
                       void setMyWorkspaceLog(
                         workspace.id,
                         habit.id,
                         today,
-                        nextWorkspaceEntry(status, habit),
+                        workspaceEntryFor(target, status, habit),
                       );
                     }
                   : undefined
@@ -850,12 +850,12 @@ function PairMemberRow({
   member,
   status,
   isMe,
-  onToggle,
+  onMark,
 }: {
   member: WorkspaceMember;
   status: HabitLogStatus;
   isMe: boolean;
-  onToggle?: () => void;
+  onMark?: (target: 'completed' | 'failed') => void;
 }) {
   const t = useTranslations();
   const labelKey =
@@ -874,10 +874,9 @@ function PairMemberRow({
       : status === 'failed'
       ? 'border-red-300 bg-red-50'
       : 'border-ink-200 bg-white',
-    isMe && status === 'pending' && 'hover:border-ink-300',
   );
 
-  const content = (
+  const nameBlock = (
     <>
       <Avatar
         name={member.displayName}
@@ -888,6 +887,42 @@ function PairMemberRow({
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-800">
         {isMe ? t('workspaces.crossMember.you') : member.displayName}
       </span>
+    </>
+  );
+
+  // Mine: two explicit buttons (✓ done / ✗ not done).
+  if (onMark) {
+    return (
+      <div className={className}>
+        {nameBlock}
+        <span className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onMark('completed')}
+            aria-pressed={status === 'completed'}
+            aria-label={t('home.markDone')}
+            className="tap-44 flex items-center justify-center"
+          >
+            <PairMarkCircle kind="done" active={status === 'completed'} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMark('failed')}
+            aria-pressed={status === 'failed'}
+            aria-label={t('home.markFailed')}
+            className="tap-44 flex items-center justify-center"
+          >
+            <PairMarkCircle kind="fail" active={status === 'failed'} />
+          </button>
+        </span>
+      </div>
+    );
+  }
+
+  // Partner: read-only status circle.
+  return (
+    <div className={className} aria-label={ariaLabel} title={ariaLabel}>
+      {nameBlock}
       <span
         className={clsx(
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
@@ -913,26 +948,35 @@ function PairMemberRow({
           </svg>
         )}
       </span>
-    </>
-  );
-
-  if (onToggle) {
-    return (
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-pressed={status === 'completed'}
-        aria-label={ariaLabel}
-        className={clsx('tap-44', className)}
-      >
-        {content}
-      </button>
-    );
-  }
-  return (
-    <div className={className} aria-label={ariaLabel} title={ariaLabel}>
-      {content}
     </div>
+  );
+}
+
+/** Compact ✓/✗ action circle for the pair "Today together" card — h-7 to
+ *  match the read-only partner mark. Mirrors the home checklist's MarkCircle
+ *  (faint outline when inactive). */
+function PairMarkCircle({ kind, active }: { kind: 'done' | 'fail'; active: boolean }) {
+  const isDone = kind === 'done';
+  return (
+    <span
+      className={clsx(
+        'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
+        active && isDone && 'border-leaf-600 bg-leaf-600 text-white animate-pop',
+        active && !isDone && 'border-red-500 bg-red-500 text-white animate-pop',
+        !active && 'border-ink-200 bg-white text-ink-300',
+      )}
+      aria-hidden
+    >
+      {isDone ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+          <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3.5 w-3.5">
+          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </span>
   );
 }
 

@@ -696,30 +696,32 @@ export function workspaceEntryStatus(
   return entry?.status ?? (entry?.completed ? 'completed' : 'pending');
 }
 
-/** Next entry in the shared-habit cycle: pending → completed → failed →
- *  pending. Returns a full {value, completed, status} so the Firestore
- *  merge-write always carries an explicit status (the deep-merge would
- *  otherwise let a stale status survive). Value follows the same
- *  good/bad/binary rules as the personal toggle. */
-export function nextWorkspaceEntry(
+/** Entry for an explicit two-button tap (✓ done / ✗ not done) on a shared
+ *  habit. Tapping the button that matches the current mark clears it back
+ *  to pending (an undo); otherwise it sets the target mark. Returns a full
+ *  {value, completed, status} so the Firestore merge-write always carries
+ *  an explicit status (the deep-merge would otherwise let a stale status
+ *  survive). Value follows the same good/bad/binary rules as the personal
+ *  toggle. */
+export function workspaceEntryFor(
+  target: 'completed' | 'failed',
   current: HabitLogStatus,
   habit: Pick<WorkspaceHabit, 'type' | 'target' | 'limit'>,
 ): { value: number; completed: boolean; status: HabitLogStatus } {
-  if (current === 'pending') {
-    // → completed
+  // Re-tapping the active mark is an undo → pending.
+  if (current === target) {
+    return { value: 0, completed: false, status: 'pending' };
+  }
+  if (target === 'completed') {
     let value: number;
     if (habit.type === 'good' && habit.target !== undefined) value = habit.target;
     else if (habit.type === 'bad') value = habit.limit ?? 0;
     else value = 1;
     return { value, completed: true, status: 'completed' };
   }
-  if (current === 'completed') {
-    // → failed (over-limit for bad habits, zero for good)
-    const value = habit.type === 'bad' ? (habit.limit ?? 0) + 1 : 0;
-    return { value, completed: false, status: 'failed' };
-  }
-  // failed → pending
-  return { value: 0, completed: false, status: 'pending' };
+  // → failed (over-limit for bad habits, zero for good)
+  const value = habit.type === 'bad' ? (habit.limit ?? 0) + 1 : 0;
+  return { value, completed: false, status: 'failed' };
 }
 
 /** Subscribe to the current user's own daily log for a workspace,

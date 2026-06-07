@@ -148,12 +148,13 @@ interface AppState {
    *  don't re-pop the prompt for another ~30 days. */
   dismissLevelUpPrompt: (habitId: string) => void;
   toggleHabit: (habitId: string, date?: string) => void;
-  /** Three-state checklist cycle: pending → completed → failed → pending.
-   *  Reuses toggleHabit for the pending↔completed transitions (preserving
-   *  its reward / live-count / sound side-effects) and stamps the log's
-   *  `status` for the failed/pending marks. Reading habits (linksToBooks)
-   *  are book-driven and ignore this, same as toggleHabit. */
-  cycleHabitStatus: (habitId: string, date?: string) => void;
+  /** The ✗ button on the checklist. Toggles the explicit "failed" mark:
+   *  failed → pending (clears the log), anything-else → failed. ✓ is
+   *  handled by toggleHabit (done↔pending, and failed→done via a normal
+   *  complete). 'failed' leaves completed=false, so it counts exactly like
+   *  'pending' for every streak / summary / fire calc — only the record +
+   *  icon differ. Reading habits (linksToBooks) are book-driven, ignored. */
+  toggleHabitFailed: (habitId: string, date?: string) => void;
   setHabitValue: (habitId: string, value: number, date?: string) => void;
 
   addReward: (label: string, tier: RewardTier, presetKey?: string) => RewardOption;
@@ -787,71 +788,56 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      cycleHabitStatus: (habitId, date) => {
+      toggleHabitFailed: (habitId, date) => {
         const day = date ?? todayKey();
         const habit = get().habits.find((h) => h.id === habitId);
         if (!habit) return;
 
-        // Reading habits are driven by book-page logs — defer to the same
-        // no-op-then-sync path toggleHabit uses. No tri-state for them.
-        if (habit.linksToBooks) {
-          get().toggleHabit(habitId, day);
-          return;
-        }
+        // Reading habits are book-driven — no ✗ mark. No-op (the UI hides
+        // the ✗ button for them, this is just defence-in-depth).
+        if (habit.linksToBooks) return;
 
         const log = get().logs[day]?.[habitId];
         const current: 'completed' | 'failed' | 'pending' =
           log?.status ?? (log?.completed ? 'completed' : 'pending');
 
-        // Stamp the status field on the existing log without disturbing
-        // value/completed (already correct from the toggle below) and
-        // without re-running the recompute (completed didn't change in the
-        // stamp step, so summary/streak/fire are already up to date).
-        const stamp = (status: 'completed' | 'failed') =>
-          set((s) => {
-            const dayLogs = s.logs[day];
-            const existing = dayLogs?.[habitId];
-            if (!existing) return s;
-            return {
-              logs: {
-                ...s.logs,
-                [day]: { ...dayLogs, [habitId]: { ...existing, status } },
-              },
-            };
-          });
-
-        if (current === 'pending') {
-          // → completed. toggleHabit flips completed false→true and runs
-          // the full reward / live-count / sound machinery.
-          get().toggleHabit(habitId, day);
-          stamp('completed');
-        } else if (current === 'completed') {
-          // → failed. toggleHabit flips completed true→false (untick sound
-          // + recompute); then mark it explicitly failed. value is already
-          // 0 (good) or limit+1 (bad) from the toggle, which reads as
-          // not-successful — exactly what "failed" means.
-          get().toggleHabit(habitId, day);
-          stamp('failed');
-        } else {
-          // failed → pending. Clear the log entry entirely so the day reads
-          // as untouched. completed was already false, so isLogSuccessful is
-          // unchanged — but recompute summary/streak/fire anyway to drop the
-          // stale value (a bad habit's failed log carried value=limit+1).
+        if (current === 'failed') {
+          // ✗ on an already-failed habit → undo to pending. Clear the log
+          // entry so the day reads as untouched, then recompute (a bad
+          // habit's failed log carried value=limit+1 that must drop).
           set((s) => {
             const dayLogs = { ...(s.logs[day] ?? {}) };
             delete dayLogs[habitId];
             return { logs: { ...s.logs, [day]: dayLogs } };
           });
-          const newSummary = recomputeSummary(get(), day);
-          const newStreak = recomputeStreakFor(get(), habitId);
-          set((s) => ({
-            summaries: { ...s.summaries, [day]: newSummary },
-            streaks: newStreak ? { ...s.streaks, [habitId]: newStreak } : s.streaks,
-          }));
-          const nextProfile = applyOverallStreakRecompute(get());
-          if (nextProfile) set({ profile: nextProfile });
+          playSound('untick');
+        } else {
+          // Mark failed: completed=false, status='failed', value chosen so
+          // isLogSuccessful is false (0 for good, limit+1 for bad). No
+          // rewards/live-count — this is a non-success.
+          set((s) => {
+            const dayLogs = { ...(s.logs[day] ?? {}) };
+            const value = habit.type === 'bad' ? (habit.limit ?? 0) + 1 : 0;
+            dayLogs[habitId] = {
+              habitId,
+              date: day,
+              value,
+              completed: false,
+              status: 'failed',
+            };
+            return { logs: { ...s.logs, [day]: dayLogs } };
+          });
           playSound('untick');
         }
+
+        const newSummary = recomputeSummary(get(), day);
+        const newStreak = recomputeStreakFor(get(), habitId);
+        set((s) => ({
+          summaries: { ...s.summaries, [day]: newSummary },
+          streaks: newStreak ? { ...s.streaks, [habitId]: newStreak } : s.streaks,
+        }));
+        const nextProfile = applyOverallStreakRecompute(get());
+        if (nextProfile) set({ profile: nextProfile });
       },
 
       setHabitValue: (habitId, value, date) => {

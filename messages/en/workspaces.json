@@ -114,11 +114,13 @@
     "you": "You",
     "done": "{name} — done today",
     "failed": "{name} — marked failed today",
-    "notDone": "{name} — not yet today"
+    "notDone": "{name} — not yet today",
+    "memberSummary": "{done} of {total} done",
+    "memberCollapse": "Show fewer"
   },
   "pairToday": {
     "title": "Today together",
-    "body": "Tap your own row to cycle done → failed → clear. Your partner's mark fills in when they tap on their side.",
+    "body": "Tap ✓ or ✗ on your own row. Your partner's mark fills in when they tap on their side.",
     "doneAria": "{name} — done today",
     "failedAria": "{name} — marked failed today",
     "notDoneAria": "{name} — not yet today"
