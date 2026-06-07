@@ -147,6 +147,14 @@
     "targetLabel": "Daily target",
     "limitLabel": "Daily limit"
   },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "All-time shared-habit completions",
+    "loading": "Tallying the standings…",
+    "empty": "No completions yet — be the first to check one off.",
+    "count": "{n} done",
+    "rowAria": "Rank {rank}: {name}, {n} completions"
+  },
   "activity": {
     "title": "Recent activity",
     "body": "Who joined, who left, and what habits were added — newest first.",
