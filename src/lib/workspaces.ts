@@ -20,6 +20,7 @@ import { firebaseEnabled, getFirebase } from './firebase';
 import { currentUidPromise } from './livecounts';
 import type {
   Frequency,
+  HabitLogStatus,
   HabitType,
   Workspace,
   WorkspaceDayLog,
@@ -665,7 +666,7 @@ export async function setMyWorkspaceLog(
   wsId: string,
   habitId: string,
   date: string,
-  entry: { value: number; completed: boolean },
+  entry: { value: number; completed: boolean; status?: HabitLogStatus },
 ): Promise<boolean> {
   if (!firebaseEnabled() || !wsId || !habitId || !date) return false;
   const uid = await currentUidPromise();
@@ -682,6 +683,43 @@ export async function setMyWorkspaceLog(
   } catch {
     return false;
   }
+}
+
+/* ── Tri-state helpers for shared habits ─────────────────────────────── */
+
+/** Derive the tri-state mark for a shared-habit entry. Absent `status`
+ *  (older entries, binary toggles) falls back to completed-or-pending —
+ *  an entry is never retroactively shown as 'failed'. */
+export function workspaceEntryStatus(
+  entry: { completed: boolean; status?: HabitLogStatus } | undefined,
+): HabitLogStatus {
+  return entry?.status ?? (entry?.completed ? 'completed' : 'pending');
+}
+
+/** Next entry in the shared-habit cycle: pending → completed → failed →
+ *  pending. Returns a full {value, completed, status} so the Firestore
+ *  merge-write always carries an explicit status (the deep-merge would
+ *  otherwise let a stale status survive). Value follows the same
+ *  good/bad/binary rules as the personal toggle. */
+export function nextWorkspaceEntry(
+  current: HabitLogStatus,
+  habit: Pick<WorkspaceHabit, 'type' | 'target' | 'limit'>,
+): { value: number; completed: boolean; status: HabitLogStatus } {
+  if (current === 'pending') {
+    // → completed
+    let value: number;
+    if (habit.type === 'good' && habit.target !== undefined) value = habit.target;
+    else if (habit.type === 'bad') value = habit.limit ?? 0;
+    else value = 1;
+    return { value, completed: true, status: 'completed' };
+  }
+  if (current === 'completed') {
+    // → failed (over-limit for bad habits, zero for good)
+    const value = habit.type === 'bad' ? (habit.limit ?? 0) + 1 : 0;
+    return { value, completed: false, status: 'failed' };
+  }
+  // failed → pending
+  return { value: 0, completed: false, status: 'pending' };
 }
 
 /** Subscribe to the current user's own daily log for a workspace,

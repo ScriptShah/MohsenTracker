@@ -555,6 +555,12 @@ export interface WorkspaceDayLog {
   date: string;
   /** Map keyed by `WorkspaceHabit.id`. Same per-habit shape as the
    *  personal `HabitLog`: a value (count/pages/etc.) plus a completed
-   *  boolean for non-numeric habits. */
-  entries: Record<string, { value: number; completed: boolean }>;
+   *  boolean, plus the optional tri-state `status` (✓/✗/— in the shared
+   *  checklist). As with the personal log, 'failed' behaves like 'pending'
+   *  for any math — it's only a visible, honest "I didn't" mark your
+   *  workspace-mates can see. Absent `status` derives from `completed`. */
+  entries: Record<
+    string,
+    { value: number; completed: boolean; status?: HabitLogStatus }
+  >;
 }
