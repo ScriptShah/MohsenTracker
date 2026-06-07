@@ -564,3 +564,26 @@ export interface WorkspaceDayLog {
     { value: number; completed: boolean; status?: HabitLogStatus }
   >;
 }
+
+/** Lives at `workspaces/{wsId}/messages/{messageId}`. A chat message in
+ *  the workspace's conversation. Sibling to the append-only `events`
+ *  feed, but member-authored: every member can post, and reads are gated
+ *  on workspace membership. Messages are immutable (no edit) for v1 —
+ *  the sender or the workspace owner can delete one. Sender display info
+ *  is denormalized so the thread still reads naturally after someone
+ *  leaves and their member subdoc is gone. */
+export interface WorkspaceMessage {
+  id: string;
+  /** Firebase uid of the author. The Firestore rule requires this to
+   *  equal the writer's uid, so no one can post as someone else. */
+  senderUid: string;
+  /** Denormalized display name at write time. */
+  senderName: string;
+  /** Denormalized avatar at write time. Optional — falls back to the
+   *  initials chip in the Avatar component. */
+  senderPhotoURL?: string;
+  /** Message body. Capped at 1000 chars client-side. */
+  text: string;
+  /** ISO timestamp (client clock). Sort key + "X ago" rendering. */
+  at: string;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
@@ -20,17 +20,21 @@ import {
   createWorkspaceHabit,
   deleteWorkspace,
   deleteWorkspaceHabit,
+  deleteWorkspaceMessage,
   leaveWorkspace,
   nextWorkspaceEntry,
   rotateInviteCode,
+  sendWorkspaceMessage,
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
   subscribeWorkspace,
   subscribeWorkspaceEvents,
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
+  subscribeWorkspaceMessages,
   updateWorkspaceHabit,
   workspaceEntryStatus,
+  WORKSPACE_MESSAGE_MAX,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
 import type {
@@ -41,6 +45,7 @@ import type {
   WorkspaceEvent,
   WorkspaceHabit,
   WorkspaceMember,
+  WorkspaceMessage,
 } from '@/domain/types';
 import clsx from 'clsx';
 
@@ -251,6 +256,12 @@ function WorkspaceDetail() {
       )}
 
       <SharedHabitsSection wsId={workspace.id} isOwner={isOwner} />
+
+      <ChatSection
+        wsId={workspace.id}
+        myUid={currentUid}
+        isOwner={isOwner}
+      />
 
       <ActivitySection wsId={workspace.id} />
 
@@ -932,6 +943,203 @@ function PairMemberRow({
   return (
     <div className={className} aria-label={ariaLabel} title={ariaLabel}>
       {content}
+    </div>
+  );
+}
+
+/* ───────────────────────────── Chat ─────────────────────────────────── */
+
+/** Live workspace chat. Subscribes to the messages subcollection (oldest →
+ *  newest), renders a scrollable thread with your messages right-aligned
+ *  and everyone else's left-aligned (avatar + name), and a composer pinned
+ *  at the bottom. Enter sends; Shift+Enter inserts a newline. Tapping your
+ *  own message (or any message, if you're the owner) offers to delete it.
+ */
+function ChatSection({
+  wsId,
+  myUid,
+  isOwner,
+}: {
+  wsId: string;
+  myUid: string | null;
+  isOwner: boolean;
+}) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const [messages, setMessages] = useState<WorkspaceMessage[] | null>(null);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const lastCountRef = useRef(0);
+
+  useEffect(() => {
+    const unsub = subscribeWorkspaceMessages(wsId, (list) => setMessages(list));
+    return unsub;
+  }, [wsId]);
+
+  // Auto-scroll the thread to the bottom whenever a new message arrives
+  // (or on first load). Only scrolls when the count actually grew so a
+  // re-render from an unrelated state change doesn't yank the view.
+  useEffect(() => {
+    if (!messages) return;
+    if (messages.length !== lastCountRef.current) {
+      lastCountRef.current = messages.length;
+      const el = listRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }, [messages]);
+
+  const onSend = async () => {
+    const text = draft.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setDraft('');
+    const sent = await sendWorkspaceMessage(wsId, text);
+    setSending(false);
+    if (!sent) {
+      // Restore the draft so the user doesn't lose their message on a
+      // transient failure.
+      setDraft(text);
+    }
+  };
+
+  const onDelete = async (m: WorkspaceMessage) => {
+    if (!confirm(t('workspaces.chat.deleteConfirm'))) return;
+    await deleteWorkspaceMessage(wsId, m.id);
+  };
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('workspaces.chat.title')}
+        </h2>
+        <p className="text-xs text-ink-500">{t('workspaces.chat.body')}</p>
+      </div>
+
+      <Card className="space-y-3">
+        <div
+          ref={listRef}
+          className="max-h-80 space-y-2 overflow-y-auto"
+        >
+          {messages === null ? (
+            <p className="text-sm text-ink-500">
+              {t('workspaces.detail.loading')}
+            </p>
+          ) : messages.length === 0 ? (
+            <p className="py-6 text-center text-sm text-ink-500">
+              {t('workspaces.chat.empty')}
+            </p>
+          ) : (
+            messages.map((m) => {
+              const isMe = !!myUid && m.senderUid === myUid;
+              const canDelete = isMe || isOwner;
+              return (
+                <ChatBubble
+                  key={m.id}
+                  message={m}
+                  isMe={isMe}
+                  canDelete={canDelete}
+                  onDelete={() => onDelete(m)}
+                  t={t}
+                  fmt={fmt}
+                />
+              );
+            })
+          )}
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void onSend();
+          }}
+          className="flex items-end gap-2"
+        >
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, WORKSPACE_MESSAGE_MAX))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                void onSend();
+              }
+            }}
+            placeholder={t('workspaces.chat.placeholder')}
+            rows={1}
+            maxLength={WORKSPACE_MESSAGE_MAX}
+            className="max-h-32 min-h-[2.75rem] flex-1 resize-none rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm outline-none focus:border-leaf-500"
+          />
+          <Button type="submit" disabled={!draft.trim() || sending}>
+            {t('workspaces.chat.send')}
+          </Button>
+        </form>
+      </Card>
+    </section>
+  );
+}
+
+/** A single chat bubble. Mine: leaf, right-aligned, no avatar (it's
+ *  obviously me). Theirs: white, left-aligned, avatar + name above the
+ *  text. Tap a deletable bubble to remove it. */
+function ChatBubble({
+  message,
+  isMe,
+  canDelete,
+  onDelete,
+  t,
+  fmt,
+}: {
+  message: WorkspaceMessage;
+  isMe: boolean;
+  canDelete: boolean;
+  onDelete: () => void;
+  t: ReturnType<typeof useTranslations>;
+  fmt: (n: number) => string;
+}) {
+  return (
+    <div className={clsx('flex', isMe ? 'justify-end' : 'justify-start')}>
+      <div className={clsx('flex max-w-[80%] gap-2', isMe && 'flex-row-reverse')}>
+        {!isMe && (
+          <Avatar
+            name={message.senderName}
+            photoURL={message.senderPhotoURL}
+            size="xs"
+            className="mt-4 shrink-0"
+          />
+        )}
+        <div className="min-w-0">
+          {!isMe && (
+            <span className="ms-1 block text-[11px] font-medium text-ink-500">
+              {message.senderName}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={canDelete ? onDelete : undefined}
+            aria-label={
+              canDelete ? t('workspaces.chat.deleteAria') : undefined
+            }
+            className={clsx(
+              'block whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-start text-sm leading-relaxed',
+              isMe
+                ? 'bg-leaf-600 text-white'
+                : 'bg-white text-ink-800 border border-ink-200',
+              canDelete ? 'cursor-pointer' : 'cursor-default',
+            )}
+          >
+            {message.text}
+          </button>
+          <span
+            className={clsx(
+              'numeral mt-0.5 block text-[10px] text-ink-400',
+              isMe ? 'text-end' : 'ms-1',
+            )}
+          >
+            {relativeTime(message.at, t, fmt)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

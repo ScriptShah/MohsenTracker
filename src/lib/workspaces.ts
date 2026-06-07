@@ -28,6 +28,7 @@ import type {
   WorkspaceEventType,
   WorkspaceHabit,
   WorkspaceMember,
+  WorkspaceMessage,
   WorkspaceMode,
 } from '@/domain/types';
 
@@ -516,6 +517,17 @@ export async function deleteWorkspace(wsId: string): Promise<boolean> {
       /* swallow */
     }
 
+    // 3c. Chat messages. Same reasoning — owner can delete any message
+    // per the rule, so sweep them before the parent doc goes.
+    try {
+      const messagesSnap = await getDocs(
+        collection(fb.db, 'workspaces', wsId, 'messages'),
+      );
+      await Promise.all(messagesSnap.docs.map((m) => deleteDoc(m.ref)));
+    } catch {
+      /* swallow */
+    }
+
     // 4. Invite-code lookup doc.
     if (ws.inviteCode) {
       try {
@@ -935,4 +947,95 @@ export function subscribeWorkspaceEvents(
     },
     () => cb([]),
   );
+}
+
+/* ── Chat (messages) ─────────────────────────────────────────────────── */
+
+/** Max characters per message. Enforced client-side; the Firestore rule
+ *  doesn't validate length (keeping the rule simple), so this is a UX
+ *  guard, not a security boundary. */
+export const WORKSPACE_MESSAGE_MAX = 1000;
+
+/** Post a chat message to `workspaces/{wsId}/messages/{id}`. Returns the
+ *  written message on success or null on failure (signed out, Firebase
+ *  disabled, rule rejection, empty text). Sender display info is captured
+ *  from Firebase Auth at write time and denormalized onto the doc so the
+ *  thread reads naturally even after the sender later leaves. */
+export async function sendWorkspaceMessage(
+  wsId: string,
+  text: string,
+): Promise<WorkspaceMessage | null> {
+  if (!firebaseEnabled() || !wsId) return null;
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const uid = await currentUidPromise();
+  if (!uid) return null;
+  const fb = getFirebase();
+  if (!fb) return null;
+
+  const user = fb.auth.currentUser;
+  const senderName =
+    user?.displayName?.trim() ||
+    user?.email?.split('@')[0] ||
+    'Member';
+  const messageId = `msg_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  const message: WorkspaceMessage = {
+    id: messageId,
+    senderUid: uid,
+    senderName,
+    // Only include photoURL when present — Firestore rejects undefined
+    // fields, and an absent avatar falls back to the initials chip.
+    ...(user?.photoURL ? { senderPhotoURL: user.photoURL } : {}),
+    text: trimmed.slice(0, WORKSPACE_MESSAGE_MAX),
+    at: new Date().toISOString(),
+  };
+  try {
+    await setDoc(doc(fb.db, 'workspaces', wsId, 'messages', messageId), message);
+    return message;
+  } catch {
+    return null;
+  }
+}
+
+/** Subscribe to the workspace's chat. Returns messages in CHRONOLOGICAL
+ *  order (oldest first, newest last) so the UI can append at the bottom
+ *  like a normal conversation. Capped to the most recent `limit` (default
+ *  50): we pull, sort newest-first, slice the cap, then reverse so the
+ *  returned array is oldest→newest. */
+export function subscribeWorkspaceMessages(
+  wsId: string,
+  cb: (messages: WorkspaceMessage[]) => void,
+  limit = 50,
+): Unsubscribe {
+  if (!firebaseEnabled() || !wsId) return () => {};
+  const fb = getFirebase();
+  if (!fb) return () => {};
+  return onSnapshot(
+    collection(fb.db, 'workspaces', wsId, 'messages'),
+    (snap) => {
+      const all: WorkspaceMessage[] = [];
+      snap.forEach((d) => all.push(d.data() as WorkspaceMessage));
+      // Newest-first to apply the cap, then reverse to chronological.
+      all.sort((a, b) => (a.at < b.at ? 1 : -1));
+      cb(all.slice(0, limit).reverse());
+    },
+    () => cb([]),
+  );
+}
+
+/** Delete a chat message. The Firestore rule permits this only for the
+ *  message's sender or the workspace owner. Best-effort — returns nothing;
+ *  the live subscription reflects the removal. */
+export async function deleteWorkspaceMessage(
+  wsId: string,
+  messageId: string,
+): Promise<void> {
+  if (!firebaseEnabled() || !wsId || !messageId) return;
+  const fb = getFirebase();
+  if (!fb) return;
+  try {
+    await deleteDoc(doc(fb.db, 'workspaces', wsId, 'messages', messageId));
+  } catch {
+    /* swallow — rule rejection or offline; subscription stays source of truth */
+  }
 }

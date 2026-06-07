@@ -184,6 +184,31 @@ service cloud.firestore {
             /databases/$(database)/documents/workspaces/$(wsId)
           ).data.ownerUid;
       }
+
+      // Chat messages. Member-authored, unlike the events feed. Reads are
+      // gated on workspace membership. A member can create a message only
+      // as themselves (senderUid == auth.uid) AND only while a member, so
+      // a non-member or a since-left user can't post. No updates —
+      // messages are immutable. Delete is allowed for the sender (remove
+      // your own message) or the workspace owner (moderation +
+      // cascade-on-delete-workspace).
+      match /messages/{messageId} {
+        allow read: if request.auth != null
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.senderUid
+          && request.auth.uid in get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.memberUids;
+        allow delete: if request.auth != null && (
+          request.auth.uid == resource.data.senderUid
+          || request.auth.uid == get(
+            /databases/$(database)/documents/workspaces/$(wsId)
+          ).data.ownerUid
+        );
+      }
     }
 
     // Public invite-code lookup. Any authenticated user can read (so a
