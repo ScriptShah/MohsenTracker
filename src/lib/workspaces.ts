@@ -781,6 +781,66 @@ export function subscribeMemberWorkspaceLog(
   );
 }
 
+/* ── Leaderboard ─────────────────────────────────────────────────────── */
+
+export type WorkspaceLeaderboardRow = {
+  uid: string;
+  /** Lifetime count of completed shared-habit logs (every {habit,day} pair
+   *  the member checked off, across the whole workspace history). */
+  totalCompleted: number;
+};
+
+/** All-time standings for a workspace: for each member, read their full
+ *  day-log history once and sum the entries where `completed` is true.
+ *
+ *  Reads straight from the logs (the source of truth), so the tally is
+ *  always exact — un-completing or marking-failed a habit removes it from
+ *  the count, with no counter to drift. Reuses the existing
+ *  `logs/{uid}/days` read rule (a member may list any member's logs), so
+ *  no security-rule change is required. One getDocs per member: fine at the
+ *  current workspace-member cap; if read volume ever bites, swap this for a
+ *  denormalized per-member counter maintained on the write path.
+ *
+ *  Returns rows sorted by total descending, ties broken by uid for a
+ *  deterministic order. Members with no log history sort to a 0 total
+ *  rather than being dropped, so the caller can still rank everyone. */
+export async function fetchWorkspaceLeaderboard(
+  wsId: string,
+  memberUids: string[],
+): Promise<WorkspaceLeaderboardRow[]> {
+  if (!firebaseEnabled() || !wsId || memberUids.length === 0) return [];
+  const fb = getFirebase();
+  if (!fb) return [];
+
+  const rows = await Promise.all(
+    memberUids.map(async (uid): Promise<WorkspaceLeaderboardRow> => {
+      try {
+        const snap = await getDocs(
+          collection(fb.db, 'workspaces', wsId, 'logs', uid, 'days'),
+        );
+        let total = 0;
+        snap.forEach((d) => {
+          const entries = (d.data() as WorkspaceDayLog)?.entries ?? {};
+          for (const habitId of Object.keys(entries)) {
+            if (entries[habitId]?.completed) total += 1;
+          }
+        });
+        return { uid, totalCompleted: total };
+      } catch {
+        // Best-effort per member — a single unreadable history shouldn't
+        // sink the whole board. Treat as zero.
+        return { uid, totalCompleted: 0 };
+      }
+    }),
+  );
+
+  rows.sort(
+    (a, b) =>
+      b.totalCompleted - a.totalCompleted || a.uid.localeCompare(b.uid),
+  );
+  return rows;
+}
+
 /* ── Membership ──────────────────────────────────────────────────────── */
 
 /** Best-effort: delete every day-log doc the current user has written

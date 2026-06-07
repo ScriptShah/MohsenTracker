@@ -20,6 +20,7 @@ import {
   createWorkspaceHabit,
   deleteWorkspace,
   deleteWorkspaceHabit,
+  fetchWorkspaceLeaderboard,
   leaveWorkspace,
   rotateInviteCode,
   setMyWorkspaceLog,
@@ -31,6 +32,7 @@ import {
   updateWorkspaceHabit,
   workspaceEntryFor,
   workspaceEntryStatus,
+  type WorkspaceLeaderboardRow,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
 import type {
@@ -251,6 +253,12 @@ function WorkspaceDetail() {
       )}
 
       <SharedHabitsSection wsId={workspace.id} isOwner={isOwner} />
+
+      <LeaderboardSection
+        workspace={workspace}
+        members={members}
+        myUid={currentUid}
+      />
 
       <ActivitySection wsId={workspace.id} />
 
@@ -977,6 +985,133 @@ function PairMarkCircle({ kind, active }: { kind: 'done' | 'fail'; active: boole
         </svg>
       )}
     </span>
+  );
+}
+
+/* ───────────────────────────── Leaderboard ──────────────────────────── */
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+// Gold / silver / bronze row tints for the top three.
+const MEDAL_TINT = [
+  'border-amber-300 bg-amber-50',
+  'border-slate-300 bg-slate-100',
+  'border-orange-300 bg-orange-50',
+];
+
+/** All-time standings, ranked by lifetime shared-habit completions. The top
+ *  three get gold / silver / bronze medals; everyone else gets a numbered
+ *  row. The current user's row is ring-highlighted. Reads each member's full
+ *  log history once on mount (see fetchWorkspaceLeaderboard) — no realtime
+ *  listener, since standings don't need to tick live and a whole-subcollection
+ *  subscription per member would be wasteful. Re-fetches when the member set
+ *  changes (someone joins or leaves). */
+function LeaderboardSection({
+  workspace,
+  members,
+  myUid,
+}: {
+  workspace: Workspace;
+  members: WorkspaceMember[];
+  myUid: string | null;
+}) {
+  const t = useTranslations();
+  const fmt = useNumberFormatter();
+  const [rows, setRows] = useState<WorkspaceLeaderboardRow[] | null>(null);
+
+  const memberUidsKey = [...workspace.memberUids].sort().join(',');
+  useEffect(() => {
+    let alive = true;
+    setRows(null);
+    void fetchWorkspaceLeaderboard(workspace.id, workspace.memberUids).then(
+      (r) => {
+        if (alive) setRows(r);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace.id, memberUidsKey]);
+
+  const infoByUid = new Map(members.map((m) => [m.uid, m]));
+  // Everyone-at-zero (a brand-new workspace) shows an encouraging empty
+  // state rather than a podium of zeros.
+  const topScore = rows && rows.length > 0 ? rows[0].totalCompleted : 0;
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-ink-800">
+          {t('workspaces.leaderboard.title')}
+        </h2>
+        <p className="text-xs text-ink-500">
+          {t('workspaces.leaderboard.subtitle')}
+        </p>
+      </div>
+
+      {rows === null ? (
+        <p className="text-sm text-ink-500">
+          {t('workspaces.leaderboard.loading')}
+        </p>
+      ) : topScore === 0 ? (
+        <Card className="border-sand-200 bg-sand-50">
+          <p className="text-sm text-ink-700">
+            {t('workspaces.leaderboard.empty')}
+          </p>
+        </Card>
+      ) : (
+        <ol className="space-y-2">
+          {rows.map((row, i) => {
+            const info = infoByUid.get(row.uid);
+            const name = info?.displayName || row.uid.slice(0, 6);
+            const isMe = row.uid === myUid;
+            const rank = i + 1;
+            const medal = i < 3 ? MEDALS[i] : null;
+            const ariaLabel = t('workspaces.leaderboard.rowAria', {
+              rank: fmt(rank),
+              name: isMe ? t('workspaces.crossMember.you') : name,
+              n: fmt(row.totalCompleted),
+            });
+            return (
+              <li
+                key={row.uid}
+                aria-label={ariaLabel}
+                className={clsx(
+                  'flex items-center gap-3 rounded-xl border px-3 py-2',
+                  medal ? MEDAL_TINT[i] : 'border-ink-200 bg-white',
+                  isMe && 'ring-2 ring-leaf-400 ring-offset-1',
+                )}
+              >
+                <span
+                  className="flex w-7 shrink-0 items-center justify-center text-lg"
+                  aria-hidden
+                >
+                  {medal ?? (
+                    <span className="numeral text-sm font-semibold text-ink-500">
+                      {fmt(rank)}
+                    </span>
+                  )}
+                </span>
+                <Avatar name={name} photoURL={info?.photoURL} size="sm" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900">
+                  {name}
+                  {isMe && (
+                    <span className="ms-2 rounded-full bg-sand-100 px-2 py-0.5 text-[10px] font-medium text-sand-700">
+                      {t('workspaces.detail.youBadge')}
+                    </span>
+                  )}
+                </span>
+                <span className="numeral shrink-0 text-sm font-semibold text-leaf-700">
+                  {t('workspaces.leaderboard.count', {
+                    n: fmt(row.totalCompleted),
+                  })}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }
 
