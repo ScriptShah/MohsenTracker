@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -230,7 +231,18 @@ export async function createWorkspace(
 /* ── Join ────────────────────────────────────────────────────────────── */
 
 export type JoinWorkspaceResult =
-  | { ok: true; wsId: string; mode: WorkspaceMode; title: string }
+  | {
+      ok: true;
+      wsId: string;
+      /** Mode + title are populated post-join only when we managed to read
+       *  the workspace doc (i.e. previously, via the now-removed pre-join
+       *  transaction). With the blind-arrayUnion approach the join can't
+       *  read the doc as a non-member, so these are undefined on first
+       *  join — the caller subscribes to the workspace immediately after
+       *  routing to it and pulls the title/mode from the subscription. */
+      mode?: WorkspaceMode;
+      title?: string;
+    }
   | { ok: false; error: JoinError };
 
 export type JoinError =
@@ -267,27 +279,31 @@ export async function joinWorkspace(
     if (!wsId) return { ok: false, error: 'invalid-code' };
 
     const wsRef = doc(fb.db, 'workspaces', wsId);
-    const result = await runTransaction(fb.db, async (tx) => {
-      const wsSnap = await tx.get(wsRef);
-      if (!wsSnap.exists()) {
-        return { ok: false as const, error: 'workspace-missing' as JoinError };
+
+    // BLIND ADD via arrayUnion — we deliberately do NOT read the workspace
+    // doc first. The Firestore read rule on /workspaces/{wsId} requires
+    // existing membership ("request.auth.uid in resource.data.memberUids"),
+    // so a non-member's tx.get(wsRef) fails with permission-denied before
+    // the join can even attempt the update. arrayUnion is a server-side
+    // atomic op — the client doesn't need to know the current array — and
+    // the update rule already permits "non-member adding exactly self with
+    // size+1, ≤ maxMembers, only memberUids changed".
+    //
+    // Loss vs the previous transaction: we can no longer distinguish
+    // workspace-missing / already-member / workspace-full from each other —
+    // all three present as a generic permission-denied. The UI surfaces
+    // them as the same "try again" error. A follow-up could denormalize
+    // mode/title/memberCount into the public workspaceInvites doc so the
+    // client can pre-check and give specific feedback before the write.
+    // See #72 for the original report.
+    try {
+      await updateDoc(wsRef, { memberUids: arrayUnion(uid) });
+    } catch (e: any) {
+      if (e?.code === 'permission-denied') {
+        return { ok: false, error: 'unknown' };
       }
-      const data = wsSnap.data() as Workspace;
-      if (data.memberUids.includes(uid)) {
-        return { ok: false as const, error: 'already-member' as JoinError };
-      }
-      if (data.memberUids.length >= data.maxMembers) {
-        return { ok: false as const, error: 'workspace-full' as JoinError };
-      }
-      tx.update(wsRef, { memberUids: [...data.memberUids, uid] });
-      return {
-        ok: true as const,
-        wsId,
-        mode: data.mode,
-        title: data.title,
-      };
-    });
-    if (!result.ok) return result;
+      throw e;
+    }
 
     // Best-effort: write the member subdoc. If it fails the user is in
     // memberUids but invisible until they retry — acceptable for v1.
@@ -310,7 +326,7 @@ export async function joinWorkspace(
       actorUid: uid,
       actorName: display.displayName,
     });
-    return result;
+    return { ok: true, wsId };
   } catch {
     return { ok: false, error: 'unknown' };
   }
