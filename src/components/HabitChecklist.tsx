@@ -40,6 +40,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   const logs = useAppStore((s) => s.logs[today] ?? {});
   const streaks = useAppStore((s) => s.streaks);
   const toggleHabit = useAppStore((s) => s.toggleHabit);
+  const cycleHabitStatus = useAppStore((s) => s.cycleHabitStatus);
   const reorderHabits = useAppStore((s) => s.reorderHabits);
   const setReadingHabit = useAppStore((s) => s.setReadingHabit);
   const liveCounts = useLiveCounts();
@@ -83,10 +84,12 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
     }
 
     // Spec §24.2: bad-habit slips pair with the "positive cargo." Capture
-    // the pre-toggle success state, then read post-toggle from the store
-    // (the selector won't have re-rendered yet inside this handler).
+    // the pre-cycle success state, then read post-cycle from the store
+    // (the selector won't have re-rendered yet inside this handler). The
+    // slip fires on the completed→failed step — a bad habit going from
+    // "resisted" (success) to "gave in" (failed).
     const wasSuccessful = isLogSuccessful(habit, logs[habit.id]);
-    toggleHabit(habit.id);
+    cycleHabitStatus(habit.id);
     if (habit.type === 'bad' && habit.positiveCargo?.trim()) {
       const after = useAppStore.getState().logs[today]?.[habit.id];
       const isNowSuccessful = isLogSuccessful(habit, after);
@@ -153,6 +156,10 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
             {visibleHabits.map((habit) => {
               const log = logs[habit.id];
               const done = isLogSuccessful(habit, log);
+              // Tri-state: explicit status when the user cycled, else derive
+              // from success (legacy logs + binary toggles have no status).
+              const status: 'completed' | 'failed' | 'pending' =
+                log?.status ?? (done ? 'completed' : 'pending');
               const streak = streaks[habit.id]?.current ?? 0;
               const liveCount =
                 habit.type === 'good' && habit.presetKey
@@ -164,6 +171,7 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
                   habit={habit}
                   log={log}
                   done={done}
+                  status={status}
                   streak={streak}
                   liveCount={liveCount}
                   onCheck={onCheck}
@@ -203,18 +211,35 @@ export function HabitChecklist({ habits }: { habits: Habit[] }) {
   );
 }
 
-function Checkmark({ active }: { active: boolean }) {
+/** Tri-state mark for the checklist:
+ *  - completed → leaf-filled circle with a white ✓
+ *  - failed    → red-filled circle with a white ✗
+ *  - pending   → grey outline with a faint — (minus)
+ *  Tapping cycles pending → completed → failed → pending. */
+function Checkmark({ status }: { status: 'completed' | 'failed' | 'pending' }) {
   return (
     <span
       className={clsx(
         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition',
-        active ? 'border-leaf-600 bg-leaf-600 text-white animate-pop' : 'border-ink-300 bg-white',
+        status === 'completed' && 'border-leaf-600 bg-leaf-600 text-white animate-pop',
+        status === 'failed' && 'border-red-500 bg-red-500 text-white animate-pop',
+        status === 'pending' && 'border-ink-300 bg-white text-ink-300',
       )}
       aria-hidden
     >
-      {active && (
+      {status === 'completed' && (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
           <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {status === 'failed' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
+          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {status === 'pending' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+          <path d="M6 12h12" strokeLinecap="round" />
         </svg>
       )}
     </span>
@@ -232,6 +257,7 @@ function SortableHabitRow({
   habit,
   log,
   done,
+  status,
   streak,
   liveCount,
   onCheck,
@@ -242,6 +268,7 @@ function SortableHabitRow({
   habit: Habit;
   log: ReturnType<typeof useAppStore.getState>['logs'][string][string] | undefined;
   done: boolean;
+  status: 'completed' | 'failed' | 'pending';
   streak: number;
   liveCount: number;
   onCheck: (habit: Habit) => void;
@@ -279,7 +306,11 @@ function SortableHabitRow({
         href={`/habits/detail?id=${habit.id}`}
         className={clsx(
           'tap-44 flex flex-1 items-center gap-3 rounded-xl border px-3 py-3 text-start transition',
-          done ? 'border-leaf-500 bg-leaf-50' : 'border-ink-200 bg-white hover:border-ink-300',
+          status === 'completed'
+            ? 'border-leaf-500 bg-leaf-50'
+            : status === 'failed'
+            ? 'border-red-300 bg-red-50'
+            : 'border-ink-200 bg-white hover:border-ink-300',
         )}
       >
         <button
@@ -289,15 +320,17 @@ function SortableHabitRow({
             e.stopPropagation();
             onCheck(habit);
           }}
-          aria-pressed={done}
-          aria-label={
-            done
-              ? `${habit.name} — ${t('common.done')}`
-              : `${habit.name} — ${t('common.add')}`
-          }
+          aria-pressed={status === 'completed'}
+          aria-label={`${habit.name} — ${t(
+            status === 'completed'
+              ? 'home.statusCompleted'
+              : status === 'failed'
+              ? 'home.statusFailed'
+              : 'home.statusPending',
+          )}`}
           className="tap-44 -m-2 flex items-center justify-center p-2"
         >
-          <Checkmark active={done} />
+          <Checkmark status={status} />
         </button>
         <span className="flex-1">
           <span className={clsx('block font-medium', done && 'text-leaf-800')}>

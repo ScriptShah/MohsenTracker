@@ -18,5 +18,8 @@
   "showDone": "Show done ({n})",
   "hideDone": "Hide done ({n})",
   "livesAria": "{remaining} of {total} lives remaining",
-  "livesCaption": "Below 50% loses a heart · 3 days above 50% earns one back"
+  "livesCaption": "Below 50% loses a heart · 3 days above 50% earns one back",
+  "statusCompleted": "completed (tap to mark failed)",
+  "statusFailed": "failed (tap to clear)",
+  "statusPending": "pending (tap to complete)"
 }

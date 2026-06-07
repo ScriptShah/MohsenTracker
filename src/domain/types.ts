@@ -77,12 +77,25 @@ export interface Habit {
   createdAt: string;
 }
 
+/** Tri-state marker for the daily checklist (user request). `completed` is
+ *  the success flag everything else keys off; `status` adds an explicit
+ *  "failed" mark that's visually distinct from "not yet". For all streak /
+ *  summary / fire math, 'failed' is identical to 'pending' (both leave
+ *  `completed: false`) — it only records the user's intent and drives the
+ *  ✓/✗/— icon. */
+export type HabitLogStatus = 'completed' | 'failed' | 'pending';
+
 /** A single day's log for one habit. */
 export interface HabitLog {
   habitId: string;
   date: string;
   value: number;
   completed: boolean;
+  /** Optional tri-state for the checklist UI. Absent on older logs — those
+   *  derive their state from `completed` (true → 'completed', else
+   *  'pending'), so a pre-existing log is never retroactively shown as
+   *  'failed'. */
+  status?: HabitLogStatus;
 }
 
 /** Precomputed per-day summary for the heatmap (spec §8). */
@@ -542,6 +555,12 @@ export interface WorkspaceDayLog {
   date: string;
   /** Map keyed by `WorkspaceHabit.id`. Same per-habit shape as the
    *  personal `HabitLog`: a value (count/pages/etc.) plus a completed
-   *  boolean for non-numeric habits. */
-  entries: Record<string, { value: number; completed: boolean }>;
+   *  boolean, plus the optional tri-state `status` (✓/✗/— in the shared
+   *  checklist). As with the personal log, 'failed' behaves like 'pending'
+   *  for any math — it's only a visible, honest "I didn't" mark your
+   *  workspace-mates can see. Absent `status` derives from `completed`. */
+  entries: Record<
+    string,
+    { value: number; completed: boolean; status?: HabitLogStatus }
+  >;
 }

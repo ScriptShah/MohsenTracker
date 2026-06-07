@@ -21,6 +21,7 @@ import {
   deleteWorkspace,
   deleteWorkspaceHabit,
   leaveWorkspace,
+  nextWorkspaceEntry,
   rotateInviteCode,
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
@@ -29,9 +30,11 @@ import {
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
   updateWorkspaceHabit,
+  workspaceEntryStatus,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
 import type {
+  HabitLogStatus,
   HabitType,
   Workspace,
   WorkspaceDayLog,
@@ -790,7 +793,6 @@ function PairTodayHabitCard({
   unitLabel: (u: string | undefined) => string;
   fmt: (n: number) => string;
 }) {
-  const t = useTranslations();
   const today = todayKey();
 
   return (
@@ -810,32 +812,26 @@ function PairTodayHabitCard({
       <div className="space-y-1.5">
         {members.map((m) => {
           const log = memberLogs[m.uid];
-          const done = log?.entries[habit.id]?.completed === true;
+          const status = workspaceEntryStatus(log?.entries[habit.id]);
           const isMe = m.uid === myUid;
           return (
             <PairMemberRow
               key={m.uid}
               member={m}
-              done={done}
+              status={status}
               isMe={isMe}
               onToggle={
                 isMe
                   ? () => {
-                      const nextCompleted = !done;
-                      let value: number;
-                      if (habit.type === 'good' && habit.target !== undefined) {
-                        value = nextCompleted ? habit.target : 0;
-                      } else if (habit.type === 'bad') {
-                        value = nextCompleted
-                          ? habit.limit ?? 0
-                          : (habit.limit ?? 0) + 1;
-                      } else {
-                        value = nextCompleted ? 1 : 0;
-                      }
-                      void setMyWorkspaceLog(workspace.id, habit.id, today, {
-                        value,
-                        completed: nextCompleted,
-                      });
+                      // Cycle pending → completed → failed → pending,
+                      // writing a full entry (explicit status) so the
+                      // Firestore merge can't keep a stale mark.
+                      void setMyWorkspaceLog(
+                        workspace.id,
+                        habit.id,
+                        today,
+                        nextWorkspaceEntry(status, habit),
+                      );
                     }
                   : undefined
               }
@@ -847,32 +843,38 @@ function PairTodayHabitCard({
   );
 }
 
-/** Single stacked row inside a PairTodayHabitCard. Yours is a tap target;
- *  your partner's is read-only. The visual treatment matches the home
- *  cross-member avatar (full colour + ✓ when done, grayscale at half
- *  opacity when not) but at the larger pair size with names visible. */
+/** Single stacked row inside a PairTodayHabitCard. Yours is a tap target
+ *  (cycles ✓/✗/—); your partner's is read-only and shows their current
+ *  mark. Bigger than the home cross-member avatar, with names visible. */
 function PairMemberRow({
   member,
-  done,
+  status,
   isMe,
   onToggle,
 }: {
   member: WorkspaceMember;
-  done: boolean;
+  status: HabitLogStatus;
   isMe: boolean;
   onToggle?: () => void;
 }) {
   const t = useTranslations();
-  const labelKey = done ? 'workspaces.pairToday.doneAria' : 'workspaces.pairToday.notDoneAria';
+  const labelKey =
+    status === 'completed'
+      ? 'workspaces.pairToday.doneAria'
+      : status === 'failed'
+      ? 'workspaces.pairToday.failedAria'
+      : 'workspaces.pairToday.notDoneAria';
   const ariaLabel = t(labelKey, {
     name: isMe ? t('workspaces.crossMember.you') : member.displayName,
   });
   const className = clsx(
     'flex w-full items-center gap-3 rounded-xl border px-3 py-2 transition',
-    done
+    status === 'completed'
       ? 'border-leaf-500 bg-leaf-50'
+      : status === 'failed'
+      ? 'border-red-300 bg-red-50'
       : 'border-ink-200 bg-white',
-    isMe && !done && 'hover:border-ink-300',
+    isMe && status === 'pending' && 'hover:border-ink-300',
   );
 
   const content = (
@@ -881,7 +883,7 @@ function PairMemberRow({
         name={member.displayName}
         photoURL={member.photoURL}
         size="sm"
-        className={clsx(!done && 'opacity-60 grayscale')}
+        className={clsx(status === 'pending' && 'opacity-60 grayscale')}
       />
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-800">
         {isMe ? t('workspaces.crossMember.you') : member.displayName}
@@ -889,25 +891,25 @@ function PairMemberRow({
       <span
         className={clsx(
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition',
-          done
-            ? 'border-leaf-600 bg-leaf-600 text-white'
-            : 'border-ink-300 bg-white',
+          status === 'completed' && 'border-leaf-600 bg-leaf-600 text-white',
+          status === 'failed' && 'border-red-500 bg-red-500 text-white',
+          status === 'pending' && 'border-ink-300 bg-white text-ink-300',
         )}
         aria-hidden
       >
-        {done && (
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            className="h-4 w-4"
-          >
-            <path
-              d="M5 12l5 5L20 7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+        {status === 'completed' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+            <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+        {status === 'failed' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+            <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+        {status === 'pending' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3.5 w-3.5">
+            <path d="M6 12h12" strokeLinecap="round" />
           </svg>
         )}
       </span>
@@ -919,7 +921,7 @@ function PairMemberRow({
       <button
         type="button"
         onClick={onToggle}
-        aria-pressed={done}
+        aria-pressed={status === 'completed'}
         aria-label={ariaLabel}
         className={clsx('tap-44', className)}
       >

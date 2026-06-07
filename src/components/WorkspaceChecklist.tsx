@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
+  nextWorkspaceEntry,
   setMyWorkspaceLog,
   subscribeMemberWorkspaceLog,
   subscribeMyWorkspaceLog,
   subscribeMyWorkspaces,
   subscribeWorkspaceHabits,
   subscribeWorkspaceMembers,
+  workspaceEntryStatus,
 } from '@/lib/workspaces';
 import { todayKey } from '@/lib/dates';
 import { useAuth } from '@/lib/auth';
@@ -19,6 +21,7 @@ import { useNumberFormatter } from '@/lib/format';
 import { ChevronEnd } from './Chevron';
 import { Avatar } from './Avatar';
 import type {
+  HabitLogStatus,
   Workspace,
   WorkspaceDayLog,
   WorkspaceHabit,
@@ -219,8 +222,8 @@ function WorkspaceHabitRow({
   memberLogs,
 }: {
   habit: WorkspaceHabit;
-  entry: { value: number; completed: boolean } | undefined;
-  onToggle: (next: { value: number; completed: boolean }) => void;
+  entry: { value: number; completed: boolean; status?: HabitLogStatus } | undefined;
+  onToggle: (next: { value: number; completed: boolean; status: HabitLogStatus }) => void;
   unitLabel: (u: string | undefined) => string;
   fmt: (n: number) => string;
   mode: 'pair' | 'group';
@@ -229,42 +232,41 @@ function WorkspaceHabitRow({
   memberLogs: Record<string, WorkspaceDayLog | null>;
 }) {
   const t = useTranslations();
-  const done = entry?.completed === true;
+  const status = workspaceEntryStatus(entry);
+  const done = status === 'completed';
 
+  // Tap cycles pending → completed → failed → pending, same as the
+  // personal checklist. nextWorkspaceEntry returns a full entry (with an
+  // explicit status) so the Firestore merge-write can't leave a stale mark.
   const handle = () => {
-    const nextCompleted = !done;
-    let value: number;
-    if (habit.type === 'good' && habit.target !== undefined) {
-      value = nextCompleted ? habit.target : 0;
-    } else if (habit.type === 'bad') {
-      value = nextCompleted ? habit.limit ?? 0 : (habit.limit ?? 0) + 1;
-    } else {
-      value = nextCompleted ? 1 : 0;
-    }
-    onToggle({ value, completed: nextCompleted });
+    onToggle(nextWorkspaceEntry(status, habit));
   };
 
   return (
     <div
       className={clsx(
         'flex w-full items-center gap-3 rounded-xl border px-3 py-3 transition',
-        done
+        status === 'completed'
           ? 'border-leaf-500 bg-leaf-50'
+          : status === 'failed'
+          ? 'border-red-300 bg-red-50'
           : 'border-ink-200 bg-white hover:border-ink-300',
       )}
     >
       <button
         type="button"
         onClick={handle}
-        aria-pressed={done}
-        aria-label={
-          done
-            ? `${habit.name} — ${t('common.done')}`
-            : `${habit.name} — ${t('common.add')}`
-        }
+        aria-pressed={status === 'completed'}
+        aria-label={`${habit.name} — ${t(
+          status === 'completed'
+            ? 'home.statusCompleted'
+            : status === 'failed'
+            ? 'home.statusFailed'
+            : 'home.statusPending',
+        )}`}
         className="tap-44 -m-2 flex items-center justify-center p-2"
       >
-        <Checkmark active={done} />
+        <Checkmark status={status} />
       </button>
       <span className="flex-1">
         <span className={clsx('block font-medium', done && 'text-leaf-800')}>
@@ -333,11 +335,13 @@ function MemberGrid({
     >
       {members.map((m) => {
         const log = memberLogs[m.uid];
-        const completed = log?.entries[habitId]?.completed === true;
+        const status = workspaceEntryStatus(log?.entries[habitId]);
         const isMe = m.uid === myUid;
         const label = t(
-          completed
+          status === 'completed'
             ? 'workspaces.crossMember.done'
+            : status === 'failed'
+            ? 'workspaces.crossMember.failed'
             : 'workspaces.crossMember.notDone',
           { name: isMe ? t('workspaces.crossMember.you') : m.displayName },
         );
@@ -356,29 +360,31 @@ function MemberGrid({
               photoURL={m.photoURL}
               size={isPair ? 'sm' : 'xs'}
               className={clsx(
-                completed
-                  ? 'ring-2 ring-leaf-500 ring-offset-1'
-                  : 'opacity-50 grayscale',
+                status === 'completed' && 'ring-2 ring-leaf-500 ring-offset-1',
+                // Failed members keep full opacity (they engaged, then
+                // failed) but get a red ring; pending stays dimmed.
+                status === 'failed' && 'ring-2 ring-red-400 ring-offset-1',
+                status === 'pending' && 'opacity-50 grayscale',
                 isPair ? '' : 'ring-2 ring-white',
               )}
             />
-            {completed && (
+            {status === 'completed' && (
               <span
                 aria-hidden
                 className="absolute -bottom-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-leaf-600 text-white"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  className="h-2.5 w-2.5"
-                >
-                  <path
-                    d="M5 12l5 5L20 7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="h-2.5 w-2.5">
+                  <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            )}
+            {status === 'failed' && (
+              <span
+                aria-hidden
+                className="absolute -bottom-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-white"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" className="h-2.5 w-2.5">
+                  <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
             )}
@@ -389,33 +395,34 @@ function MemberGrid({
   );
 }
 
-/** Duplicate of the personal-checklist `Checkmark` so workspace habits
- *  visually match without importing from `HabitChecklist` (which would
- *  pull in unrelated personal-habit logic). Same DOM, same animation. */
-function Checkmark({ active }: { active: boolean }) {
+/** Tri-state mark mirroring the personal-checklist `Checkmark` so shared
+ *  habits feel identical — ✓ completed (leaf), ✗ failed (red), — pending
+ *  (grey outline). Kept local rather than imported from HabitChecklist to
+ *  avoid pulling in unrelated personal-habit logic. */
+function Checkmark({ status }: { status: HabitLogStatus }) {
   return (
     <span
       className={clsx(
         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition',
-        active
-          ? 'border-leaf-600 bg-leaf-600 text-white animate-pop'
-          : 'border-ink-300 bg-white',
+        status === 'completed' && 'border-leaf-600 bg-leaf-600 text-white animate-pop',
+        status === 'failed' && 'border-red-500 bg-red-500 text-white animate-pop',
+        status === 'pending' && 'border-ink-300 bg-white text-ink-300',
       )}
       aria-hidden
     >
-      {active && (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          className="h-5 w-5"
-        >
-          <path
-            d="M5 12l5 5L20 7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+      {status === 'completed' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
+          <path d="M5 12l5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {status === 'failed' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-5 w-5">
+          <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {status === 'pending' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-4 w-4">
+          <path d="M6 12h12" strokeLinecap="round" />
         </svg>
       )}
     </span>
